@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HarnessDeck B+1 Static Directions</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0d10;
+        --panel: #11151a;
+        --panel-2: #151a20;
+        --panel-3: #1b222b;
+        --line: #2a323d;
+        --line-soft: #202832;
+        --text: #edf2f7;
+        --muted: #9aa7b5;
+        --subtle: #6f7b88;
+        --green: #63d68d;
+        --cyan: #61c8ff;
+        --amber: #f0b45b;
+        --rose: #f07f91;
+        --violet: #a994ff;
+        --blue: #4f8cff;
+        --radius: 8px;
+        --shadow: 0 18px 60px rgba(0, 0, 0, 0.38);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(97, 200, 255, 0.08), transparent 26%),
+          radial-gradient(circle at 86% 8%, rgba(240, 180, 91, 0.07), transparent 22%),
+          var(--bg);
+        color: var(--text);
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .page {
+        width: min(1480px, calc(100vw - 48px));
+        margin: 0 auto;
+        padding: 32px 0 56px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 32px;
+        align-items: end;
+        padding: 6px 0 24px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--cyan);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 36px;
+        line-height: 1.08;
+        font-weight: 760;
+      }
+
+      .hero p {
+        max-width: 780px;
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .brief {
+        display: grid;
+        grid-template-columns: repeat(4, max-content);
+        gap: 8px;
+        justify-content: end;
+      }
+
+      .brief span {
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #c6d1de;
+        background: rgba(255, 255, 255, 0.03);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .option {
+        padding: 34px 0 42px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .option-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+        gap: 24px;
+        align-items: start;
+        margin-bottom: 22px;
+      }
+
+      .option-title {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .index {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #19202a;
+        border: 1px solid var(--line);
+        color: var(--cyan);
+        font-weight: 760;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 23px;
+        line-height: 1.2;
+      }
+
+      .summary {
+        margin: 8px 0 0 46px;
+        color: var(--muted);
+        line-height: 1.65;
+        font-size: 14px;
+        max-width: 760px;
+      }
+
+      .fit {
+        border-left: 2px solid var(--cyan);
+        padding-left: 14px;
+        color: #cbd5df;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .stage {
+        display: grid;
+        grid-template-columns: 360px minmax(680px, 1fr);
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .menu,
+      .workbench {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+        box-shadow: var(--shadow);
+      }
+
+      .menu {
+        min-height: 620px;
+        border-radius: 12px;
+      }
+
+      .workbench {
+        min-height: 620px;
+        border-radius: 14px;
+      }
+
+      .chrome {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 34px;
+        padding: 0 12px;
+        background: rgba(255, 255, 255, 0.035);
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .red {
+        background: #ff6b76;
+      }
+
+      .yellow {
+        background: #f0bd5b;
+      }
+
+      .green {
+        background: #5bd88e;
+      }
+
+      .chrome-label {
+        margin-left: 8px;
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      .menu-body {
+        padding: 16px;
+      }
+
+      .topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        font-weight: 760;
+        font-size: 16px;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 26px;
+        padding: 0 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(99, 214, 141, 0.35);
+        background: rgba(99, 214, 141, 0.08);
+        color: var(--green);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .status-pill::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .command {
+        height: 42px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #0f141a;
+        color: #b9c5d0;
+        font-size: 13px;
+      }
+
+      .command kbd {
+        margin-left: auto;
+        padding: 2px 6px;
+        border-radius: 5px;
+        border: 1px solid var(--line);
+        color: var(--subtle);
+        background: #121922;
+        font-size: 11px;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin: 14px 0;
+      }
+
+      .metric {
+        min-height: 68px;
+        padding: 10px;
+        border-radius: var(--radius);
+        background: var(--panel-2);
+        border: 1px solid var(--line-soft);
+      }
+
+      .label {
+        color: var(--subtle);
+        font-size: 11px;
+        line-height: 1.2;
+      }
+
+      .value {
+        margin-top: 8px;
+        color: var(--text);
+        font-size: 19px;
+        font-weight: 740;
+      }
+
+      .trend {
+        color: var(--green);
+        font-size: 11px;
+        margin-top: 4px;
+      }
+
+      .row-group {
+        margin-top: 12px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 44px;
+        padding: 10px 11px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .row:last-child {
+        border-bottom: 0;
+      }
+
+      .row strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .row small {
+        display: block;
+        margin-top: 3px;
+        color: var(--subtle);
+        font-size: 11px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        height: 22px;
+        padding: 0 8px;
+        border-radius: 999px;
+        color: #d6dee8;
+        background: #222b35;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+
+      .tag.green {
+        background: rgba(99, 214, 141, 0.12);
+        color: var(--green);
+      }
+
+      .tag.amber {
+        background: rgba(240, 180, 91, 0.13);
+        color: var(--amber);
+      }
+
+      .tag.rose {
+        background: rgba(240, 127, 145, 0.13);
+        color: var(--rose);
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .action {
+        height: 38px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #151b22;
+        color: #dbe4ee;
+        font-size: 13px;
+      }
+
+      .action.primary {
+        border-color: rgba(97, 200, 255, 0.45);
+        background: linear-gradient(180deg, rgba(97, 200, 255, 0.18), rgba(79, 140, 255, 0.12));
+        color: white;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 210px minmax(0, 1fr);
+        min-height: 586px;
+      }
+
+      .rail {
+        border-right: 1px solid var(--line-soft);
+        padding: 14px 12px;
+        background: rgba(255, 255, 255, 0.018);
+      }
+
+      .rail-title {
+        color: var(--subtle);
+        font-size: 11px;
+        margin: 2px 8px 12px;
+        text-transform: uppercase;
+      }
+
+      .nav {
+        display: grid;
+        gap: 4px;
+      }
+
+      .nav a {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 34px;
+        padding: 0 9px;
+        border-radius: 7px;
+        color: #bac6d2;
+        text-decoration: none;
+        font-size: 13px;
+      }
+
+      .nav a.active {
+        background: #1b232d;
+        color: white;
+      }
+
+      .nav em {
+        color: var(--subtle);
+        font-style: normal;
+        font-size: 11px;
+      }
+
+      .main {
+        padding: 18px;
+      }
+
+      .main-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 16px;
+      }
+
+      .main h3 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.2;
+      }
+
+      .main-head p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        line-height: 1.55;
+        font-size: 13px;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .icon-button {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #131920;
+        color: #d8e1eb;
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+        gap: 14px;
+      }
+
+      .surface {
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.024);
+        overflow: hidden;
+      }
+
+      .surface-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-height: 42px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--line-soft);
+        color: #d9e2ec;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .timeline {
+        padding: 12px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 24px minmax(0, 1fr) auto;
+        gap: 9px;
+        align-items: start;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .step:last-child {
+        border-bottom: 0;
+      }
+
+      .mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        color: #091016;
+        background: var(--green);
+        font-weight: 800;
+      }
+
+      .mark.pending {
+        background: #26313e;
+        color: #9eabb8;
+      }
+
+      .mark.warn {
+        background: var(--amber);
+      }
+
+      .step strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .step small {
+        display: block;
+        margin-top: 3px;
+        color: var(--subtle);
+        font-size: 11px;
+      }
+
+      .diff {
+        font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.65;
+        padding: 12px;
+        color: #c9d4df;
+      }
+
+      .diff .add {
+        color: var(--green);
+      }
+
+      .diff .warn {
+        color: var(--amber);
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      .table th,
+      .table td {
+        padding: 10px 11px;
+        border-bottom: 1px solid var(--line-soft);
+        text-align: left;
+      }
+
+      .table th {
+        color: var(--subtle);
+        font-weight: 560;
+      }
+
+      .table td {
+        color: #d7e0ea;
+      }
+
+      .health {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 9px;
+        margin-bottom: 14px;
+      }
+
+      .health .metric {
+        min-height: 74px;
+      }
+
+      .pipeline {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .phase {
+        min-height: 76px;
+        padding: 10px;
+        border-radius: var(--radius);
+        border: 1px solid var(--line-soft);
+        background: #12181f;
+      }
+
+      .phase.active {
+        border-color: rgba(97, 200, 255, 0.38);
+        background: rgba(97, 200, 255, 0.07);
+      }
+
+      .phase strong {
+        font-size: 12px;
+      }
+
+      .phase small {
+        display: block;
+        margin-top: 7px;
+        color: var(--subtle);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .compact-list {
+        padding: 6px 0;
+      }
+
+      .compact-list .row {
+        min-height: 40px;
+        padding: 8px 12px;
+      }
+
+      .notes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .note {
+        padding: 12px;
+        border: 1px solid var(--line-soft);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.018);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .note strong {
+        display: block;
+        color: #dfe7ef;
+        margin-bottom: 5px;
+      }
+
+      .footer {
+        padding: 28px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      @media (max-width: 1180px) {
+        .stage,
+        .option-head,
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .brief {
+          justify-content: start;
+          grid-template-columns: repeat(2, max-content);
+        }
+      }
+
+      @media (max-width: 820px) {
+        .page {
+          width: min(100vw - 24px, 760px);
+          padding-top: 18px;
+        }
+
+        h1 {
+          font-size: 28px;
+        }
+
+        .stage,
+        .workspace,
+        .content-grid,
+        .health,
+        .pipeline,
+        .notes {
+          grid-template-columns: 1fr;
+        }
+
+        .menu,
+        .workbench {
+          min-height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">HarnessDeck Product Design / B + 1</p>
+          <h1>Raycast / Linear 感的高密度开发者工具原型方向</h1>
+          <p>
+            这份 HTML 设计板用于描述 HarnessDeck 的第一轮静态视觉方向。三种方案都围绕菜单栏控制中心和二级工作台展开，重点看信息层级、导航方式、Profile 到 dry-run deploy plan 的主路径。
+          </p>
+        </div>
+        <div class="brief" aria-label="Design brief">
+          <span>macOS menu bar</span>
+          <span>dark developer tool</span>
+          <span>static mock</span>
+          <span>Phase 0 + Phase 1</span>
+        </div>
+      </header>
+
+      <section class="option" aria-labelledby="option-1">
+        <div class="option-head">
+          <div>
+            <div class="option-title">
+              <span class="index">1</span>
+              <h2 id="option-1">Command Deck：命令中心优先</h2>
+            </div>
+            <p class="summary">
+              这个方向把菜单栏面板设计成日常主入口，像 Raycast 一样让用户先搜索、再执行。Workbench 服务于更重的 Profile 和 Sync 管理，适合高频切换 Profile、账号和 target 的用户。
+            </p>
+          </div>
+          <div class="fit">
+            推荐场景：每天频繁在 Claude Code 和 Codex 间切换任务，用户更关心快速状态判断和命令入口。视觉重点是 command bar、状态密度和即时操作。
+          </div>
+        </div>
+
+        <div class="stage">
+          <aside class="menu">
+            <div class="chrome">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="chrome-label">Menu Bar Panel</span>
+            </div>
+            <div class="menu-body">
+              <div class="topline">
+                <div class="brand">HarnessDeck</div>
+                <div class="status-pill">Local ready</div>
+              </div>
+              <div class="command">
+                Search profile, sync, account
+                <kbd>⌘K</kbd>
+              </div>
+              <div class="metric-grid">
+                <div class="metric">
+                  <div class="label">Active profile</div>
+                  <div class="value">macOS Dev</div>
+                  <div class="trend">Claude + Codex</div>
+                </div>
+                <div class="metric">
+                  <div class="label">5h burn</div>
+                  <div class="value">$4.82</div>
+                  <div class="trend">local log</div>
+                </div>
+                <div class="metric">
+                  <div class="label">Sync health</div>
+                  <div class="value">2 drift</div>
+                  <div class="trend">review needed</div>
+                </div>
+                <div class="metric">
+                  <div class="label">Awake</div>
+                  <div class="value">2h left</div>
+                  <div class="trend">standard</div>
+                </div>
+              </div>
+              <div class="row-group">
+                <div class="row">
+                  <div>
+                    <strong>Deploy dry-run ready</strong>
+                    <small>3 file operations, no secret detected</small>
+                  </div>
+                  <span class="tag green">Low</span>
+                </div>
+                <div class="row">
+                  <div>
+                    <strong>Codex target</strong>
+                    <small>Fixture mode, manifest available</small>
+                  </div>
+                  <span class="tag">Dry-run</span>
+                </div>
+                <div class="row">
+                  <div>
+                    <strong>Profile impact feed</strong>
+                    <small>1 Claude Code update affects rules</small>
+                  </div>
+                  <span class="tag amber">New</span>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="action primary">Open Workbench</button>
+                <button class="action">Run Sync</button>
+                <button class="action">Switch Profile</button>
+                <button class="action">Refresh</button>
+              </div>
+            </div>
+          </aside>
+
+          <section class="workbench">
+            <div class="chrome">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="chrome-label">HarnessDeck Workbench</span>
+            </div>
+            <div class="workspace">
+              <nav class="rail">
+                <div class="rail-title">Lifecycle</div>
+                <div class="nav">
+                  <a href="#">Discover <em>12</em></a>
+                  <a class="active" href="#">Profiles <em>4</em></a>
+                  <a href="#">Sync <em>2</em></a>
+                  <a href="#">Accounts <em>1</em></a>
+                  <a href="#">Insights <em>5</em></a>
+                  <a href="#">Settings</a>
+                </div>
+              </nav>
+              <div class="main">
+                <div class="main-head">
+                  <div>
+                    <h3>macOS Dev Harness Profile</h3>
+                    <p>Rules, skills, MCP references and sync policy for local macOS app work.</p>
+                  </div>
+                  <div class="toolbar">
+                    <button class="icon-button" title="Refresh">↻</button>
+                    <button class="icon-button" title="Run dry-run">▶</button>
+                  </div>
+                </div>
+                <div class="content-grid">
+                  <div class="surface">
+                    <div class="surface-head">
+                      Deploy Plan
+                      <span class="tag green">Ready</span>
+                    </div>
+                    <div class="timeline">
+                      <div class="step">
+                        <span class="mark">1</span>
+                        <div>
+                          <strong>Validate profile</strong>
+                          <small>schema ok, no secret pattern</small>
+                        </div>
+                        <span class="tag green">Pass</span>
+                      </div>
+                      <div class="step">
+                        <span class="mark">2</span>
+                        <div>
+                          <strong>Read Codex fixture target</strong>
+                          <small>settings.toml and AGENTS.md snapshot</small>
+                        </div>
+                        <span class="tag">Dry-run</span>
+                      </div>
+                      <div class="step">
+                        <span class="mark warn">3</span>
+                        <div>
+                          <strong>Preview scoped merge</strong>
+                          <small>rules append, MCP noop, skill copy</small>
+                        </div>
+                        <span class="tag amber">Review</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="surface">
+                    <div class="surface-head">Preview Diff</div>
+                    <div class="diff">
+                      <div class="add">+ rule: prefer local-first config writes</div>
+                      <div class="add">+ skill: macos-tauri-fixture</div>
+                      <div class="warn">~ mcp: keep target override</div>
+                      <div>  manifest: dry_run=true</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="notes">
+                  <div class="note"><strong>优点</strong>高频动作很快，菜单栏承担主要操作入口。</div>
+                  <div class="note"><strong>代价</strong>新用户需要理解 command-first 的操作方式。</div>
+                  <div class="note"><strong>适合</strong>Power user、长期使用、快捷键重度用户。</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="option" aria-labelledby="option-2">
+        <div class="option-head">
+          <div>
+            <div class="option-title">
+              <span class="index">2</span>
+              <h2 id="option-2">Sync Ops：同步治理优先</h2>
+            </div>
+            <p class="summary">
+              这个方向把 Workbench 设计成操作台，核心是 Profile 到 target 的部署与冲突治理。菜单栏更像运行摘要，真正的重点在 deploy plan、风险等级、manifest 和 rollback 线索。
+            </p>
+          </div>
+          <div class="fit">
+            推荐场景：用户担心配置被写坏，需要在每次同步前看清变化。视觉重点是表格、diff、风险标签和审计感。
+          </div>
+        </div>
+
+        <div class="stage">
+          <aside class="menu">
+            <div class="chrome">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="chrome-label">Menu Bar Panel</span>
+            </div>
+            <div class="menu-body">
+              <div class="topline">
+                <div class="brand">Sync Ops</div>
+                <div class="status-pill">Guarded</div>
+              </div>
+              <div class="row-group">
+                <div class="row">
+                  <div>
+                    <strong>Current batch</strong>
+                    <small>macOS Dev -> Codex fixture</small>
+                  </div>
+                  <span class="tag amber">Review</span>
+                </div>
+                <div class="row">
+                  <div>
+                    <strong>Operations</strong>
+                    <small>1 create, 2 append, 1 noop</small>
+                  </div>
+                  <span class="tag">4</span>
+                </div>
+                <div class="row">
+                  <div>
+                    <strong>Risk</strong>
+                    <small>1 medium, 0 blocked</small>
+                  </div>
+                  <span class="tag amber">Medium</span>
+                </div>
+              </div>
+              <div class="metric-grid">
+                <div class="metric">
+                  <div class="label">Manifest</div>
+                  <div class="value">#024</div>
+                  <div class="trend">dry-run</div>
+                </div>
+                <div class="metric">
+                  <div class="label">Rollback</div>
+                  <div class="value">Ready</div>
+                  <div class="trend">planned</div>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="action primary">Review Plan</button>
+                <button class="action">Open Diff</button>
+              </div>
+            </div>
+          </aside>
+
+          <section class="workbench">
+            <div class="chrome">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="chrome-label">HarnessDeck Workbench</span>
+            </div>
+            <div class="workspace">
+              <nav class="rail">
+                <div class="rail-title">Ops</div>
+                <div class="nav">
+                  <a href="#">Profiles <em>4</em></a>
+                  <a class="active" href="#">Sync Queue <em>2</em></a>
+                  <a href="#">Targets <em>2</em></a>
+                  <a href="#">Manifests <em>24</em></a>
+                  <a href="#">Audit Trail</a>
+                  <a href="#">Settings</a>
+                </div>
+              </nav>
+              <div class="main">
+                <div class="main-head">
+                  <div>
+                    <h3>Deploy Plan Preview</h3>
+                    <p>Every target write is planned, previewed, backed up, verified and recorded.</p>
+                  </div>
+                  <span class="tag amber">Dry-run required</span>
+                </div>
+                <div class="health">
+                  <div class="metric">
+                    <div class="label">Files touched</div>
+                    <div class="value">3</div>
+                    <div class="trend">fixture only</div>
+                  </div>
+                  <div class="metric">
+                    <div class="label">Policy</div>
+                    <div class="value">Scoped</div>
+                    <div class="trend">rules merge</div>
+                  </div>
+                  <div class="metric">
+                    <div class="label">Secrets</div>
+                    <div class="value">0</div>
+                    <div class="trend">scanner pass</div>
+                  </div>
+                  <div class="metric">
+                    <div class="label">Risk</div>
+                    <div class="value">Med</div>
+                    <div class="trend">review</div>
+                  </div>
+                </div>
+                <div class="content-grid">
+                  <div class="surface">
+                    <div class="surface-head">Operation List</div>
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Operation</th>
+                          <th>File</th>
+                          <th>Risk</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>AppendBlock</td>
+                          <td>AGENTS.md</td>
+                          <td><span class="tag green">Low</span></td>
+                          <td>Ready</td>
+                        </tr>
+                        <tr>
+                          <td>UpdateFile</td>
+                          <td>settings.toml</td>
+                          <td><span class="tag amber">Medium</span></td>
+                          <td>Review</td>
+                        </tr>
+                        <tr>
+                          <td>Noop</td>
+                          <td>mcp.json</td>
+                          <td><span class="tag">None</span></td>
+                          <td>Keep target</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="surface">
+                    <div class="surface-head">Manifest Summary</div>
+                    <div class="compact-list">
+                      <div class="row">
+                        <div>
+                          <strong>profile_id</strong>
+                          <small>macos-dev-harness</small>
+                        </div>
+                        <span class="tag">v0.1</span>
+                      </div>
+                      <div class="row">
+                        <div>
+                          <strong>target_kind</strong>
+                          <small>Codex fixture</small>
+                        </div>
+                        <span class="tag">Dry-run</span>
+                      </div>
+                      <div class="row">
+                        <div>
+                          <strong>backup_policy</strong>
+                          <small>planned, not executed</small>
+                        </div>
+                        <span class="tag green">Safe</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="notes">
+                  <div class="note"><strong>优点</strong>安全感强，适合真实写配置前建立信任。</div>
+                  <div class="note"><strong>代价</strong>日常轻操作会显得偏重，需要菜单栏保留快捷入口。</div>
+                  <div class="note"><strong>适合</strong>配置治理、团队化、后续 sync conflict 深水区。</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="option" aria-labelledby="option-3">
+        <div class="option-head">
+          <div>
+            <div class="option-title">
+              <span class="index">3</span>
+              <h2 id="option-3">Lifecycle Console：生命周期优先</h2>
+            </div>
+            <p class="summary">
+              这个方向把产品闭环直接放到界面上，Discover、Profile、Sync、Operate、Improve 形成一条清楚路径。它更适合展示最终目标态，也能让第一次使用的用户理解 HarnessDeck 负责哪条链路。
+            </p>
+          </div>
+          <div class="fit">
+            推荐场景：希望原型能讲清完整愿景，同时保留高密度工具感。视觉重点是生命周期阶段、当前进度、推荐动作和下一步。
+          </div>
+        </div>
+
+        <div class="stage">
+          <aside class="menu">
+            <div class="chrome">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="chrome-label">Menu Bar Panel</span>
+            </div>
+            <div class="menu-body">
+              <div class="topline">
+                <div class="brand">Lifecycle</div>
+                <div class="status-pill">Improve</div>
+              </div>
+              <div class="pipeline">
+                <div class="phase active">
+                  <strong>Discover</strong>
+                  <small>12 templates</small>
+                </div>
+                <div class="phase active">
+                  <strong>Profile</strong>
+                  <small>4 active</small>
+                </div>
+                <div class="phase active">
+                  <strong>Sync</strong>
+                  <small>2 drift</small>
+                </div>
+                <div class="phase">
+                  <strong>Operate</strong>
+                  <small>healthy</small>
+                </div>
+                <div class="phase">
+                  <strong>Improve</strong>
+                  <small>5 insights</small>
+                </div>
+              </div>
+              <div class="row-group">
+                <div class="row">
+                  <div>
+                    <strong>Next best action</strong>
+                    <small>Review medium-risk deploy plan</small>
+                  </div>
+                  <span class="tag amber">Now</span>
+                </div>
+                <div class="row">
+                  <div>
+                    <strong>Insight</strong>
+                    <small>Repeated macOS build failure suggests skill update</small>
+                  </div>
+                  <span class="tag">Local</span>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="action primary">Continue</button>
+                <button class="action">View Feed</button>
+              </div>
+            </div>
+          </aside>
+
+          <section class="workbench">
+            <div class="chrome">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+              <span class="chrome-label">HarnessDeck Workbench</span>
+            </div>
+            <div class="workspace">
+              <nav class="rail">
+                <div class="rail-title">Harness Loop</div>
+                <div class="nav">
+                  <a href="#">Discover <em>New</em></a>
+                  <a href="#">Profile</a>
+                  <a class="active" href="#">Sync</a>
+                  <a href="#">Operate</a>
+                  <a href="#">Improve <em>5</em></a>
+                  <a href="#">Settings</a>
+                </div>
+              </nav>
+              <div class="main">
+                <div class="main-head">
+                  <div>
+                    <h3>Current Harness Loop</h3>
+                    <p>A single path from best practice discovery to profile improvement.</p>
+                  </div>
+                  <span class="tag green">Local-first</span>
+                </div>
+                <div class="pipeline">
+                  <div class="phase active">
+                    <strong>Discover</strong>
+                    <small>macOS Tauri template selected</small>
+                  </div>
+                  <div class="phase active">
+                    <strong>Profile</strong>
+                    <small>rules and skills validated</small>
+                  </div>
+                  <div class="phase active">
+                    <strong>Sync</strong>
+                    <small>dry-run manifest ready</small>
+                  </div>
+                  <div class="phase">
+                    <strong>Operate</strong>
+                    <small>usage missing in Phase 1</small>
+                  </div>
+                  <div class="phase">
+                    <strong>Improve</strong>
+                    <small>local rules queued</small>
+                  </div>
+                </div>
+                <div class="content-grid">
+                  <div class="surface">
+                    <div class="surface-head">Next Actions</div>
+                    <div class="timeline">
+                      <div class="step">
+                        <span class="mark">1</span>
+                        <div>
+                          <strong>Confirm dry-run deploy</strong>
+                          <small>Codex fixture, 3 operations, low risk</small>
+                        </div>
+                        <span class="tag green">Ready</span>
+                      </div>
+                      <div class="step">
+                        <span class="mark pending">2</span>
+                        <div>
+                          <strong>Enable real target discovery</strong>
+                          <small>Phase 2, read-only first</small>
+                        </div>
+                        <span class="tag">Later</span>
+                      </div>
+                      <div class="step">
+                        <span class="mark pending">3</span>
+                        <div>
+                          <strong>Generate improvement insight</strong>
+                          <small>Local rules, no upload</small>
+                        </div>
+                        <span class="tag">Queued</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="surface">
+                    <div class="surface-head">Profile Health</div>
+                    <div class="compact-list">
+                      <div class="row">
+                        <div>
+                          <strong>Rules</strong>
+                          <small>8 scoped rules, 0 conflicts</small>
+                        </div>
+                        <span class="tag green">Pass</span>
+                      </div>
+                      <div class="row">
+                        <div>
+                          <strong>Skills</strong>
+                          <small>3 linked, 1 update available</small>
+                        </div>
+                        <span class="tag amber">Update</span>
+                      </div>
+                      <div class="row">
+                        <div>
+                          <strong>MCP</strong>
+                          <small>2 refs, target override kept</small>
+                        </div>
+                        <span class="tag">Scoped</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="notes">
+                  <div class="note"><strong>优点</strong>最容易讲清产品最终目标态和生命周期。</div>
+                  <div class="note"><strong>代价</strong>高级用户可能觉得路径感偏强，需要保留快捷模式。</div>
+                  <div class="note"><strong>适合</strong>对外演示、README 截图、首次 onboarding。</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <footer class="footer">
+        建议选择方式：如果要先服务重度开发者，选 1；如果要先建立安全可信的同步体验，选 2；如果要用原型讲清完整产品愿景，选 3。
+      </footer>
+    </main>
+  </body>
+</html>
