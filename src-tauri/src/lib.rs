@@ -12,12 +12,33 @@ mod phase4_5_tests;
 mod phase6_8_tests;
 
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::TrayIconBuilder;
-use tauri::Manager;
+use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
+use tauri::{AppHandle, Manager, PhysicalPosition, Rect, Runtime};
+
+fn show_menu_panel<R: Runtime>(app: &AppHandle<R>, anchor: Option<&Rect>) {
+  if let Some(window) = app.get_webview_window("menubar") {
+    if let Some(rect) = anchor {
+      let position = rect.position.to_physical::<i32>(1.0);
+      let size = rect.size.to_physical::<i32>(1.0);
+      let x = position.x + size.width - 356;
+      let y = position.y + size.height + 6;
+      let _ = window.set_position(PhysicalPosition::new(x.max(0), y.max(0)));
+    }
+    let _ = window.show();
+    let _ = window.set_focus();
+  }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .on_window_event(|window, event| {
+      if window.label() == "menubar" {
+        if let tauri::WindowEvent::Focused(false) = event {
+          let _ = window.hide();
+        }
+      }
+    })
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
@@ -35,13 +56,20 @@ pub fn run() {
       let mut tray_builder = TrayIconBuilder::new()
         .tooltip("HarnessDeck")
         .menu(&tray_menu)
-        .show_menu_on_left_click(true)
+        .show_menu_on_left_click(false)
+        .on_tray_icon_event(|tray, event| {
+          if let TrayIconEvent::Click {
+            button: MouseButton::Left,
+            rect,
+            ..
+          } = event
+          {
+            show_menu_panel(tray.app_handle(), Some(&rect));
+          }
+        })
         .on_menu_event(|app, event| match event.id().as_ref() {
           "open_menu_panel" => {
-            if let Some(window) = app.get_webview_window("menubar") {
-              let _ = window.show();
-              let _ = window.set_focus();
-            }
+            show_menu_panel(app, None);
           }
           "open_workbench" => {
             if let Some(window) = app.get_webview_window("main") {

@@ -949,6 +949,104 @@ body {
   padding: 10px;
 }
 
+.workbench-app.app-shell {
+  --bg: #f4f2ea;
+  --page-top: #fbfaf4;
+  --page-bottom: #edf5f7;
+  --surface: #fffdf7;
+  --surface-strong: #ffffff;
+  --surface-soft: #f2efe6;
+  --text: #10233a;
+  --muted: #5f6870;
+  --line: #d4c6a8;
+  --blue: #0d3b66;
+  --gold: #c9973f;
+  --teal: #117a79;
+  --green: #2f7a4f;
+  --rose: #b65360;
+  display: block;
+  min-height: 100vh;
+  padding: 18px;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 8% 10%, rgba(201, 151, 63, 0.14), transparent 22%),
+    linear-gradient(180deg, var(--page-top) 0%, var(--bg) 56%, var(--page-bottom) 100%);
+}
+
+.workbench-app.app-shell[data-theme="dark"] {
+  --bg: #091322;
+  --page-top: #0c1726;
+  --page-bottom: #111827;
+  --surface: #101d2f;
+  --surface-strong: #16263c;
+  --surface-soft: #0d1a2c;
+  --text: #eef5ff;
+  --muted: #9ca9ba;
+  --line: rgba(238, 245, 255, 0.16);
+  --blue: #7fb2ff;
+  --gold: #f0bd61;
+  --teal: #6ed6c6;
+  --green: #8ee0a3;
+  --rose: #ff94a3;
+  background:
+    radial-gradient(circle at 8% 10%, rgba(240, 189, 97, 0.12), transparent 23%),
+    linear-gradient(180deg, var(--page-top) 0%, var(--bg) 50%, var(--page-bottom) 100%);
+}
+
+.native-workbench.workbench-window {
+  width: min(1180px, 100%);
+  min-height: calc(100vh - 36px);
+  margin: 0 auto;
+}
+
+.native-workbench-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 58px;
+  padding: 0 4px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+}
+
+.workbench-lockup,
+.workbench-toolbar-actions {
+  display: flex;
+  align-items: center;
+}
+
+.workbench-lockup {
+  min-width: 0;
+  gap: 12px;
+}
+
+.workbench-lockup span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.workbench-lockup strong {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workbench-toolbar-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.native-workbench .window-grid {
+  min-height: calc(100vh - 132px);
+}
+
 .shell {
   display: grid;
   gap: 16px;

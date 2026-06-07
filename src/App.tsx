@@ -372,23 +372,18 @@ export function App() {
   }
 
   return (
-    <div className="app-shell command-deck" data-theme={theme} data-testid="app-shell">
-      <div className="shell">
-        <header className="deck-topbar">
-          <div className="topbar-lockup">
+    <div className="app-shell workbench-app" data-theme={theme} data-testid="app-shell">
+      <section className="workbench-window native-workbench" aria-label={t.workbenchTitle}>
+        <header className="native-workbench-toolbar">
+          <div className="workbench-lockup">
             <BrandGlyph />
             <div>
-              <p className="eyebrow">{t.phaseStatus}</p>
-              <h1>{t.title}</h1>
-              <p>{t.subtitle}</p>
+              <span>{t.workbenchTitle}</span>
+              <strong>{selectedProfileName}</strong>
             </div>
           </div>
 
-          <div className="deck-actions">
-            <button type="button" className="toolbar-button">
-              <Search size={17} aria-hidden="true" />
-              <span>{t.command}</span>
-            </button>
+          <div className="workbench-toolbar-actions">
             <button
               type="button"
               className="toolbar-button"
@@ -408,113 +403,93 @@ export function App() {
           </div>
         </header>
 
-        <ConstellationBand activeView={activeView} locale={locale} onSelect={setActiveView} t={t} />
-
-        <section className="prototype-layout">
-          <MenuBarPanel
-            highPriorityFeed={highPriorityFeed}
-            locale={locale}
-            manifest={manifest}
-            onOpenWorkbench={openWorkbench}
-            onRunDryRun={runDryRun}
-            onSwitchProfile={switchProfile}
-            selectedProfileName={selectedProfileName}
-            selectedTargetKind={selectedTargetKind}
-            t={t}
-            usageSummary={usageSummary}
-          />
-
-          <section className="workbench-window" aria-label={t.workbenchTitle}>
-            <MacChrome status={t.fixture} title={t.workbenchTitle} />
-            <div className="window-grid">
-              <aside className="rail">
-                <div className="rail-head">
-                  <span>{t.lifecycle}</span>
-                  <strong>Discover → Profile → Sync → Operate → Improve</strong>
-                </div>
-                <nav className="rail-nav" aria-label="Workbench views">
-                  {navItems.map((item, index) => {
-                    const Icon = item.icon;
-                    const selected = item.id === activeView;
-                    return (
-                      <button
-                        key={item.id}
-                        aria-label={label(locale, item)}
-                        aria-current={selected ? "page" : undefined}
-                        className={selected ? "rail-item active" : "rail-item"}
-                        type="button"
-                        onClick={() => setActiveView(item.id)}
-                      >
-                        <Icon size={17} aria-hidden="true" />
-                        <span>{label(locale, item)}</span>
-                        <small>{String(index + 1).padStart(2, "0")}</small>
-                      </button>
-                    );
-                  })}
-                </nav>
-              </aside>
-
-              <main className="workbench-main">
-                <div className="view-titlebar">
-                  <div>
-                    <span>{activeTitle}</span>
-                    <strong>{selectedProfileName}</strong>
-                  </div>
-                  <span className="status-pill">
-                    <CheckCircle2 size={15} aria-hidden="true" />
-                    Dry-run
-                  </span>
-                </div>
-
-                <section className="view-panel prototype-view-panel">
-                  {activeView === "discover" ? (
-                    <DiscoverView registryTemplates={registryTemplates} skillRecommendation={skillRecommendation} />
-                  ) : activeView === "profiles" ? (
-                    <ProfileView
-                      locale={locale}
-                      profiles={profiles}
-                      selectedProfileId={selectedProfileId}
-                      setSelectedProfileId={setSelectedProfileId}
-                      targets={targets}
-                      selectedTargetKind={selectedTargetKind}
-                      setSelectedTargetKind={setSelectedTargetKind}
-                    />
-                  ) : activeView === "sync" ? (
-                    <SyncView
-                      locale={locale}
-                      plan={deployPlan}
-                      manifest={manifest}
-                      onAuthorizeTargetRead={authorizeTargetRead}
-                      onConfirm={confirmDryRun}
-                      profile={selectedProfile}
-                      syncGovernance={syncGovernance}
-                      targetDiscoveries={targetDiscoveries}
-                      targetReadAuthorized={targetReadAuthorized}
-                    />
-                  ) : activeView === "operate" ? (
-                    <OperateView
-                      confirmedWakeSession={confirmedWakeSession}
-                      locale={locale}
-                      onConfirmExperimentalWake={confirmExperimentalWake}
-                      wakeSummary={wakeSummary}
-                    />
-                  ) : activeView === "usage" ? (
-                    <UsageView locale={locale} usageSummary={usageSummary} />
-                  ) : activeView === "insights" ? (
-                    <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} insights={insights} locale={locale} />
-                  ) : activeView === "guard" ? (
-                    <GuardView accountWorkspace={accountWorkspace} locale={locale} />
-                  ) : activeView === "settings" ? (
-                    <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
-                  ) : (
-                    <FoundationSummary locale={locale} />
-                  )}
-                </section>
-              </main>
+        <div className="window-grid">
+          <aside className="rail">
+            <div className="rail-head">
+              <span>{t.lifecycle}</span>
+              <strong>Discover → Profile → Sync → Operate → Improve</strong>
             </div>
-          </section>
-        </section>
-      </div>
+            <nav className="rail-nav" aria-label="Workbench views">
+              {navItems.map((item, index) => {
+                const Icon = item.icon;
+                const selected = item.id === activeView;
+                return (
+                  <button
+                    key={item.id}
+                    aria-label={label(locale, item)}
+                    aria-current={selected ? "page" : undefined}
+                    className={selected ? "rail-item active" : "rail-item"}
+                    type="button"
+                    onClick={() => setActiveView(item.id)}
+                  >
+                    <Icon size={17} aria-hidden="true" />
+                    <span>{label(locale, item)}</span>
+                    <small>{String(index + 1).padStart(2, "0")}</small>
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+
+          <main className="workbench-main">
+            <div className="view-titlebar">
+              <div>
+                <span>{activeTitle}</span>
+                <strong>{selectedProfileName}</strong>
+              </div>
+              <span className="status-pill">
+                <CheckCircle2 size={15} aria-hidden="true" />
+                Dry-run
+              </span>
+            </div>
+
+            <section className="view-panel prototype-view-panel">
+              {activeView === "discover" ? (
+                <DiscoverView registryTemplates={registryTemplates} skillRecommendation={skillRecommendation} />
+              ) : activeView === "profiles" ? (
+                <ProfileView
+                  locale={locale}
+                  profiles={profiles}
+                  selectedProfileId={selectedProfileId}
+                  setSelectedProfileId={setSelectedProfileId}
+                  targets={targets}
+                  selectedTargetKind={selectedTargetKind}
+                  setSelectedTargetKind={setSelectedTargetKind}
+                />
+              ) : activeView === "sync" ? (
+                <SyncView
+                  locale={locale}
+                  plan={deployPlan}
+                  manifest={manifest}
+                  onAuthorizeTargetRead={authorizeTargetRead}
+                  onConfirm={confirmDryRun}
+                  profile={selectedProfile}
+                  syncGovernance={syncGovernance}
+                  targetDiscoveries={targetDiscoveries}
+                  targetReadAuthorized={targetReadAuthorized}
+                />
+              ) : activeView === "operate" ? (
+                <OperateView
+                  confirmedWakeSession={confirmedWakeSession}
+                  locale={locale}
+                  onConfirmExperimentalWake={confirmExperimentalWake}
+                  wakeSummary={wakeSummary}
+                />
+              ) : activeView === "usage" ? (
+                <UsageView locale={locale} usageSummary={usageSummary} />
+              ) : activeView === "insights" ? (
+                <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} insights={insights} locale={locale} />
+              ) : activeView === "guard" ? (
+                <GuardView accountWorkspace={accountWorkspace} locale={locale} />
+              ) : activeView === "settings" ? (
+                <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
+              ) : (
+                <FoundationSummary locale={locale} />
+              )}
+            </section>
+          </main>
+        </div>
+      </section>
     </div>
   );
 }
@@ -629,48 +604,6 @@ function MenuBarPanel({
         </button>
       </div>
     </aside>
-  );
-}
-
-function ConstellationBand({
-  activeView,
-  locale,
-  onSelect,
-  t,
-}: {
-  activeView: ViewId;
-  locale: Locale;
-  onSelect: (viewId: ViewId) => void;
-  t: Record<string, string>;
-}) {
-  return (
-    <section className="constellation-band">
-      <div className="constellation-copy">
-        <BrandGlyph />
-        <div>
-          <strong>HarnessDeck</strong>
-          <span>{t.heroTitle}</span>
-        </div>
-      </div>
-      <nav className="constellation-nav" aria-label="Brand navigation">
-        {navItems.slice(1, 8).map((item) => {
-          const Icon = item.icon;
-          const selected = item.id === activeView;
-          return (
-            <button
-              key={item.id}
-              aria-current={selected ? "page" : undefined}
-              className={selected ? "star-node active" : "star-node"}
-              type="button"
-              onClick={() => onSelect(item.id)}
-            >
-              <Icon size={15} aria-hidden="true" />
-              <span>{label(locale, item)}</span>
-            </button>
-          );
-        })}
-      </nav>
-    </section>
   );
 }
 
