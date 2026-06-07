@@ -106,4 +106,35 @@ describe("HarnessDeck app foundation", () => {
     expect(screen.getByText("Claude Code local target")).toBeInTheDocument();
     expect(screen.getAllByText("raw config hidden").length).toBeGreaterThan(0);
   });
+
+  it("renders usage and cost with source confidence labels", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "用量" }));
+
+    expect(await screen.findByText("用量与成本")).toBeInTheDocument();
+    expect(screen.getByText("$4.82")).toBeInTheDocument();
+    expect(screen.getByText("LocalLog")).toBeInTheDocument();
+    expect(screen.getAllByText("Estimated").length).toBeGreaterThan(0);
+    expect(screen.getByText("Missing")).toBeInTheDocument();
+    expect(screen.getByText("burn rate")).toBeInTheDocument();
+  });
+
+  it("renders account workspace with keychain references and no secret values", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "设置" }));
+
+    expect(await screen.findByText("Account Workspace")).toBeInTheDocument();
+    expect(screen.getByText("OpenAI")).toBeInTheDocument();
+    expect(screen.getByText("gpt-5-codex")).toBeInTheDocument();
+    expect(screen.getByText("keychain://HarnessDeck/accounts/openai")).toBeInTheDocument();
+    expect(screen.getByText("secret value hidden")).toBeInTheDocument();
+    expect(screen.getByText("Switch-plan preview")).toBeInTheDocument();
+    expect(screen.queryByText(/sk-/)).not.toBeInTheDocument();
+  });
 });

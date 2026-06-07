@@ -25,11 +25,14 @@ import {
   confirmDryRunDeploy,
   discoverTargets,
   generateDeployPlan,
+  getAccountWorkspace,
   getSyncGovernance,
+  getUsageSummary,
   listProfiles,
   listTargets,
 } from "./lib/api";
 import type {
+  AccountWorkspace,
   DeployPlan,
   Locale,
   ManifestSummary,
@@ -39,6 +42,7 @@ import type {
   TargetKind,
   TargetSummary,
   Theme,
+  UsageSummary,
 } from "./lib/types";
 
 type ViewId =
@@ -151,6 +155,8 @@ export function App() {
   const [syncGovernance, setSyncGovernance] = useState<SyncGovernance | null>(null);
   const [targetDiscoveries, setTargetDiscoveries] = useState<TargetDiscoverySummary[]>([]);
   const [targetReadAuthorized, setTargetReadAuthorized] = useState(false);
+  const [accountWorkspace, setAccountWorkspace] = useState<AccountWorkspace | null>(null);
+  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
   const [manifest, setManifest] = useState<ManifestSummary | null>(null);
   const t = copy[locale];
 
@@ -165,12 +171,16 @@ export function App() {
   }, [theme]);
 
   useEffect(() => {
-    void Promise.all([listProfiles(), listTargets()]).then(([nextProfiles, nextTargets]) => {
+    void Promise.all([listProfiles(), listTargets(), getAccountWorkspace(), getUsageSummary()]).then(
+      ([nextProfiles, nextTargets, nextAccountWorkspace, nextUsageSummary]) => {
       setProfiles(nextProfiles);
       setTargets(nextTargets);
+      setAccountWorkspace(nextAccountWorkspace);
+      setUsageSummary(nextUsageSummary);
       setSelectedProfileId(nextProfiles[0]?.id ?? "macos-dev");
       setSelectedTargetKind(nextTargets[0]?.kind ?? "Codex");
-    });
+      },
+    );
   }, []);
 
   useEffect(() => {
@@ -317,7 +327,11 @@ export function App() {
                 const values = {
                   profile: t.activeProfile,
                   sync: manifest ? (locale === "zh-CN" ? "manifest 已写入" : "manifest written") : t.syncReady,
-                  cost: metric.value,
+                  cost: usageSummary
+                    ? `${usageSummary.metrics.find((item) => item.id === "cost")?.value ?? `$${usageSummary.costUsd.toFixed(2)}`} · ${
+                        usageSummary.metrics.find((item) => item.id === "cost")?.confidenceLabel ?? "Estimated"
+                      }`
+                    : metric.value,
                   wake: t.awakeStandard,
                 };
                 return (
@@ -372,6 +386,10 @@ export function App() {
                 targetDiscoveries={targetDiscoveries}
                 targetReadAuthorized={targetReadAuthorized}
               />
+            ) : activeView === "usage" ? (
+              <UsageView locale={locale} usageSummary={usageSummary} />
+            ) : activeView === "settings" ? (
+              <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
             ) : (
               <FoundationSummary locale={locale} />
             )}
@@ -576,6 +594,128 @@ function SyncView({
           </article>
         </section>
       ) : null}
+    </div>
+  );
+}
+
+function UsageView({ locale, usageSummary }: { locale: Locale; usageSummary: UsageSummary | null }) {
+  if (!usageSummary) {
+    return <p className="muted-line">{locale === "zh-CN" ? "用量数据加载中" : "Loading usage data"}</p>;
+  }
+
+  const costMetric = usageSummary.metrics.find((metric) => metric.id === "cost");
+  const confidenceLabels = ["Official", "LocalLog", "Estimated", "Missing"];
+
+  return (
+    <div className="usage-dashboard">
+      <section className="usage-hero">
+        <div>
+          <h3>{locale === "zh-CN" ? "用量与成本" : "Usage and Cost"}</h3>
+          <p>
+            {usageSummary.windowHours}h · {usageSummary.totalTokens.toLocaleString()} tokens ·{" "}
+            {usageSummary.durationMinutes} min
+          </p>
+        </div>
+        <strong>{costMetric?.value ?? `$${usageSummary.costUsd.toFixed(2)}`}</strong>
+      </section>
+
+      <div className="confidence-strip" aria-label="Usage confidence labels">
+        {confidenceLabels.map((confidence) => (
+          <span key={confidence}>{confidence}</span>
+        ))}
+      </div>
+
+      <div className="metric-board">
+        {usageSummary.metrics.map((metric) => (
+          <article key={metric.id}>
+            <span>{metric.label}</span>
+            <strong>{metric.id === "cost" ? `${metric.value} ${metric.unit}` : metric.value}</strong>
+            <small>
+              {metric.unit || "source"} · {metric.confidenceLabel} confidence
+            </small>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SettingsView({
+  accountWorkspace,
+  locale,
+  theme,
+}: {
+  accountWorkspace: AccountWorkspace | null;
+  locale: Locale;
+  theme: Theme;
+}) {
+  if (!accountWorkspace) {
+    return <p className="muted-line">{locale === "zh-CN" ? "账户工作区加载中" : "Loading account workspace"}</p>;
+  }
+
+  return (
+    <div className="account-workspace">
+      <section className="account-hero">
+        <div>
+          <h3>Account Workspace</h3>
+          <p>{locale === "zh-CN" ? "账户、预算、模型和 Keychain 引用先以 mock/interface 形式落地。" : "Account, budget, model, and Keychain references are modeled through a mock/interface boundary."}</p>
+        </div>
+        <span className="status-pill">{locale === "zh-CN" ? "不存储 secret 值" : "No secret values"}</span>
+      </section>
+
+      <div className="account-grid">
+        <article>
+          <span>Provider</span>
+          <strong>{accountWorkspace.provider}</strong>
+          <small>{accountWorkspace.baseUrl}</small>
+        </article>
+        <article>
+          <span>Default model</span>
+          <strong>{accountWorkspace.defaultModel}</strong>
+          <small>${accountWorkspace.monthlyBudgetUsd.toFixed(0)} monthly budget</small>
+        </article>
+        <article>
+          <span>Limits</span>
+          <strong>{accountWorkspace.requestLimitPerDay}/day</strong>
+          <small>{accountWorkspace.tokenLimitPerDay.toLocaleString()} tokens/day</small>
+        </article>
+        <article>
+          <span>Preferences</span>
+          <strong>{locale}</strong>
+          <small>{theme} theme</small>
+        </article>
+      </div>
+
+      <section className="keychain-panel">
+        <div>
+          <span>Keychain reference</span>
+          <code>{accountWorkspace.keychainRef.reference}</code>
+        </div>
+        <strong>{accountWorkspace.keychainRef.secretPreview ?? "secret value hidden"}</strong>
+      </section>
+
+      <section className="switch-preview">
+        <div className="section-title">
+          <h3>Switch-plan preview</h3>
+          <span className="status-pill">{accountWorkspace.switchPlanPreview.writesRealConfig ? "Real write" : "Preview only"}</span>
+        </div>
+        <p>
+          {accountWorkspace.switchPlanPreview.fromModel} → {accountWorkspace.switchPlanPreview.toModel}
+        </p>
+        <small>
+          +${accountWorkspace.switchPlanPreview.budgetDeltaUsd.toFixed(0)} projected budget ·{" "}
+          {accountWorkspace.switchPlanPreview.requiresSecretValue ? "requires secret" : "uses existing Keychain reference"}
+        </small>
+      </section>
+
+      <section className="audit-list">
+        {accountWorkspace.auditTrail.map((entry) => (
+          <article key={entry.id}>
+            <strong>{entry.severity}</strong>
+            <span>{entry.summary}</span>
+          </article>
+        ))}
+      </section>
     </div>
   );
 }

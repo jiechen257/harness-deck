@@ -603,3 +603,136 @@ button {
   border-radius: 8px;
   background: color-mix(in srgb, var(--surface) 78%, transparent);
 }
+
+.usage-dashboard,
+.account-workspace {
+  display: grid;
+  gap: 14px;
+}
+
+.usage-hero,
+.account-hero,
+.keychain-panel,
+.switch-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+}
+
+.usage-hero h3,
+.account-hero h3,
+.switch-preview h3 {
+  margin: 0;
+}
+
+.usage-hero p,
+.account-hero p,
+.switch-preview p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.usage-hero > strong {
+  font-size: clamp(28px, 4vw, 48px);
+  color: var(--blue);
+}
+
+.confidence-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.confidence-strip span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid color-mix(in srgb, var(--gold) 28%, var(--line));
+  border-radius: 8px;
+  color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
+}
+
+.metric-board,
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric-board article,
+.account-grid article {
+  display: grid;
+  gap: 8px;
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 74%, transparent);
+}
+
+.metric-board article span,
+.account-grid article span,
+.keychain-panel span,
+.metric-board article small,
+.account-grid article small,
+.switch-preview small,
+.audit-list span {
+  color: var(--muted);
+}
+
+.metric-board article strong,
+.account-grid article strong {
+  font-size: 20px;
+}
+
+.keychain-panel {
+  align-items: stretch;
+}
+
+.keychain-panel > div {
+  display: grid;
+  gap: 8px;
+}
+
+.keychain-panel code {
+  color: var(--gold);
+  font-family: "SF Mono", "Menlo", monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.keychain-panel > strong {
+  align-self: center;
+  color: var(--green);
+}
+
+.switch-preview {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.switch-preview .section-title {
+  width: 100%;
+}
+
+.audit-list {
+  display: grid;
+  gap: 8px;
+}
+
+.audit-list article {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 
 import type {
+  AccountWorkspace,
   DeployPlan,
   ManifestSummary,
   ProfileSummary,
@@ -8,6 +9,7 @@ import type {
   TargetDiscoverySummary,
   TargetKind,
   TargetSummary,
+  UsageSummary,
 } from "./types";
 
 type TauriWindow = Window & { __TAURI_INTERNALS__?: unknown };
@@ -183,4 +185,78 @@ export async function getSyncGovernance(profileId: string, targetKind: TargetKin
       },
     };
   });
+}
+
+export async function getAccountWorkspace(): Promise<AccountWorkspace> {
+  return call("get_account_workspace", {}, () => ({
+    provider: "OpenAI",
+    baseUrl: "https://api.openai.com/v1",
+    defaultModel: "gpt-5-codex",
+    monthlyBudgetUsd: 150,
+    requestLimitPerDay: 240,
+    tokenLimitPerDay: 2_000_000,
+    keychainRef: {
+      reference: "keychain://HarnessDeck/accounts/openai",
+      service: "HarnessDeck.MockKeychain",
+      account: "openai",
+      secretValueStored: false,
+      secretPreview: null,
+    },
+    switchPlanPreview: {
+      provider: "OpenAI",
+      fromModel: "gpt-5-codex",
+      toModel: "gpt-5-codex-high-context",
+      budgetDeltaUsd: 12,
+      keychainReference: "keychain://HarnessDeck/accounts/openai",
+      requiresSecretValue: false,
+      writesRealConfig: false,
+    },
+    auditTrail: [
+      {
+        id: "audit-keychain-ref-linked",
+        createdAt: "fixture-now",
+        summary: "mock Keychain reference linked without storing a secret value",
+        severity: "info",
+      },
+      {
+        id: "audit-switch-preview",
+        createdAt: "fixture-now",
+        summary: "switch-plan preview is local-only and does not rewrite provider config",
+        severity: "info",
+      },
+    ],
+  }));
+}
+
+export async function getUsageSummary(): Promise<UsageSummary> {
+  return call("get_usage_summary", {}, () => ({
+    windowHours: 5,
+    totalTokens: 182_400,
+    costUsd: 4.82,
+    durationMinutes: 146,
+    driftEvents: 2,
+    burnRateUsdPerHour: 0.96,
+    metrics: [
+      { id: "tokens", label: "tokens", value: "182.4k", unit: "", confidence: "LocalLog", confidenceLabel: "LocalLog" },
+      { id: "cost", label: "cost", value: "$4.82", unit: "USD", confidence: "Estimated", confidenceLabel: "Estimated" },
+      { id: "duration", label: "duration", value: "146", unit: "min", confidence: "LocalLog", confidenceLabel: "LocalLog" },
+      { id: "drift", label: "drift", value: "2", unit: "events", confidence: "Estimated", confidenceLabel: "Estimated" },
+      {
+        id: "official-bill",
+        label: "official billing",
+        value: "not connected",
+        unit: "",
+        confidence: "Missing",
+        confidenceLabel: "Missing",
+      },
+      {
+        id: "burn-rate",
+        label: "burn rate",
+        value: "$0.96",
+        unit: "USD/h",
+        confidence: "Estimated",
+        confidenceLabel: "Estimated",
+      },
+    ],
+  }));
 }

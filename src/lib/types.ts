@@ -3,6 +3,7 @@ export type Theme = "light" | "dark";
 export type TargetKind = "Codex" | "ClaudeCode";
 export type OperationType = "CreateFile" | "UpdateFile" | "AppendBlock" | "ReplaceBlock" | "Noop";
 export type RiskLevel = "Low" | "Medium" | "High" | "Blocked";
+export type DataConfidence = "Official" | "LocalLog" | "Estimated" | "Missing";
 
 export interface ProfileSummary {
   id: string;
@@ -94,4 +95,60 @@ export interface SyncGovernance {
   conflicts: ConflictItem[];
   drift: DriftReport;
   rollbackPreview: RollbackPreview;
+}
+
+export interface KeychainReference {
+  reference: string;
+  service: string;
+  account: string;
+  secretValueStored: boolean;
+  secretPreview: string | null;
+}
+
+export interface AccountSwitchPreview {
+  provider: string;
+  fromModel: string;
+  toModel: string;
+  budgetDeltaUsd: number;
+  keychainReference: string;
+  requiresSecretValue: boolean;
+  writesRealConfig: boolean;
+}
+
+export interface AuditEntry {
+  id: string;
+  createdAt: string;
+  summary: string;
+  severity: string;
+}
+
+export interface AccountWorkspace {
+  provider: string;
+  baseUrl: string;
+  defaultModel: string;
+  monthlyBudgetUsd: number;
+  requestLimitPerDay: number;
+  tokenLimitPerDay: number;
+  keychainRef: KeychainReference;
+  switchPlanPreview: AccountSwitchPreview;
+  auditTrail: AuditEntry[];
+}
+
+export interface UsageMetric {
+  id: string;
+  label: string;
+  value: string;
+  unit: string;
+  confidence: DataConfidence;
+  confidenceLabel: string;
+}
+
+export interface UsageSummary {
+  windowHours: number;
+  totalTokens: number;
+  costUsd: number;
+  durationMinutes: number;
+  driftEvents: number;
+  burnRateUsdPerHour: number;
+  metrics: UsageMetric[];
 }
