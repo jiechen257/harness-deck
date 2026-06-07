@@ -168,6 +168,10 @@ function label(locale: Locale, item: NavItem) {
   return locale === "zh-CN" ? item.zh : item.en;
 }
 
+function isEditableTarget(target: EventTarget | null) {
+  return target instanceof HTMLElement && Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
+}
+
 export function App() {
   const [locale, setLocale] = useState<Locale>(() => {
     const saved = window.localStorage.getItem("harnessdeck.locale");
@@ -207,6 +211,17 @@ export function App() {
     window.localStorage.setItem("harnessdeck.theme", theme);
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    const suppressWebKitContextMenu = (event: MouseEvent) => {
+      if (!isEditableTarget(event.target)) {
+        event.preventDefault();
+      }
+    };
+
+    document.addEventListener("contextmenu", suppressWebKitContextMenu);
+    return () => document.removeEventListener("contextmenu", suppressWebKitContextMenu);
+  }, []);
 
   useEffect(() => {
     void Promise.all([
@@ -300,6 +315,41 @@ export function App() {
     void openWorkbenchWindow();
   };
   const switchProfile = () => setActiveView("profiles");
+
+  useEffect(() => {
+    const handleNativeShortcut = (event: KeyboardEvent) => {
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        if (activeView !== "home") {
+          event.preventDefault();
+          setActiveView("home");
+        }
+        return;
+      }
+
+      if (!event.metaKey || event.altKey || event.ctrlKey) {
+        return;
+      }
+
+      if (event.key === ",") {
+        event.preventDefault();
+        setActiveView("settings");
+        return;
+      }
+
+      const navIndex = Number(event.key) - 1;
+      if (!event.shiftKey && navItems[navIndex]) {
+        event.preventDefault();
+        setActiveView(navItems[navIndex].id);
+      }
+    };
+
+    window.addEventListener("keydown", handleNativeShortcut);
+    return () => window.removeEventListener("keydown", handleNativeShortcut);
+  }, [activeView]);
 
   if (isMenuPanelWindow) {
     return (
@@ -627,11 +677,7 @@ function ConstellationBand({
 function MacChrome({ compact = false, status, title }: { compact?: boolean; status?: string; title: string }) {
   return (
     <div className={compact ? "mac-chrome compact" : "mac-chrome"}>
-      <div className="traffic-lights" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
+      <div className="panel-grabber" aria-hidden="true" />
       <span>{title}</span>
       {status ? <em>{status}</em> : null}
     </div>

@@ -1,7 +1,10 @@
 :root {
   font-family:
-    "Avenir Next",
-    "SF Pro Display",
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "Helvetica Neue",
+    "Segoe UI Variable",
     "Segoe UI",
     sans-serif;
   color: #1c2741;
@@ -9,7 +12,14 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --font-body: "Avenir Next", "SF Pro Text", "Segoe UI", sans-serif;
+  --font-body:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "Helvetica Neue",
+    "Segoe UI Variable",
+    "Segoe UI",
+    sans-serif;
 }
 
 * {
@@ -138,7 +148,7 @@ button {
   border-radius: 8px;
   color: var(--text);
   background: transparent;
-  cursor: pointer;
+  cursor: default;
 }
 
 .nav-item {
@@ -457,7 +467,7 @@ button {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
-  cursor: pointer;
+  cursor: default;
 }
 
 .profile-card.selected,
@@ -581,7 +591,7 @@ button {
   border: 1px solid color-mix(in srgb, var(--blue) 70%, #000);
   border-radius: 8px;
   background: var(--blue);
-  cursor: pointer;
+  cursor: default;
 }
 
 .secondary-action {
@@ -1009,7 +1019,7 @@ body {
   border-radius: 8px;
   color: var(--text);
   background: rgba(255, 255, 255, 0.45);
-  cursor: pointer;
+  cursor: default;
 }
 
 .toolbar-button,
@@ -1497,5 +1507,163 @@ body {
 
   .star-node {
     width: 100%;
+  }
+}
+
+/* Native-feel pass guided by native-feel-skill:
+   T3 - adopt the platform; use system typography, default cursor, platform focus rings, and terse chrome. */
+:root {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "Helvetica Neue",
+    "Segoe UI Variable",
+    "Segoe UI",
+    sans-serif;
+  --font-body:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "Helvetica Neue",
+    "Segoe UI Variable",
+    "Segoe UI",
+    sans-serif;
+  --focus-ring: -webkit-focus-ring-color;
+  color-scheme: light dark;
+}
+
+html,
+body {
+  cursor: default;
+  -webkit-text-size-adjust: 100%;
+}
+
+body,
+.app-shell,
+.panel-shell,
+.command-panel,
+.workbench-window,
+.constellation-band,
+.deck-topbar,
+.rail,
+.view-titlebar {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+code,
+pre,
+.keychain-panel code,
+.guard-grid code,
+.manifest-banner code {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+button,
+[role="button"],
+.nav-item,
+.icon-button,
+.quick-actions button,
+.profile-card,
+.target-card,
+.toolbar-button,
+.panel-actions button,
+.star-node,
+.rail-item,
+.primary-action,
+.secondary-action,
+.panel-search {
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+.nav-item:focus-visible,
+.icon-button:focus-visible,
+.quick-actions button:focus-visible,
+.profile-card:focus-visible,
+.target-card:focus-visible,
+.toolbar-button:focus-visible,
+.panel-actions button:focus-visible,
+.star-node:focus-visible,
+.rail-item:focus-visible,
+.primary-action:focus-visible,
+.secondary-action:focus-visible,
+.panel-search:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+button:active,
+.nav-item:active,
+.icon-button:active,
+.quick-actions button:active,
+.profile-card:active,
+.target-card:active,
+.toolbar-button:active,
+.panel-actions button:active,
+.star-node:active,
+.rail-item:active,
+.primary-action:active,
+.secondary-action:active,
+.panel-search:active {
+  transform: translateY(1px);
+}
+
+.command-deck.app-shell,
+.panel-shell {
+  font-family: var(--font-body);
+}
+
+.command-panel,
+.workbench-window,
+.prototype-view-panel.view-panel,
+.primary-action.compact {
+  box-shadow: none;
+}
+
+.constellation-band {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.mac-chrome.compact {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+}
+
+.panel-grabber {
+  width: 34px;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 24%, transparent);
+}
+
+.toolbar-button:hover,
+.primary-action.compact:hover,
+.panel-actions button:hover,
+.primary-action:hover,
+.secondary-action:hover {
+  background-color: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+}
+
+.rail-item:hover,
+.star-node:hover {
+  background-color: color-mix(in srgb, var(--blue) 9%, var(--surface));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
   }
 }

@@ -13,6 +13,7 @@
   - `docs/superpowers/specs/2026-06-07-harness-deck-design.md`
   - `docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`
   - `docs/product-design/harnessdeck-command-deck-prototype.html`
+  - `yetone/native-feel-skill`
 
 ## 默认语言
 
@@ -49,6 +50,7 @@ MVP 必须保留完整闭环：
 - 浅色主题使用浅金白底、低饱和星图、深蓝/鎏金点缀。
 - 深色主题使用玄夜蓝、鎏金星图风格。
 - 菜单栏面板必须能独立于管理窗口展示当前配置集、同步健康度、成本、防睡状态和快捷动作。
+- 原生感改动遵循 native-feel audit：系统字体、默认 cursor、非内容文本不选中、平台 focus ring、pressed state、禁用 WebKit 默认右键菜单、快捷键遵循 macOS 习惯。
 
 ## 技术方向
 

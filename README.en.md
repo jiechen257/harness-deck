@@ -11,6 +11,7 @@ This repository contains a locally runnable Tauri 2 + React + TypeScript + Rust 
 - Product design document: [`docs/superpowers/specs/2026-06-07-harness-deck-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-design.md)
 - Implementation design document: [`docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md)
 - UI/UX prototype: [`docs/product-design/harnessdeck-command-deck-prototype.html`](docs/product-design/harnessdeck-command-deck-prototype.html)
+- Native-feel reference: [`yetone/native-feel-skill`](https://github.com/yetone/native-feel-skill)
 - Target platform: macOS
 - Current stack: Tauri 2, React, TypeScript, Rust
 - Reserved integrations: SQLite and macOS Keychain
@@ -57,7 +58,7 @@ HarnessDeck uses a local-first design:
 
 ## Development Status
 
-The current implementation runs in local-first fixture mode. The app defaults to Simplified Chinese and the light theme, with English and dark theme switching available. The main window now follows the command deck prototype with a top command bar, Beidou brand status band, menu bar panel, and macOS-style workbench window. The workbench includes Home, Discover, Profiles, Sync, Operate, Usage, Insights, Guard, and Settings. A standalone Tauri menu bar panel renders through `index.html?panel=1` and shows the current profile, sync health, cost, wake state, and quick actions.
+The current implementation runs in local-first fixture mode. The app defaults to Simplified Chinese and the light theme, with English and dark theme switching available. The main window now follows the command deck prototype with a top command bar, Beidou brand status band, menu bar panel, and macOS-style workbench window. The workbench includes Home, Discover, Profiles, Sync, Operate, Usage, Insights, Guard, and Settings. A standalone Tauri menu bar panel renders through `index.html?panel=1` and shows the current profile, sync health, cost, wake state, and quick actions. The UI has also been adjusted against the native-feel audit with system typography, default cursors, platform focus rings, pressed states, WebKit context-menu suppression, and macOS-style shortcuts.
 
 Implemented local loop:
 

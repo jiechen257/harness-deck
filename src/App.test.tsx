@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -71,6 +71,28 @@ describe("HarnessDeck app foundation", () => {
     await user.click(screen.getByRole("button", { name: "深色" }));
 
     expect(shell).toHaveAttribute("data-theme", "dark");
+  });
+
+  it("uses native-feel keyboard and context-menu conventions", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const contextMenuEvent = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    document.dispatchEvent(contextMenuEvent);
+    expect(contextMenuEvent.defaultPrevented).toBe(true);
+
+    fireEvent.keyDown(window, { key: ",", metaKey: true });
+    expect(await screen.findByText("Account Workspace")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "4", metaKey: true });
+    expect(await screen.findByText("Deploy Plan")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    expect(within(navigation).getByRole("button", { name: "首页" })).toHaveAttribute("aria-current", "page");
+
+    await user.tab();
+    expect(document.activeElement).not.toBe(document.body);
   });
 
   it("renders fixture profiles and targets", async () => {
