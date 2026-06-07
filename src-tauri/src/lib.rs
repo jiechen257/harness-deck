@@ -28,14 +28,21 @@ pub fn run() {
       }
       let app_paths = services::app_paths::paths_for_app(app.handle())?;
       app_paths.ensure()?;
+      let panel = MenuItem::with_id(app, "open_menu_panel", "Open Menu Panel", true, None::<&str>)?;
       let open = MenuItem::with_id(app, "open_workbench", "Open Workbench", true, None::<&str>)?;
       let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-      let tray_menu = Menu::with_items(app, &[&open, &quit])?;
+      let tray_menu = Menu::with_items(app, &[&panel, &open, &quit])?;
       let mut tray_builder = TrayIconBuilder::new()
         .tooltip("HarnessDeck")
         .menu(&tray_menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| match event.id().as_ref() {
+          "open_menu_panel" => {
+            if let Some(window) = app.get_webview_window("menubar") {
+              let _ = window.show();
+              let _ = window.set_focus();
+            }
+          }
           "open_workbench" => {
             if let Some(window) = app.get_webview_window("main") {
               let _ = window.show();

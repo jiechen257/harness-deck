@@ -1,6 +1,5 @@
 import {
   BarChart3,
-  BellRing,
   CheckCircle2,
   Compass,
   Database,
@@ -36,6 +35,7 @@ import {
   listProfiles,
   listRegistryTemplates,
   listTargets,
+  openWorkbench as openWorkbenchWindow,
   requestWakeMode,
 } from "./lib/api";
 import type {
@@ -90,52 +90,70 @@ const navItems: NavItem[] = [
 
 const copy = {
   "zh-CN": {
-    title: "HarnessDeck 工作台",
-    subtitle: "本地优先的配置集、同步、运行、用量与守护控制台",
+    title: "HarnessDeck 命令中心",
+    subtitle: "本地 Harness 工作台",
     switchLanguage: "English",
     switchThemeDark: "深色",
     switchThemeLight: "浅色",
+    command: "命令",
     menuPanel: "菜单栏面板",
     currentProfile: "当前配置集",
-    syncStatus: "同步状态",
+    syncStatus: "同步健康度",
     cost: "5 小时成本",
-    wake: "防睡状态",
+    wake: "防睡",
     quickActions: "快捷动作",
     dryRun: "运行 dry-run",
     refresh: "刷新状态",
     openWorkbench: "打开工作台",
+    switchProfile: "切换配置集",
     fixture: "Fixture 模式",
     activeProfile: "macOS Dev 配置集",
     syncReady: "dry-run 就绪",
     awakeStandard: "标准模式",
     localFirst: "本地优先",
-    heroTitle: "配置集、同步、运行与守护集中在一个本地控制台。",
-    heroBody: "北斗视觉用于导航感和状态识别，功能命名保持工程语义。当前默认锁定 fixture mode，不触碰真实 Claude Code 或 Codex 配置。",
-    phaseStatus: "Implementation Design Phase 0",
+    workbenchTitle: "HarnessDeck 工作台",
+    lifecycle: "工作流",
+    localReady: "本地就绪",
+    searchPlaceholder: "搜索配置集、同步、账号",
+    dryRunPlanReady: "dry-run 部署计划就绪",
+    target: "目标",
+    feed: "高优先",
+    heroTitle: "把配置集、同步、运行、用量与守护压进一个本地优先的控制面。",
+    heroBody: "北斗视觉只作为品牌语言和状态氛围，功能命名保持工程语义。当前默认锁定 fixture mode，不触碰真实 Claude Code 或 Codex 配置。",
+    phaseStatus: "Local-first agent operations",
   },
   "en-US": {
-    title: "HarnessDeck Workbench",
-    subtitle: "Local-first profiles, sync, operate, usage, and guard control center",
+    title: "HarnessDeck Command Center",
+    subtitle: "Local Harness Workbench",
     switchLanguage: "中文",
     switchThemeDark: "Dark",
     switchThemeLight: "Light",
+    command: "Command",
     menuPanel: "Menu Bar Panel",
     currentProfile: "Current Profile",
-    syncStatus: "Sync Status",
+    syncStatus: "Sync Health",
     cost: "5h Cost",
-    wake: "Wake State",
+    wake: "Wake",
     quickActions: "Quick Actions",
     dryRun: "Run dry-run",
     refresh: "Refresh",
     openWorkbench: "Open Workbench",
+    switchProfile: "Switch Profile",
     fixture: "Fixture mode",
     activeProfile: "macOS Dev Profile",
     syncReady: "dry-run ready",
     awakeStandard: "Standard",
     localFirst: "Local-first",
+    workbenchTitle: "HarnessDeck Workbench",
+    lifecycle: "Lifecycle",
+    localReady: "Local ready",
+    searchPlaceholder: "Search profiles, sync, accounts",
+    dryRunPlanReady: "dry-run deploy plan ready",
+    target: "Target",
+    feed: "High priority",
     heroTitle: "Profiles, sync, operation, and guardrails in one local control surface.",
     heroBody: "Beidou visuals support navigation and status awareness while feature names stay engineering-oriented. Fixture mode is locked by default and does not touch real Claude Code or Codex config.",
-    phaseStatus: "Implementation Design Phase 0",
+    phaseStatus: "Local-first agent operations",
   },
 } satisfies Record<Locale, Record<string, string>>;
 
@@ -271,204 +289,365 @@ export function App() {
     setWakeSummary((current) => (current ? { ...current, currentState: session } : current));
   };
 
+  const isMenuPanelWindow = new URLSearchParams(window.location.search).get("panel") === "1";
+  const selectedProfileName = selectedProfile?.name ?? t.activeProfile;
+  const runDryRun = async () => {
+    setActiveView("sync");
+    await confirmDryRun();
+  };
+  const openWorkbench = () => {
+    setActiveView("home");
+    void openWorkbenchWindow();
+  };
+  const switchProfile = () => setActiveView("profiles");
+
+  if (isMenuPanelWindow) {
+    return (
+      <div className="panel-shell" data-theme={theme}>
+        <MenuBarPanel
+          highPriorityFeed={highPriorityFeed}
+          locale={locale}
+          manifest={manifest}
+          onOpenWorkbench={openWorkbench}
+          onRunDryRun={runDryRun}
+          onSwitchProfile={switchProfile}
+          selectedProfileName={selectedProfileName}
+          selectedTargetKind={selectedTargetKind}
+          standalone
+          t={t}
+          usageSummary={usageSummary}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="app-shell" data-theme={theme} data-testid="app-shell">
-      <aside className="sidebar" aria-label="HarnessDeck navigation">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
+    <div className="app-shell command-deck" data-theme={theme} data-testid="app-shell">
+      <div className="shell">
+        <header className="deck-topbar">
+          <div className="topbar-lockup">
+            <BrandGlyph />
+            <div>
+              <p className="eyebrow">{t.phaseStatus}</p>
+              <h1>{t.title}</h1>
+              <p>{t.subtitle}</p>
+            </div>
           </div>
-          <div>
-            <strong>HarnessDeck</strong>
-            <small>{t.localFirst}</small>
-          </div>
-        </div>
 
-        <nav className="nav-stack" aria-label="Workbench views">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const selected = item.id === activeView;
-            return (
-              <button
-                key={item.id}
-                className={selected ? "nav-item active" : "nav-item"}
-                type="button"
-                onClick={() => setActiveView(item.id)}
-              >
-                <Icon size={17} aria-hidden="true" />
-                <span>{label(locale, item)}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
-
-      <main className="workbench">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">{t.phaseStatus}</p>
-            <h1>{t.title}</h1>
-            <p>{t.subtitle}</p>
-          </div>
-          <div className="topbar-actions">
-            <button type="button" className="icon-button">
-              <BellRing size={17} aria-hidden="true" />
-              <span>{t.refresh}</span>
+          <div className="deck-actions">
+            <button type="button" className="toolbar-button">
+              <Search size={17} aria-hidden="true" />
+              <span>{t.command}</span>
             </button>
             <button
               type="button"
-              className="icon-button"
+              className="toolbar-button"
               onClick={() => setLocale(locale === "zh-CN" ? "en-US" : "zh-CN")}
             >
               <Languages size={17} aria-hidden="true" />
               <span>{t.switchLanguage}</span>
             </button>
-            <button type="button" className="icon-button" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+            <button type="button" className="toolbar-button" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
               {theme === "light" ? <Moon size={17} aria-hidden="true" /> : <SunMedium size={17} aria-hidden="true" />}
               <span>{theme === "light" ? t.switchThemeDark : t.switchThemeLight}</span>
+            </button>
+            <button className="primary-action compact" type="button" onClick={() => void runDryRun()}>
+              <Zap size={17} aria-hidden="true" />
+              <span>{t.dryRun}</span>
             </button>
           </div>
         </header>
 
-        <section className="content-grid">
-          <section className="hero-panel" aria-labelledby="hero-title">
-            <div className="star-field" aria-hidden="true">
-              <i className="line line-one" />
-              <i className="line line-two" />
-              <i className="line line-three" />
-              <b className="star star-a" />
-              <b className="star star-b" />
-              <b className="star star-c" />
-              <b className="star star-d" />
-              <b className="star star-e" />
-              <b className="star star-f" />
-              <b className="star star-g" />
-            </div>
-            <div className="hero-copy">
-              <span className="status-pill">
-                <CheckCircle2 size={15} aria-hidden="true" />
-                {t.fixture}
-              </span>
-              <h2 id="hero-title">{t.heroTitle}</h2>
-              <p>{t.heroBody}</p>
-            </div>
-            <div className="stage-strip" aria-label="Lifecycle stages">
-              {navItems.slice(1, 8).map((item) => (
-                <span key={item.id}>{label(locale, item)}</span>
-              ))}
-            </div>
-          </section>
+        <ConstellationBand activeView={activeView} locale={locale} onSelect={setActiveView} t={t} />
 
-          <aside className="menu-panel" aria-label={t.menuPanel}>
-            <div className="panel-head">
-              <span>{t.menuPanel}</span>
-              <span className="status-dot">Live</span>
-            </div>
-            <div className="metric-list">
-              {metricCards.map((metric) => {
-                const labels = {
-                  profile: t.currentProfile,
-                  sync: t.syncStatus,
-                  cost: t.cost,
-                  wake: t.wake,
-                };
-                const values = {
-                  profile: t.activeProfile,
-                  sync: manifest ? (locale === "zh-CN" ? "manifest 已写入" : "manifest written") : t.syncReady,
-                  cost: usageSummary
-                    ? `${usageSummary.metrics.find((item) => item.id === "cost")?.value ?? `$${usageSummary.costUsd.toFixed(2)}`} · ${
-                        usageSummary.metrics.find((item) => item.id === "cost")?.confidenceLabel ?? "Estimated"
-                      }`
-                    : metric.value,
-                  wake: t.awakeStandard,
-                };
-                return (
-                  <div className="metric-row" key={metric.id}>
-                    <span>{labels[metric.id]}</span>
-                    <strong className={metric.tone}>{values[metric.id]}</strong>
+        <section className="prototype-layout">
+          <MenuBarPanel
+            highPriorityFeed={highPriorityFeed}
+            locale={locale}
+            manifest={manifest}
+            onOpenWorkbench={openWorkbench}
+            onRunDryRun={runDryRun}
+            onSwitchProfile={switchProfile}
+            selectedProfileName={selectedProfileName}
+            selectedTargetKind={selectedTargetKind}
+            t={t}
+            usageSummary={usageSummary}
+          />
+
+          <section className="workbench-window" aria-label={t.workbenchTitle}>
+            <MacChrome status={t.fixture} title={t.workbenchTitle} />
+            <div className="window-grid">
+              <aside className="rail">
+                <div className="rail-head">
+                  <span>{t.lifecycle}</span>
+                  <strong>Discover → Profile → Sync → Operate → Improve</strong>
+                </div>
+                <nav className="rail-nav" aria-label="Workbench views">
+                  {navItems.map((item, index) => {
+                    const Icon = item.icon;
+                    const selected = item.id === activeView;
+                    return (
+                      <button
+                        key={item.id}
+                        aria-label={label(locale, item)}
+                        aria-current={selected ? "page" : undefined}
+                        className={selected ? "rail-item active" : "rail-item"}
+                        type="button"
+                        onClick={() => setActiveView(item.id)}
+                      >
+                        <Icon size={17} aria-hidden="true" />
+                        <span>{label(locale, item)}</span>
+                        <small>{String(index + 1).padStart(2, "0")}</small>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </aside>
+
+              <main className="workbench-main">
+                <div className="view-titlebar">
+                  <div>
+                    <span>{activeTitle}</span>
+                    <strong>{selectedProfileName}</strong>
                   </div>
-                );
-              })}
-            </div>
-            <div className="quick-actions">
-              <p>{t.quickActions}</p>
-              <button type="button">
-                <Zap size={16} aria-hidden="true" />
-                <span>{t.dryRun}</span>
-              </button>
-              <button type="button">
-                <RotateCw size={16} aria-hidden="true" />
-                <span>{t.refresh}</span>
-              </button>
-              <button type="button">
-                <Gauge size={16} aria-hidden="true" />
-                <span>{t.openWorkbench}</span>
-              </button>
-            </div>
-            {highPriorityFeed[0] ? (
-              <div className="menu-feed">
-                <span>High priority</span>
-                <strong>{highPriorityFeed[0].title}</strong>
-              </div>
-            ) : null}
-          </aside>
+                  <span className="status-pill">
+                    <CheckCircle2 size={15} aria-hidden="true" />
+                    Dry-run
+                  </span>
+                </div>
 
-          <section className="view-panel">
-            <div className="panel-head">
-              <span>{activeTitle}</span>
-              <span className="status-dot muted">Dry-run</span>
+                <section className="view-panel prototype-view-panel">
+                  {activeView === "discover" ? (
+                    <DiscoverView registryTemplates={registryTemplates} skillRecommendation={skillRecommendation} />
+                  ) : activeView === "profiles" ? (
+                    <ProfileView
+                      locale={locale}
+                      profiles={profiles}
+                      selectedProfileId={selectedProfileId}
+                      setSelectedProfileId={setSelectedProfileId}
+                      targets={targets}
+                      selectedTargetKind={selectedTargetKind}
+                      setSelectedTargetKind={setSelectedTargetKind}
+                    />
+                  ) : activeView === "sync" ? (
+                    <SyncView
+                      locale={locale}
+                      plan={deployPlan}
+                      manifest={manifest}
+                      onAuthorizeTargetRead={authorizeTargetRead}
+                      onConfirm={confirmDryRun}
+                      profile={selectedProfile}
+                      syncGovernance={syncGovernance}
+                      targetDiscoveries={targetDiscoveries}
+                      targetReadAuthorized={targetReadAuthorized}
+                    />
+                  ) : activeView === "operate" ? (
+                    <OperateView
+                      confirmedWakeSession={confirmedWakeSession}
+                      locale={locale}
+                      onConfirmExperimentalWake={confirmExperimentalWake}
+                      wakeSummary={wakeSummary}
+                    />
+                  ) : activeView === "usage" ? (
+                    <UsageView locale={locale} usageSummary={usageSummary} />
+                  ) : activeView === "insights" ? (
+                    <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} insights={insights} locale={locale} />
+                  ) : activeView === "guard" ? (
+                    <GuardView accountWorkspace={accountWorkspace} locale={locale} />
+                  ) : activeView === "settings" ? (
+                    <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
+                  ) : (
+                    <FoundationSummary locale={locale} />
+                  )}
+                </section>
+              </main>
             </div>
-            {activeView === "discover" ? (
-              <DiscoverView registryTemplates={registryTemplates} skillRecommendation={skillRecommendation} />
-            ) : activeView === "profiles" ? (
-              <ProfileView
-                locale={locale}
-                profiles={profiles}
-                selectedProfileId={selectedProfileId}
-                setSelectedProfileId={setSelectedProfileId}
-                targets={targets}
-                selectedTargetKind={selectedTargetKind}
-                setSelectedTargetKind={setSelectedTargetKind}
-              />
-            ) : activeView === "sync" ? (
-              <SyncView
-                locale={locale}
-                plan={deployPlan}
-                manifest={manifest}
-                onAuthorizeTargetRead={authorizeTargetRead}
-                onConfirm={confirmDryRun}
-                profile={selectedProfile}
-                syncGovernance={syncGovernance}
-                targetDiscoveries={targetDiscoveries}
-                targetReadAuthorized={targetReadAuthorized}
-              />
-            ) : activeView === "operate" ? (
-              <OperateView
-                confirmedWakeSession={confirmedWakeSession}
-                locale={locale}
-                onConfirmExperimentalWake={confirmExperimentalWake}
-                wakeSummary={wakeSummary}
-              />
-            ) : activeView === "usage" ? (
-              <UsageView locale={locale} usageSummary={usageSummary} />
-            ) : activeView === "insights" ? (
-              <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} insights={insights} locale={locale} />
-            ) : activeView === "guard" ? (
-              <GuardView accountWorkspace={accountWorkspace} locale={locale} />
-            ) : activeView === "settings" ? (
-              <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
-            ) : (
-              <FoundationSummary locale={locale} />
-            )}
           </section>
         </section>
-      </main>
+      </div>
+    </div>
+  );
+}
+
+interface MenuBarPanelProps {
+  highPriorityFeed: FeedItem[];
+  locale: Locale;
+  manifest: ManifestSummary | null;
+  onOpenWorkbench: () => void;
+  onRunDryRun: () => Promise<void>;
+  onSwitchProfile: () => void;
+  selectedProfileName: string;
+  selectedTargetKind: TargetKind;
+  standalone?: boolean;
+  t: Record<string, string>;
+  usageSummary: UsageSummary | null;
+}
+
+function MenuBarPanel({
+  highPriorityFeed,
+  locale,
+  manifest,
+  onOpenWorkbench,
+  onRunDryRun,
+  onSwitchProfile,
+  selectedProfileName,
+  selectedTargetKind,
+  standalone = false,
+  t,
+  usageSummary,
+}: MenuBarPanelProps) {
+  const costMetric = usageSummary?.metrics.find((item) => item.id === "cost");
+  const syncValue = manifest ? (locale === "zh-CN" ? "manifest 已写入" : "manifest written") : "93%";
+  const feedTitle = highPriorityFeed[0]?.title ?? (locale === "zh-CN" ? "暂无高优先事项" : "No high-priority items");
+  const rows = [
+    { label: t.dryRunPlanReady, value: manifest?.id ?? (locale === "zh-CN" ? "manifest 待生成" : "manifest pending") },
+    { label: t.target, value: `${selectedTargetKind} target` },
+    { label: t.feed, value: feedTitle },
+  ];
+
+  return (
+    <aside
+      aria-label={t.menuPanel}
+      className={standalone ? "command-panel standalone" : "command-panel"}
+      data-testid={standalone ? "menu-panel-window" : undefined}
+    >
+      <MacChrome compact={standalone} status={standalone ? "Pinned" : "Live"} title={t.menuPanel} />
+
+      <div className="menu-product">
+        <BrandGlyph />
+        <div>
+          <strong>HarnessDeck</strong>
+          <span>{t.localReady}</span>
+        </div>
+      </div>
+
+      <button className="panel-search" type="button">
+        <Search size={16} aria-hidden="true" />
+        <span>{t.searchPlaceholder}</span>
+        <kbd>⌘K</kbd>
+      </button>
+
+      <div className="panel-metrics">
+        {metricCards.map((metric) => {
+          const labels = {
+            profile: t.currentProfile,
+            sync: t.syncStatus,
+            cost: t.cost,
+            wake: t.wake,
+          };
+          const values = {
+            profile: selectedProfileName,
+            sync: syncValue,
+            cost: costMetric ? `${costMetric.value} · ${costMetric.confidenceLabel}` : metric.value,
+            wake: t.awakeStandard,
+          };
+
+          return (
+            <article className={`panel-metric ${metric.tone}`} key={metric.id}>
+              <span>{labels[metric.id]}</span>
+              <strong>{values[metric.id]}</strong>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="panel-row-group">
+        {rows.map((row) => (
+          <div className="panel-row" key={row.label}>
+            <span>{row.label}</span>
+            <strong>{row.value}</strong>
+          </div>
+        ))}
+      </div>
+
+      <div className="panel-actions" aria-label={t.quickActions}>
+        <button type="button" onClick={onOpenWorkbench}>
+          <Gauge size={16} aria-hidden="true" />
+          <span>{t.openWorkbench}</span>
+        </button>
+        <button type="button" onClick={() => void onRunDryRun()}>
+          <Zap size={16} aria-hidden="true" />
+          <span>{t.dryRun}</span>
+        </button>
+        <button type="button" onClick={onSwitchProfile}>
+          <Layers size={16} aria-hidden="true" />
+          <span>{t.switchProfile}</span>
+        </button>
+        <button type="button">
+          <RotateCw size={16} aria-hidden="true" />
+          <span>{t.refresh}</span>
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+function ConstellationBand({
+  activeView,
+  locale,
+  onSelect,
+  t,
+}: {
+  activeView: ViewId;
+  locale: Locale;
+  onSelect: (viewId: ViewId) => void;
+  t: Record<string, string>;
+}) {
+  return (
+    <section className="constellation-band">
+      <div className="constellation-copy">
+        <BrandGlyph />
+        <div>
+          <strong>HarnessDeck</strong>
+          <span>{t.heroTitle}</span>
+        </div>
+      </div>
+      <nav className="constellation-nav" aria-label="Brand navigation">
+        {navItems.slice(1, 8).map((item) => {
+          const Icon = item.icon;
+          const selected = item.id === activeView;
+          return (
+            <button
+              key={item.id}
+              aria-current={selected ? "page" : undefined}
+              className={selected ? "star-node active" : "star-node"}
+              type="button"
+              onClick={() => onSelect(item.id)}
+            >
+              <Icon size={15} aria-hidden="true" />
+              <span>{label(locale, item)}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </section>
+  );
+}
+
+function MacChrome({ compact = false, status, title }: { compact?: boolean; status?: string; title: string }) {
+  return (
+    <div className={compact ? "mac-chrome compact" : "mac-chrome"}>
+      <div className="traffic-lights" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      <span>{title}</span>
+      {status ? <em>{status}</em> : null}
+    </div>
+  );
+}
+
+function BrandGlyph() {
+  return (
+    <div className="brand-glyph" aria-hidden="true">
+      <span />
+      <span />
+      <span />
+      <span />
+      <span />
+      <span />
+      <span />
     </div>
   );
 }
@@ -793,7 +972,7 @@ function InsightsView({
           <h3>{locale === "zh-CN" ? "洞察与 Feed" : "Insights and Feed"}</h3>
           <p>{locale === "zh-CN" ? "本地规则覆盖 token anomaly、失败重复、profile drift 和 update impact。" : "Local rules cover token anomalies, repeated failures, profile drift, and update impact."}</p>
         </div>
-        {highPriorityFeed[0] ? <span className="status-pill">High priority feed</span> : null}
+        {highPriorityFeed[0] ? <span className="status-pill">High priority</span> : null}
       </section>
 
       <div className="insight-grid">

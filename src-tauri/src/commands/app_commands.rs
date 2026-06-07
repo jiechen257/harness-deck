@@ -1,4 +1,4 @@
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 use crate::domain::app::AppStatus;
 use crate::domain::errors::CommandError;
@@ -17,6 +17,11 @@ pub fn get_app_paths(app: AppHandle) -> Result<HarnessDeckPaths, CommandError> {
 }
 
 #[tauri::command]
-pub fn open_workbench() -> Result<bool, CommandError> {
+pub fn open_workbench(app: AppHandle) -> Result<bool, CommandError> {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+
     Ok(true)
 }

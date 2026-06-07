@@ -160,6 +160,10 @@ export async function listProfiles(): Promise<ProfileSummary[]> {
   return call("list_profiles", {}, () => fallbackProfiles);
 }
 
+export async function openWorkbench(): Promise<boolean> {
+  return call("open_workbench", {}, () => true);
+}
+
 export async function listTargets(): Promise<TargetSummary[]> {
   return call("list_targets", {}, () => fallbackTargets);
 }

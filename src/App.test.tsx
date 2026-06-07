@@ -6,23 +6,32 @@ import { App } from "./App";
 
 afterEach(() => {
   cleanup();
+  window.history.pushState({}, "", "/");
   window.localStorage.clear();
 });
 
 describe("HarnessDeck app foundation", () => {
-  it("renders the default Chinese workbench navigation and menu panel", () => {
+  it("renders the default Chinese command deck with prototype-aligned workbench navigation and menu panel", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "HarnessDeck 工作台" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "HarnessDeck 命令中心" })).toBeInTheDocument();
+    expect(screen.getByText("本地 Harness 工作台")).toBeInTheDocument();
+    const brandNavigation = screen.getByRole("navigation", { name: "Brand navigation" });
+    for (const label of ["发现", "配置集", "同步", "运行", "用量", "洞察", "守护"]) {
+      expect(within(brandNavigation).getByRole("button", { name: label })).toBeInTheDocument();
+    }
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
     for (const label of ["首页", "发现", "配置集", "同步", "运行", "用量", "洞察", "守护", "设置"]) {
       expect(within(navigation).getByRole("button", { name: label })).toBeInTheDocument();
     }
+    expect(screen.getByText("HarnessDeck 工作台")).toBeInTheDocument();
     expect(screen.getByText("菜单栏面板")).toBeInTheDocument();
     expect(screen.getByText("当前配置集")).toBeInTheDocument();
-    expect(screen.getByText("同步状态")).toBeInTheDocument();
+    expect(screen.getByText("同步健康度")).toBeInTheDocument();
     expect(screen.getByText("5 小时成本")).toBeInTheDocument();
-    expect(screen.getByText("防睡状态")).toBeInTheDocument();
+    expect(screen.getByText("防睡")).toBeInTheDocument();
+    expect(screen.getByText("搜索配置集、同步、账号")).toBeInTheDocument();
+    expect(screen.getByText("dry-run 部署计划就绪")).toBeInTheDocument();
   });
 
   it("switches fixed UI copy to English", async () => {
@@ -31,9 +40,25 @@ describe("HarnessDeck app foundation", () => {
 
     await user.click(screen.getByRole("button", { name: "English" }));
 
-    expect(screen.getByRole("heading", { name: "HarnessDeck Workbench" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Profiles/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "HarnessDeck Command Center" })).toBeInTheDocument();
+    expect(screen.getByText("Local Harness Workbench")).toBeInTheDocument();
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    expect(within(navigation).getByRole("button", { name: "Profiles" })).toBeInTheDocument();
     expect(screen.getByText("Menu Bar Panel")).toBeInTheDocument();
+    expect(screen.getByText("Search profiles, sync, accounts")).toBeInTheDocument();
+  });
+
+  it("renders a standalone menu bar panel window from the Tauri panel URL", () => {
+    window.history.pushState({}, "", "/?panel=1");
+    render(<App />);
+
+    expect(screen.getByTestId("menu-panel-window")).toBeInTheDocument();
+    expect(screen.getByText("菜单栏面板")).toBeInTheDocument();
+    expect(screen.getByText("当前配置集")).toBeInTheDocument();
+    expect(screen.getByText("同步健康度")).toBeInTheDocument();
+    expect(screen.getByText("防睡")).toBeInTheDocument();
+    expect(screen.getByText("搜索配置集、同步、账号")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "HarnessDeck 命令中心" })).not.toBeInTheDocument();
   });
 
   it("switches from the default light theme to dark", async () => {

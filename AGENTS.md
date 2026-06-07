@@ -4,10 +4,15 @@
 
 ## 项目状态
 
-- 当前仓库处于产品设计阶段。
-- 当前没有可运行 app 代码、package 配置、Tauri scaffold、测试目录或构建命令。
-- 当前主设计来源是 `docs/superpowers/specs/2026-06-07-harness-deck-design.md`。
-- 用户 review 并确认 spec 前，不进入实现计划、代码 scaffold、依赖安装、commit、push 或 PR。
+- 当前仓库已经进入可运行实现阶段。
+- 当前已有 Tauri 2 + React + TypeScript + Rust macOS 桌面应用、package 配置、测试和构建命令。
+- 当前主窗口对齐 command deck 原型，包含顶部命令栏、北斗品牌状态带、菜单栏面板和 macOS 窗口化工作台。
+- 当前 Tauri 配置包含 `main` 管理窗口和 `menubar` 菜单栏面板窗口；`menubar` 通过 `index.html?panel=1` 渲染。
+- 当前默认仍为 fixture / mock mode，不直接写入真实 Claude Code、Codex 或系统电源配置。
+- 当前设计与实现来源：
+  - `docs/superpowers/specs/2026-06-07-harness-deck-design.md`
+  - `docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`
+  - `docs/product-design/harnessdeck-command-deck-prototype.html`
 
 ## 默认语言
 
@@ -36,6 +41,15 @@ MVP 必须保留完整闭环：
 - 通过菜单栏控制中心融入日常工作。
 - 基于用量、drift、失败和更新给出改进建议。
 
+## UI/UX 约定
+
+- 复杂 UI 改动优先对齐 `docs/product-design/harnessdeck-command-deck-prototype.html`。
+- 北斗七星只作为品牌视觉语言，不进入信息架构，不使用天枢、天璇、瑶光等星名作为功能名。
+- 中文界面中 `Profiles` 统一使用“配置集”。
+- 浅色主题使用浅金白底、低饱和星图、深蓝/鎏金点缀。
+- 深色主题使用玄夜蓝、鎏金星图风格。
+- 菜单栏面板必须能独立于管理窗口展示当前配置集、同步健康度、成本、防睡状态和快捷动作。
+
 ## 技术方向
 
 已选技术栈：
@@ -47,7 +61,7 @@ MVP 必须保留完整闭环：
 - SQLite
 - macOS Keychain
 
-实现前需要先确认 spec 已获用户批准，再进入实施计划。实施计划需要围绕 Tauri/Rust 本地优先架构展开，关键配置写入由 Rust 服务负责。
+后续实现围绕 Tauri/Rust 本地优先架构展开，关键配置读取、写入、备份、manifest 和真实系统边界由 Rust 服务负责。React 前端负责工作台和菜单栏面板体验，必须通过命令接口访问本地能力。
 
 ## 安全与隐私
 
@@ -60,7 +74,8 @@ MVP 必须保留完整闭环：
 ## 文档维护
 
 - 产品设计变更先更新 spec。
-- README 只写稳定结论、当前状态和入口信息。
+- README 写中文稳定结论、当前状态和入口信息。
+- `README.en.md` 写对应英文文档。
 - 新增实现计划时，保持它与 spec 对齐，避免重新定义 MVP 边界。
 - 文档中避免占位词、临时标签和模糊状态词。
 - 文档中避免反向对比句式，直接写正向结论。
@@ -70,7 +85,17 @@ MVP 必须保留完整闭环：
 纯文档修改至少执行：
 
 ```bash
-rg -n 'TB''D|TO''DO|place''holder|待''定|未''定|不''确定|不是.*而''是|not .*b''ut' AGENTS.md README.md docs/superpowers/specs/2026-06-07-harness-deck-design.md
+rg -n 'TB''D|TO''DO|place''holder|待''定|未''定|不''确定|不是.*而''是|not .*b''ut' AGENTS.md README.md README.en.md docs/superpowers/specs/2026-06-07-harness-deck-design.md docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md
 ```
 
-仓库仍处于设计阶段时，没有 app build/test 命令。后续 scaffold 出现后，验证命令以项目 README、package scripts、Cargo/Tauri 配置为准。
+代码或 UI 修改按风险运行：
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+cargo test --manifest-path src-tauri/Cargo.toml
+pnpm tauri:build
+```
+
+前端或桌面 UI 改动需要在可行时启动 `pnpm tauri:dev`，并用浏览器、Computer Use 或 macOS 桌面观察验证主窗口与菜单栏面板。
