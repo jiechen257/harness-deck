@@ -378,6 +378,24 @@ button {
   font-weight: 700;
 }
 
+.menu-feed {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--gold) 32%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
+}
+
+.menu-feed span {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.menu-feed strong {
+  font-size: 13px;
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -735,4 +753,107 @@ button {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+
+.registry-workbench,
+.insight-workbench,
+.wake-workbench {
+  display: grid;
+  gap: 14px;
+}
+
+.registry-hero,
+.insight-hero,
+.wake-hero,
+.skill-recommendation,
+.experimental-wake-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+}
+
+.registry-hero h3,
+.insight-hero h3,
+.wake-hero h3 {
+  margin: 0;
+}
+
+.registry-hero p,
+.insight-hero p,
+.wake-hero p,
+.template-grid p,
+.skill-recommendation p,
+.insight-grid p,
+.feed-list p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.template-grid,
+.insight-grid,
+.wake-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.template-grid article,
+.insight-grid article,
+.wake-grid article,
+.feed-list article {
+  display: grid;
+  gap: 8px;
+  min-height: 126px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 74%, transparent);
+}
+
+.template-grid article > div,
+.feed-list article > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.template-grid span,
+.template-grid small,
+.skill-recommendation span,
+.insight-grid small,
+.feed-list span,
+.feed-list small,
+.wake-grid span,
+.wake-grid small,
+.experimental-wake-panel span {
+  color: var(--muted);
+}
+
+.score-board {
+  display: grid;
+  gap: 6px;
+  min-width: 190px;
+}
+
+.feed-list {
+  display: grid;
+  gap: 10px;
+}
+
+.feed-list small {
+  color: var(--gold);
+}
+
+.wake-confirmed {
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--green) 35%, var(--line));
+  border-radius: 8px;
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 10%, var(--surface));
 }

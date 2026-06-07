@@ -8,6 +8,8 @@ mod phase1_tests;
 mod phase2_3_tests;
 #[cfg(test)]
 mod phase4_5_tests;
+#[cfg(test)]
+mod phase6_8_tests;
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
@@ -62,6 +64,13 @@ pub fn run() {
       commands::target_commands::discover_targets,
       commands::account_commands::get_account_workspace,
       commands::account_commands::preview_account_switch,
+      commands::registry_commands::list_registry_templates,
+      commands::registry_commands::find_best_skill,
+      commands::insight_commands::list_insights,
+      commands::insight_commands::list_feed_items,
+      commands::insight_commands::list_high_priority_feed,
+      commands::wake_commands::get_wake_control,
+      commands::wake_commands::request_wake_mode_command,
       commands::deploy_commands::generate_deploy_plan,
       commands::deploy_commands::confirm_dry_run_deploy,
       commands::deploy_commands::get_latest_manifest,

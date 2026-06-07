@@ -137,4 +137,50 @@ describe("HarnessDeck app foundation", () => {
     expect(screen.getByText("Switch-plan preview")).toBeInTheDocument();
     expect(screen.queryByText(/sk-/)).not.toBeInTheDocument();
   });
+
+  it("renders registry templates and find-best-skill scoring without remote discovery", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "发现" }));
+
+    expect(await screen.findByText("Registry 与 find-best-skill")).toBeInTheDocument();
+    expect(screen.getByText("Tauri Desktop Guardrails")).toBeInTheDocument();
+    expect(screen.getByText("safety risk: Low")).toBeInTheDocument();
+    expect(screen.getByText("Remote call not performed")).toBeInTheDocument();
+  });
+
+  it("renders local insights and high-priority feed items", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "洞察" }));
+
+    expect(await screen.findByText("洞察与 Feed")).toBeInTheDocument();
+    expect(screen.getByText("Token anomaly")).toBeInTheDocument();
+    expect(screen.getByText("Profile drift")).toBeInTheDocument();
+    expect(screen.getByText("High priority")).toBeInTheDocument();
+    expect(screen.getByText("profile impact")).toBeInTheDocument();
+  });
+
+  it("renders wake controls and requires confirmation for experimental lid-awake", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "运行" }));
+
+    expect(await screen.findByText("Wake Control")).toBeInTheDocument();
+    expect(screen.getByText("standard awake")).toBeInTheDocument();
+    expect(screen.getByText("timed awake")).toBeInTheDocument();
+    expect(screen.getByText("display sleep control")).toBeInTheDocument();
+    expect(screen.getByText("experimental lid-awake")).toBeInTheDocument();
+    expect(screen.getByText("需要显式确认")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "确认实验性合盖防睡" }));
+
+    expect(await screen.findByText("experimental lid-awake confirmed (mock)")).toBeInTheDocument();
+  });
 });

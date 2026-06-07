@@ -4,6 +4,7 @@ export type TargetKind = "Codex" | "ClaudeCode";
 export type OperationType = "CreateFile" | "UpdateFile" | "AppendBlock" | "ReplaceBlock" | "Noop";
 export type RiskLevel = "Low" | "Medium" | "High" | "Blocked";
 export type DataConfidence = "Official" | "LocalLog" | "Estimated" | "Missing";
+export type WakeMode = "StandardAwake" | "TimedAwake" | "DisplaySleep" | "ExperimentalLidAwake";
 
 export interface ProfileSummary {
   id: string;
@@ -151,4 +152,68 @@ export interface UsageSummary {
   driftEvents: number;
   burnRateUsdPerHour: number;
   metrics: UsageMetric[];
+}
+
+export interface RegistrySkillTemplate {
+  id: string;
+  name: string;
+  description: string;
+  taskTags: string[];
+  qualityScore: number;
+  communitySignal: number;
+  personalFeedback: number;
+  safetyRisk: string;
+  source: string;
+}
+
+export interface SkillScoreBreakdown {
+  taskMatch: number;
+  quality: number;
+  community: number;
+  personal: number;
+  safetyPenalty: number;
+}
+
+export interface FindBestSkillResult {
+  task: string;
+  recommendedSkill: RegistrySkillTemplate;
+  score: number;
+  scoring: SkillScoreBreakdown;
+  githubDiscoveryEnabled: boolean;
+  remoteCallPerformed: boolean;
+  safetySummary: string;
+}
+
+export interface Insight {
+  id: string;
+  title: string;
+  summary: string;
+  severity: string;
+  relatedProfileId: string;
+  source: string;
+}
+
+export interface FeedItem {
+  id: string;
+  title: string;
+  summary: string;
+  priority: string;
+  source: string;
+  profileImpact: boolean;
+}
+
+export interface WakeSession {
+  mode: WakeMode;
+  active: boolean;
+  durationMinutes: number | null;
+  displaySleepAllowed: boolean;
+  experimental: boolean;
+  requiresConfirmation: boolean;
+  confirmed: boolean;
+  implementation: string;
+}
+
+export interface WakeControlSummary {
+  currentState: WakeSession;
+  quickActions: WakeSession[];
 }

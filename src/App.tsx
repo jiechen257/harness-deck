@@ -24,25 +24,38 @@ import { useEffect, useMemo, useState } from "react";
 import {
   confirmDryRunDeploy,
   discoverTargets,
+  findBestSkill,
   generateDeployPlan,
   getAccountWorkspace,
   getSyncGovernance,
   getUsageSummary,
+  getWakeControl,
+  listFeedItems,
+  listHighPriorityFeed,
+  listInsights,
   listProfiles,
+  listRegistryTemplates,
   listTargets,
+  requestWakeMode,
 } from "./lib/api";
 import type {
   AccountWorkspace,
   DeployPlan,
+  FeedItem,
+  FindBestSkillResult,
+  Insight,
   Locale,
   ManifestSummary,
   ProfileSummary,
+  RegistrySkillTemplate,
   SyncGovernance,
   TargetDiscoverySummary,
   TargetKind,
   TargetSummary,
   Theme,
   UsageSummary,
+  WakeControlSummary,
+  WakeSession,
 } from "./lib/types";
 
 type ViewId =
@@ -157,6 +170,13 @@ export function App() {
   const [targetReadAuthorized, setTargetReadAuthorized] = useState(false);
   const [accountWorkspace, setAccountWorkspace] = useState<AccountWorkspace | null>(null);
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
+  const [registryTemplates, setRegistryTemplates] = useState<RegistrySkillTemplate[]>([]);
+  const [skillRecommendation, setSkillRecommendation] = useState<FindBestSkillResult | null>(null);
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  const [highPriorityFeed, setHighPriorityFeed] = useState<FeedItem[]>([]);
+  const [wakeSummary, setWakeSummary] = useState<WakeControlSummary | null>(null);
+  const [confirmedWakeSession, setConfirmedWakeSession] = useState<WakeSession | null>(null);
   const [manifest, setManifest] = useState<ManifestSummary | null>(null);
   const t = copy[locale];
 
@@ -171,14 +191,42 @@ export function App() {
   }, [theme]);
 
   useEffect(() => {
-    void Promise.all([listProfiles(), listTargets(), getAccountWorkspace(), getUsageSummary()]).then(
-      ([nextProfiles, nextTargets, nextAccountWorkspace, nextUsageSummary]) => {
-      setProfiles(nextProfiles);
-      setTargets(nextTargets);
-      setAccountWorkspace(nextAccountWorkspace);
-      setUsageSummary(nextUsageSummary);
-      setSelectedProfileId(nextProfiles[0]?.id ?? "macos-dev");
-      setSelectedTargetKind(nextTargets[0]?.kind ?? "Codex");
+    void Promise.all([
+      listProfiles(),
+      listTargets(),
+      getAccountWorkspace(),
+      getUsageSummary(),
+      listRegistryTemplates(),
+      findBestSkill("sync Claude Code and Codex rules safely", false),
+      listInsights(),
+      listFeedItems(),
+      listHighPriorityFeed(),
+      getWakeControl(),
+    ]).then(
+      ([
+        nextProfiles,
+        nextTargets,
+        nextAccountWorkspace,
+        nextUsageSummary,
+        nextRegistryTemplates,
+        nextSkillRecommendation,
+        nextInsights,
+        nextFeedItems,
+        nextHighPriorityFeed,
+        nextWakeSummary,
+      ]) => {
+        setProfiles(nextProfiles);
+        setTargets(nextTargets);
+        setAccountWorkspace(nextAccountWorkspace);
+        setUsageSummary(nextUsageSummary);
+        setRegistryTemplates(nextRegistryTemplates);
+        setSkillRecommendation(nextSkillRecommendation);
+        setInsights(nextInsights);
+        setFeedItems(nextFeedItems);
+        setHighPriorityFeed(nextHighPriorityFeed);
+        setWakeSummary(nextWakeSummary);
+        setSelectedProfileId(nextProfiles[0]?.id ?? "macos-dev");
+        setSelectedTargetKind(nextTargets[0]?.kind ?? "Codex");
       },
     );
   }, []);
@@ -215,6 +263,12 @@ export function App() {
     const discoveries = await discoverTargets(true);
     setTargetReadAuthorized(true);
     setTargetDiscoveries(discoveries);
+  };
+
+  const confirmExperimentalWake = async () => {
+    const session = await requestWakeMode("ExperimentalLidAwake", true);
+    setConfirmedWakeSession(session);
+    setWakeSummary((current) => (current ? { ...current, currentState: session } : current));
   };
 
   return (
@@ -357,6 +411,12 @@ export function App() {
                 <span>{t.openWorkbench}</span>
               </button>
             </div>
+            {highPriorityFeed[0] ? (
+              <div className="menu-feed">
+                <span>High priority</span>
+                <strong>{highPriorityFeed[0].title}</strong>
+              </div>
+            ) : null}
           </aside>
 
           <section className="view-panel">
@@ -364,7 +424,9 @@ export function App() {
               <span>{activeTitle}</span>
               <span className="status-dot muted">Dry-run</span>
             </div>
-            {activeView === "profiles" ? (
+            {activeView === "discover" ? (
+              <DiscoverView registryTemplates={registryTemplates} skillRecommendation={skillRecommendation} />
+            ) : activeView === "profiles" ? (
               <ProfileView
                 locale={locale}
                 profiles={profiles}
@@ -386,8 +448,17 @@ export function App() {
                 targetDiscoveries={targetDiscoveries}
                 targetReadAuthorized={targetReadAuthorized}
               />
+            ) : activeView === "operate" ? (
+              <OperateView
+                confirmedWakeSession={confirmedWakeSession}
+                locale={locale}
+                onConfirmExperimentalWake={confirmExperimentalWake}
+                wakeSummary={wakeSummary}
+              />
             ) : activeView === "usage" ? (
               <UsageView locale={locale} usageSummary={usageSummary} />
+            ) : activeView === "insights" ? (
+              <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} insights={insights} locale={locale} />
             ) : activeView === "settings" ? (
               <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
             ) : (
@@ -598,6 +669,157 @@ function SyncView({
   );
 }
 
+function DiscoverView({
+  registryTemplates,
+  skillRecommendation,
+}: {
+  registryTemplates: RegistrySkillTemplate[];
+  skillRecommendation: FindBestSkillResult | null;
+}) {
+  return (
+    <div className="registry-workbench">
+      <section className="registry-hero">
+        <div>
+          <h3>Registry 与 find-best-skill</h3>
+          <p>Curated local registry first; GitHub discovery is gated and never called automatically.</p>
+        </div>
+        <span className="status-pill">Remote call not performed</span>
+      </section>
+
+      <div className="template-grid">
+        {registryTemplates.map((template) => (
+          <article key={template.id}>
+            <div>
+              <strong>{template.name}</strong>
+              <span>{template.source}</span>
+            </div>
+            <p>{template.description}</p>
+            <small>risk {template.safetyRisk}</small>
+          </article>
+        ))}
+      </div>
+
+      {skillRecommendation ? (
+        <section className="skill-recommendation">
+          <div>
+            <span>Recommended</span>
+            <strong>Recommended skill: {skillRecommendation.recommendedSkill.name}</strong>
+            <p>{skillRecommendation.task}</p>
+          </div>
+          <div className="score-board">
+            <span>{Math.round(skillRecommendation.score * 100)} score</span>
+            <span>{skillRecommendation.safetySummary}</span>
+            <span>{skillRecommendation.githubDiscoveryEnabled ? "GitHub discovery gated" : "GitHub discovery off"}</span>
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function OperateView({
+  confirmedWakeSession,
+  locale,
+  onConfirmExperimentalWake,
+  wakeSummary,
+}: {
+  confirmedWakeSession: WakeSession | null;
+  locale: Locale;
+  onConfirmExperimentalWake: () => Promise<void>;
+  wakeSummary: WakeControlSummary | null;
+}) {
+  if (!wakeSummary) {
+    return <p className="muted-line">{locale === "zh-CN" ? "Wake Control 加载中" : "Loading Wake Control"}</p>;
+  }
+
+  return (
+    <div className="wake-workbench">
+      <section className="wake-hero">
+        <div>
+          <h3>Wake Control</h3>
+          <p>{locale === "zh-CN" ? "当前阶段使用 mock/system-safe 控制，不修改系统电源策略。" : "This phase uses mock/system-safe controls and does not change system power policy."}</p>
+        </div>
+        <span className="status-pill">current: {wakeModeLabel(wakeSummary.currentState.mode)}</span>
+      </section>
+
+      <div className="wake-grid">
+        {wakeSummary.quickActions.map((session) => (
+          <article key={session.mode}>
+            <strong>{session.mode === "ExperimentalLidAwake" ? "experimental lid-awake mode" : wakeModeLabel(session.mode)}</strong>
+            <span>{session.implementation}</span>
+            <small>
+              {session.durationMinutes ? `${session.durationMinutes} min` : "continuous"} ·{" "}
+              {session.requiresConfirmation ? "confirmation required" : "ready"}
+            </small>
+          </article>
+        ))}
+      </div>
+
+      <section className="experimental-wake-panel">
+        <div>
+          <strong>experimental lid-awake</strong>
+          <span>需要显式确认</span>
+        </div>
+        <button className="secondary-action" type="button" onClick={() => void onConfirmExperimentalWake()}>
+          <Zap size={16} aria-hidden="true" />
+          <span>{locale === "zh-CN" ? "确认实验性合盖防睡" : "Confirm experimental lid-awake"}</span>
+        </button>
+      </section>
+
+      {confirmedWakeSession ? (
+        <div className="wake-confirmed">experimental lid-awake confirmed (mock)</div>
+      ) : null}
+    </div>
+  );
+}
+
+function InsightsView({
+  feedItems,
+  highPriorityFeed,
+  insights,
+  locale,
+}: {
+  feedItems: FeedItem[];
+  highPriorityFeed: FeedItem[];
+  insights: Insight[];
+  locale: Locale;
+}) {
+  return (
+    <div className="insight-workbench">
+      <section className="insight-hero">
+        <div>
+          <h3>{locale === "zh-CN" ? "洞察与 Feed" : "Insights and Feed"}</h3>
+          <p>{locale === "zh-CN" ? "本地规则覆盖 token anomaly、失败重复、profile drift 和 update impact。" : "Local rules cover token anomalies, repeated failures, profile drift, and update impact."}</p>
+        </div>
+        {highPriorityFeed[0] ? <span className="status-pill">High priority feed</span> : null}
+      </section>
+
+      <div className="insight-grid">
+        {insights.map((insight) => (
+          <article key={insight.id}>
+            <strong>{insight.title}</strong>
+            <p>{insight.summary}</p>
+            <small>{insight.severity} · {insight.source}</small>
+          </article>
+        ))}
+      </div>
+
+      <section className="feed-list">
+        {feedItems.map((item) => (
+          <article key={item.id}>
+            <div>
+              <strong>{item.title}</strong>
+              <span>{item.priority}</span>
+            </div>
+            <p>{item.summary}</p>
+            {item.profileImpact ? <small>profile impact</small> : <small>{item.source}</small>}
+          </article>
+        ))}
+      </section>
+    </div>
+  );
+}
+
 function UsageView({ locale, usageSummary }: { locale: Locale; usageSummary: UsageSummary | null }) {
   if (!usageSummary) {
     return <p className="muted-line">{locale === "zh-CN" ? "用量数据加载中" : "Loading usage data"}</p>;
@@ -638,6 +860,19 @@ function UsageView({ locale, usageSummary }: { locale: Locale; usageSummary: Usa
       </div>
     </div>
   );
+}
+
+function wakeModeLabel(mode: WakeSession["mode"]) {
+  switch (mode) {
+    case "StandardAwake":
+      return "standard awake";
+    case "TimedAwake":
+      return "timed awake";
+    case "DisplaySleep":
+      return "display sleep control";
+    case "ExperimentalLidAwake":
+      return "experimental lid-awake";
+  }
 }
 
 function SettingsView({

@@ -3,13 +3,20 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   AccountWorkspace,
   DeployPlan,
+  FeedItem,
+  FindBestSkillResult,
+  Insight,
   ManifestSummary,
   ProfileSummary,
+  RegistrySkillTemplate,
   SyncGovernance,
   TargetDiscoverySummary,
   TargetKind,
   TargetSummary,
   UsageSummary,
+  WakeControlSummary,
+  WakeMode,
+  WakeSession,
 } from "./types";
 
 type TauriWindow = Window & { __TAURI_INTERNALS__?: unknown };
@@ -38,6 +45,103 @@ const fallbackProfiles: ProfileSummary[] = [
 const fallbackTargets: TargetSummary[] = [
   { kind: "Codex", name: "Codex fixture", fixture: true, status: "dry-run only" },
   { kind: "ClaudeCode", name: "Claude Code fixture", fixture: true, status: "dry-run only" },
+];
+
+const fallbackRegistryTemplates: RegistrySkillTemplate[] = [
+  {
+    id: "tauri-desktop-guardrails",
+    name: "Tauri Desktop Guardrails",
+    description: "Local-first macOS app safety, backup, manifest, and config write checks.",
+    taskTags: ["tauri", "desktop", "sync", "codex", "claude", "safety"],
+    qualityScore: 0.94,
+    communitySignal: 0.72,
+    personalFeedback: 0.88,
+    safetyRisk: "Low",
+    source: "curated-local",
+  },
+  {
+    id: "prompt-ops-privacy",
+    name: "Prompt Ops Privacy Review",
+    description: "Checks prompt, log, token, and secret-handling boundaries before sync.",
+    taskTags: ["privacy", "guard", "secrets"],
+    qualityScore: 0.9,
+    communitySignal: 0.64,
+    personalFeedback: 0.81,
+    safetyRisk: "Low",
+    source: "curated-local",
+  },
+  {
+    id: "experimental-hook-runner",
+    name: "Experimental Hook Runner",
+    description: "Prototype hook automation that remains gated until explicit install consent.",
+    taskTags: ["hooks", "automation"],
+    qualityScore: 0.68,
+    communitySignal: 0.51,
+    personalFeedback: 0.43,
+    safetyRisk: "Medium",
+    source: "curated-local",
+  },
+];
+
+const fallbackInsights: Insight[] = [
+  {
+    id: "insight-token-anomaly",
+    title: "Token anomaly",
+    summary: "Estimated token burn is 24% above this profile's five-hour baseline.",
+    severity: "medium",
+    relatedProfileId: "macos-dev",
+    source: "local-rule",
+  },
+  {
+    id: "insight-repeated-failures",
+    title: "Repeated failures",
+    summary: "Two dry-run operations repeatedly require manual conflict review.",
+    severity: "medium",
+    relatedProfileId: "macos-dev",
+    source: "local-rule",
+  },
+  {
+    id: "insight-profile-drift",
+    title: "Profile drift",
+    summary: "Target state differs from the last manifest in rules and skills.",
+    severity: "high",
+    relatedProfileId: "macos-dev",
+    source: "local-rule",
+  },
+  {
+    id: "insight-update-impact",
+    title: "Update impact",
+    summary: "Registry update can improve sync guard wording without touching secrets.",
+    severity: "low",
+    relatedProfileId: "macos-dev",
+    source: "local-rule",
+  },
+];
+
+const fallbackFeedItems: FeedItem[] = [
+  {
+    id: "feed-profile-impact",
+    title: "Harness Profile impact alert",
+    summary: "A curated guardrail update affects the active macOS Dev profile.",
+    priority: "High",
+    source: "registry-cache",
+    profileImpact: true,
+  },
+  {
+    id: "feed-community-template",
+    title: "Community template update",
+    summary: "A privacy review template was refreshed in the local cache.",
+    priority: "Normal",
+    source: "community-cache",
+    profileImpact: false,
+  },
+];
+
+const fallbackWakeActions: WakeSession[] = [
+  wakeSession("StandardAwake", true, null, false, true),
+  wakeSession("TimedAwake", true, 45, false, true),
+  wakeSession("DisplaySleep", false, null, false, true),
+  wakeSession("ExperimentalLidAwake", false, 30, true, false),
 ];
 
 function isTauriRuntime() {
@@ -259,4 +363,80 @@ export async function getUsageSummary(): Promise<UsageSummary> {
       },
     ],
   }));
+}
+
+export async function listRegistryTemplates(): Promise<RegistrySkillTemplate[]> {
+  return call("list_registry_templates", {}, () => fallbackRegistryTemplates);
+}
+
+export async function findBestSkill(task: string, allowGithubDiscovery: boolean): Promise<FindBestSkillResult> {
+  return call("find_best_skill", { task, allowGithubDiscovery }, () => ({
+    task,
+    recommendedSkill: fallbackRegistryTemplates[0],
+    score: 0.86,
+    scoring: {
+      taskMatch: 0.92,
+      quality: 0.94,
+      community: 0.72,
+      personal: 0.88,
+      safetyPenalty: 0.02,
+    },
+    githubDiscoveryEnabled: allowGithubDiscovery,
+    remoteCallPerformed: false,
+    safetySummary: "safety risk: Low",
+  }));
+}
+
+export async function listInsights(): Promise<Insight[]> {
+  return call("list_insights", {}, () => fallbackInsights);
+}
+
+export async function listFeedItems(): Promise<FeedItem[]> {
+  return call("list_feed_items", {}, () => fallbackFeedItems);
+}
+
+export async function listHighPriorityFeed(): Promise<FeedItem[]> {
+  return call("list_high_priority_feed", {}, () => fallbackFeedItems.filter((item) => item.priority === "High"));
+}
+
+export async function getWakeControl(): Promise<WakeControlSummary> {
+  return call("get_wake_control", {}, () => ({
+    currentState: fallbackWakeActions[0],
+    quickActions: fallbackWakeActions,
+  }));
+}
+
+export async function requestWakeMode(mode: WakeMode, confirmed: boolean): Promise<WakeSession> {
+  return call("request_wake_mode_command", { mode, confirmed }, () => {
+    if (mode === "ExperimentalLidAwake" && !confirmed) {
+      throw new Error("experimental lid-awake requires explicit confirmation");
+    }
+
+    return wakeSession(
+      mode,
+      mode !== "DisplaySleep",
+      mode === "TimedAwake" || mode === "ExperimentalLidAwake" ? 45 : null,
+      mode === "ExperimentalLidAwake",
+      confirmed || mode !== "ExperimentalLidAwake",
+    );
+  });
+}
+
+function wakeSession(
+  mode: WakeMode,
+  active: boolean,
+  durationMinutes: number | null,
+  experimental: boolean,
+  confirmed: boolean,
+): WakeSession {
+  return {
+    mode,
+    active,
+    durationMinutes,
+    displaySleepAllowed: mode === "DisplaySleep",
+    experimental,
+    requiresConfirmation: mode === "ExperimentalLidAwake",
+    confirmed,
+    implementation: "mock/system-safe",
+  };
 }
