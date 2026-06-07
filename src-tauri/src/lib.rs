@@ -2,6 +2,9 @@ pub mod commands;
 pub mod domain;
 pub mod services;
 
+#[cfg(test)]
+mod phase1_tests;
+
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::Manager;
@@ -48,6 +51,13 @@ pub fn run() {
       commands::app_commands::get_app_status,
       commands::app_commands::get_app_paths,
       commands::app_commands::open_workbench,
+      commands::profile_commands::list_profiles,
+      commands::profile_commands::get_profile,
+      commands::profile_commands::validate_profile_command,
+      commands::target_commands::list_targets,
+      commands::deploy_commands::generate_deploy_plan,
+      commands::deploy_commands::confirm_dry_run_deploy,
+      commands::deploy_commands::get_latest_manifest,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

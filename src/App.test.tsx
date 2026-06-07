@@ -47,4 +47,32 @@ describe("HarnessDeck app foundation", () => {
 
     expect(shell).toHaveAttribute("data-theme", "dark");
   });
+
+  it("renders fixture profiles and targets", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "配置集" }));
+
+    expect(await screen.findByRole("button", { name: /macOS Dev 配置集/ })).toBeInTheDocument();
+    expect(screen.getByText("Codex fixture")).toBeInTheDocument();
+    expect(screen.getByText("Claude Code fixture")).toBeInTheDocument();
+  });
+
+  it("generates a dry-run deploy plan and writes a visible manifest result", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "同步" }));
+
+    expect(await screen.findByText("Deploy Plan")).toBeInTheDocument();
+    expect(screen.getByText("append scoped rules block from Harness Profile rules")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "确认 dry-run" }));
+
+    expect(await screen.findByText("dry-run manifest 已写入")).toBeInTheDocument();
+    expect(screen.getByText("未触碰真实配置")).toBeInTheDocument();
+  });
 });

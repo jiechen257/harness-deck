@@ -8,6 +8,20 @@ pub struct CommandError {
 }
 
 impl CommandError {
+    pub fn validation(message: impl Into<String>) -> Self {
+        Self {
+            code: "ValidationError",
+            message: message.into(),
+        }
+    }
+
+    pub fn plan_blocked(message: impl Into<String>) -> Self {
+        Self {
+            code: "PlanBlocked",
+            message: message.into(),
+        }
+    }
+
     pub fn storage(message: impl Into<String>) -> Self {
         Self {
             code: "StorageError",

@@ -21,8 +21,9 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-type Locale = "zh-CN" | "en-US";
-type Theme = "light" | "dark";
+import { confirmDryRunDeploy, generateDeployPlan, listProfiles, listTargets } from "./lib/api";
+import type { DeployPlan, Locale, ManifestSummary, ProfileSummary, TargetKind, TargetSummary, Theme } from "./lib/types";
+
 type ViewId =
   | "home"
   | "discover"
@@ -125,6 +126,12 @@ export function App() {
     return saved === "dark" ? "dark" : "light";
   });
   const [activeView, setActiveView] = useState<ViewId>("home");
+  const [profiles, setProfiles] = useState<ProfileSummary[]>([]);
+  const [targets, setTargets] = useState<TargetSummary[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState("macos-dev");
+  const [selectedTargetKind, setSelectedTargetKind] = useState<TargetKind>("Codex");
+  const [deployPlan, setDeployPlan] = useState<DeployPlan | null>(null);
+  const [manifest, setManifest] = useState<ManifestSummary | null>(null);
   const t = copy[locale];
 
   useEffect(() => {
@@ -137,10 +144,36 @@ export function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
+  useEffect(() => {
+    void Promise.all([listProfiles(), listTargets()]).then(([nextProfiles, nextTargets]) => {
+      setProfiles(nextProfiles);
+      setTargets(nextTargets);
+      setSelectedProfileId(nextProfiles[0]?.id ?? "macos-dev");
+      setSelectedTargetKind(nextTargets[0]?.kind ?? "Codex");
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedProfileId || !selectedTargetKind) {
+      return;
+    }
+    void generateDeployPlan(selectedProfileId, selectedTargetKind).then(setDeployPlan);
+  }, [selectedProfileId, selectedTargetKind]);
+
   const activeTitle = useMemo(() => {
     const item = navItems.find((nav) => nav.id === activeView) ?? navItems[0];
     return label(locale, item);
   }, [activeView, locale]);
+
+  const selectedProfile = profiles.find((profile) => profile.id === selectedProfileId) ?? profiles[0];
+
+  const confirmDryRun = async () => {
+    if (!deployPlan) {
+      return;
+    }
+    const nextManifest = await confirmDryRunDeploy(deployPlan);
+    setManifest(nextManifest);
+  };
 
   return (
     <div className="app-shell" data-theme={theme} data-testid="app-shell">
@@ -251,7 +284,7 @@ export function App() {
                 };
                 const values = {
                   profile: t.activeProfile,
-                  sync: t.syncReady,
+                  sync: manifest ? (locale === "zh-CN" ? "manifest 已写入" : "manifest written") : t.syncReady,
                   cost: metric.value,
                   wake: t.awakeStandard,
                 };
@@ -285,26 +318,159 @@ export function App() {
               <span>{activeTitle}</span>
               <span className="status-dot muted">Dry-run</span>
             </div>
-            <div className="summary-grid">
-              <article>
-                <Compass size={18} aria-hidden="true" />
-                <strong>{locale === "zh-CN" ? "北斗视觉" : "Beidou visual"}</strong>
-                <p>{locale === "zh-CN" ? "低饱和星图和鎏金节点保留品牌方向。" : "Low-saturation star maps and gold nodes preserve the brand direction."}</p>
-              </article>
-              <article>
-                <Database size={18} aria-hidden="true" />
-                <strong>{locale === "zh-CN" ? "本地数据" : "Local data"}</strong>
-                <p>{locale === "zh-CN" ? "配置集、manifest、usage 和 guard 状态优先留在本机。" : "Profiles, manifests, usage, and guard state stay local-first."}</p>
-              </article>
-              <article>
-                <ShieldCheck size={18} aria-hidden="true" />
-                <strong>{locale === "zh-CN" ? "真实写入保护" : "Real-write protection"}</strong>
-                <p>{locale === "zh-CN" ? "真实配置写入需要确认、备份、验证和 rollback 元数据。" : "Real config writes require confirmation, backup, verification, and rollback metadata."}</p>
-              </article>
-            </div>
+            {activeView === "profiles" ? (
+              <ProfileView
+                locale={locale}
+                profiles={profiles}
+                selectedProfileId={selectedProfileId}
+                setSelectedProfileId={setSelectedProfileId}
+                targets={targets}
+                selectedTargetKind={selectedTargetKind}
+                setSelectedTargetKind={setSelectedTargetKind}
+              />
+            ) : activeView === "sync" ? (
+              <SyncView locale={locale} plan={deployPlan} manifest={manifest} onConfirm={confirmDryRun} profile={selectedProfile} />
+            ) : (
+              <FoundationSummary locale={locale} />
+            )}
           </section>
         </section>
       </main>
+    </div>
+  );
+}
+
+interface ProfileViewProps {
+  locale: Locale;
+  profiles: ProfileSummary[];
+  selectedProfileId: string;
+  setSelectedProfileId: (profileId: string) => void;
+  targets: TargetSummary[];
+  selectedTargetKind: TargetKind;
+  setSelectedTargetKind: (targetKind: TargetKind) => void;
+}
+
+function ProfileView({
+  locale,
+  profiles,
+  selectedProfileId,
+  setSelectedProfileId,
+  targets,
+  selectedTargetKind,
+  setSelectedTargetKind,
+}: ProfileViewProps) {
+  return (
+    <div className="workflow-grid">
+      <div>
+        <h3>{locale === "zh-CN" ? "配置集" : "Profiles"}</h3>
+        <div className="profile-grid">
+          {profiles.map((profile) => (
+            <button
+              className={profile.id === selectedProfileId ? "profile-card selected" : "profile-card"}
+              key={profile.id}
+              type="button"
+              onClick={() => setSelectedProfileId(profile.id)}
+            >
+              <strong>{profile.name}</strong>
+              <span>{profile.description}</span>
+              <small>
+                {profile.rules} rules · {profile.skills} skills · {profile.mcpReferences} MCP
+              </small>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h3>Targets</h3>
+        <div className="target-list">
+          {targets.map((target) => (
+            <button
+              className={target.kind === selectedTargetKind ? "target-card selected" : "target-card"}
+              key={target.kind}
+              type="button"
+              onClick={() => setSelectedTargetKind(target.kind)}
+            >
+              <strong>{target.name}</strong>
+              <span>{target.status}</span>
+              <small>{target.fixture ? "Fixture" : "Real target"}</small>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface SyncViewProps {
+  locale: Locale;
+  plan: DeployPlan | null;
+  manifest: ManifestSummary | null;
+  profile?: ProfileSummary;
+  onConfirm: () => Promise<void>;
+}
+
+function SyncView({ locale, plan, manifest, profile, onConfirm }: SyncViewProps) {
+  return (
+    <div className="sync-layout">
+      {manifest ? (
+        <div className="manifest-banner">
+          <CheckCircle2 size={18} aria-hidden="true" />
+          <div>
+            <strong>{locale === "zh-CN" ? "dry-run manifest 已写入" : "Dry-run manifest written"}</strong>
+            <span>{locale === "zh-CN" ? "未触碰真实配置" : "No real config touched"}</span>
+          </div>
+          <code>{manifest.id}</code>
+        </div>
+      ) : null}
+      <div className="deploy-plan">
+        <div className="section-title">
+          <h3>Deploy Plan</h3>
+          <span className="status-pill">{plan?.dryRun ? "Dry-run" : "Loading"}</span>
+        </div>
+        <p className="muted-line">
+          {profile?.name ?? "macOS Dev"} → {plan?.targetKind ?? "Codex"}
+        </p>
+        <div className="operation-list">
+          {plan?.operations.map((operation) => (
+            <article key={operation.id}>
+              <div>
+                <strong>{operation.operationType}</strong>
+                <span>{operation.path}</span>
+              </div>
+              <p>{operation.reason}</p>
+              <small>
+                {operation.beforeSummary} → {operation.afterSummary}
+              </small>
+            </article>
+          ))}
+        </div>
+        <button className="primary-action" type="button" onClick={() => void onConfirm()}>
+          <CheckCircle2 size={17} aria-hidden="true" />
+          <span>{locale === "zh-CN" ? "确认 dry-run" : "Confirm dry-run"}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FoundationSummary({ locale }: { locale: Locale }) {
+  return (
+    <div className="summary-grid">
+      <article>
+        <Compass size={18} aria-hidden="true" />
+        <strong>{locale === "zh-CN" ? "北斗视觉" : "Beidou visual"}</strong>
+        <p>{locale === "zh-CN" ? "低饱和星图和鎏金节点保留品牌方向。" : "Low-saturation star maps and gold nodes preserve the brand direction."}</p>
+      </article>
+      <article>
+        <Database size={18} aria-hidden="true" />
+        <strong>{locale === "zh-CN" ? "本地数据" : "Local data"}</strong>
+        <p>{locale === "zh-CN" ? "配置集、manifest、usage 和 guard 状态优先留在本机。" : "Profiles, manifests, usage, and guard state stay local-first."}</p>
+      </article>
+      <article>
+        <ShieldCheck size={18} aria-hidden="true" />
+        <strong>{locale === "zh-CN" ? "真实写入保护" : "Real-write protection"}</strong>
+        <p>{locale === "zh-CN" ? "真实配置写入需要确认、备份、验证和 rollback 元数据。" : "Real config writes require confirmation, backup, verification, and rollback metadata."}</p>
+      </article>
     </div>
   );
 }

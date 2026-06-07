@@ -405,3 +405,132 @@ button {
   margin: 8px 0 0;
   line-height: 1.5;
 }
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 16px;
+}
+
+.workflow-grid h3,
+.section-title h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.profile-grid,
+.target-list,
+.operation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-card,
+.target-card {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-height: 96px;
+  padding: 14px;
+  text-align: left;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+  cursor: pointer;
+}
+
+.profile-card.selected,
+.target-card.selected {
+  border-color: color-mix(in srgb, var(--blue) 35%, transparent);
+  background: color-mix(in srgb, var(--blue) 9%, var(--surface));
+}
+
+.profile-card span,
+.target-card span,
+.profile-card small,
+.target-card small,
+.muted-line,
+.operation-list small,
+.manifest-banner span {
+  color: var(--muted);
+}
+
+.sync-layout {
+  display: grid;
+  gap: 14px;
+}
+
+.manifest-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--green) 30%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--green) 10%, var(--surface));
+}
+
+.manifest-banner > div {
+  display: grid;
+  gap: 4px;
+}
+
+.manifest-banner svg {
+  color: var(--green);
+}
+
+.manifest-banner code {
+  color: var(--gold);
+  font-family: "SF Mono", "Menlo", monospace;
+  font-size: 12px;
+}
+
+.deploy-plan {
+  display: grid;
+  gap: 12px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.muted-line {
+  margin: 0;
+}
+
+.operation-list article {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+}
+
+.operation-list article > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.operation-list article p {
+  margin: 8px 0;
+}
+
+.primary-action {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--blue) 70%, #000);
+  border-radius: 8px;
+  background: var(--blue);
+  cursor: pointer;
+}
