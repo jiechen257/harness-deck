@@ -75,4 +75,35 @@ describe("HarnessDeck app foundation", () => {
     expect(await screen.findByText("dry-run manifest 已写入")).toBeInTheDocument();
     expect(screen.getByText("未触碰真实配置")).toBeInTheDocument();
   });
+
+  it("shows sync governance diff conflicts drift and rollback preview", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "同步" }));
+
+    expect(await screen.findByText("Three-way Diff")).toBeInTheDocument();
+    expect(screen.getByText("Conflict Queue")).toBeInTheDocument();
+    expect(screen.getByText("Drift Detection")).toBeInTheDocument();
+    expect(screen.getByText("Rollback Preview")).toBeInTheDocument();
+    expect(screen.getByText("local target rule overlaps with profile rule scope")).toBeInTheDocument();
+    expect(screen.getByText("real write would create backup snapshot and rollback metadata before applying changes")).toBeInTheDocument();
+  });
+
+  it("discovers local targets only after explicit local read authorization", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "同步" }));
+
+    expect(screen.getByText("本地读取未授权")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "授权读取本地 target" }));
+
+    expect(await screen.findByText("Codex local target")).toBeInTheDocument();
+    expect(screen.getByText("Claude Code local target")).toBeInTheDocument();
+    expect(screen.getAllByText("raw config hidden").length).toBeGreaterThan(0);
+  });
 });

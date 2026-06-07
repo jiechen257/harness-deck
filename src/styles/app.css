@@ -420,7 +420,9 @@ button {
 
 .profile-grid,
 .target-list,
-.operation-list {
+.operation-list,
+.target-discovery-list,
+.governance-list {
   display: grid;
   gap: 10px;
 }
@@ -487,9 +489,14 @@ button {
   font-size: 12px;
 }
 
-.deploy-plan {
+.deploy-plan,
+.target-discovery-panel {
   display: grid;
   gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 70%, transparent);
 }
 
 .section-title {
@@ -510,7 +517,8 @@ button {
   background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
 }
 
-.operation-list article > div {
+.operation-list article > div,
+.target-discovery-list article > div {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -521,7 +529,30 @@ button {
   margin: 8px 0;
 }
 
-.primary-action {
+.target-discovery-list article {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--blue) 6%, var(--surface));
+}
+
+.target-discovery-list small,
+.target-discovery-list span,
+.target-discovery-list em,
+.governance-list span,
+.governance-grid small {
+  color: var(--muted);
+}
+
+.target-discovery-list em {
+  font-style: normal;
+  color: var(--gold);
+}
+
+.primary-action,
+.secondary-action {
   justify-self: start;
   display: inline-flex;
   align-items: center;
@@ -533,4 +564,42 @@ button {
   border-radius: 8px;
   background: var(--blue);
   cursor: pointer;
+}
+
+.secondary-action {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--gold) 38%, var(--line));
+  background: color-mix(in srgb, var(--gold) 11%, var(--surface));
+}
+
+.governance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.governance-grid article {
+  display: grid;
+  gap: 10px;
+  min-height: 164px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 78%, transparent);
+}
+
+.governance-grid h3 {
+  margin: 0;
+}
+
+.governance-grid p {
+  margin: 0;
+}
+
+.governance-list div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
 }

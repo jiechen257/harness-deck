@@ -1,6 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { DeployPlan, ManifestSummary, ProfileSummary, TargetKind, TargetSummary } from "./types";
+import type {
+  DeployPlan,
+  ManifestSummary,
+  ProfileSummary,
+  SyncGovernance,
+  TargetDiscoverySummary,
+  TargetKind,
+  TargetSummary,
+} from "./types";
 
 type TauriWindow = Window & { __TAURI_INTERNALS__?: unknown };
 
@@ -101,4 +109,78 @@ export async function confirmDryRunDeploy(plan: DeployPlan): Promise<ManifestSum
     dryRun: true,
     operationCount: plan.operations.length,
   }));
+}
+
+export async function discoverTargets(authorizedForLocalRead: boolean): Promise<TargetDiscoverySummary[]> {
+  return call("discover_targets", { authorizedForLocalRead }, () => {
+    if (!authorizedForLocalRead) {
+      throw new Error("local target discovery requires explicit read authorization");
+    }
+
+    return [
+      {
+        kind: "Codex",
+        name: "Codex local target",
+        discovered: false,
+        candidatePaths: ["~/.codex/AGENTS.md", "~/.codex/config.toml"],
+        schemaStatus: "target directory not found",
+        rawConfigPreview: null,
+      },
+      {
+        kind: "ClaudeCode",
+        name: "Claude Code local target",
+        discovered: false,
+        candidatePaths: ["~/.claude/CLAUDE.md", "~/.claude/settings.json"],
+        schemaStatus: "target directory not found",
+        rawConfigPreview: null,
+      },
+    ];
+  });
+}
+
+export async function getSyncGovernance(profileId: string, targetKind: TargetKind): Promise<SyncGovernance> {
+  return call("get_sync_governance", { profileId, targetKind }, () => {
+    const targetPath = targetKind === "Codex" ? "~/.codex/AGENTS.md" : "~/.claude/CLAUDE.md";
+
+    return {
+      profileId,
+      targetKind,
+      threeWayDiff: [
+        {
+          path: targetPath,
+          baseSummary: "last manifest had 2 managed rules",
+          targetSummary: "fixture target has 1 unmanaged local rule",
+          plannedSummary: "append scoped managed block and keep local override",
+          risk: "Medium",
+        },
+        {
+          path: "fixture://skills",
+          baseSummary: "1 skill reference",
+          targetSummary: "2 skill references",
+          plannedSummary: "record skill copy plan in manifest",
+          risk: "Low",
+        },
+      ],
+      conflicts: [
+        {
+          id: "conflict-local-rule-overlap",
+          path: targetPath,
+          summary: "local target rule overlaps with profile rule scope",
+          resolution: "review before real write; dry-run keeps both entries",
+          risk: "Medium",
+        },
+      ],
+      drift: {
+        detected: true,
+        count: 2,
+        summary: "target differs from last known manifest in rules and skills",
+      },
+      rollbackPreview: {
+        backupRequired: true,
+        manifestRequired: true,
+        rollbackAvailableAfterRealWrite: true,
+        summary: "real write would create backup snapshot and rollback metadata before applying changes",
+      },
+    };
+  });
 }

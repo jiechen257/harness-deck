@@ -8,6 +8,13 @@ pub struct CommandError {
 }
 
 impl CommandError {
+    pub fn authorization_required(message: impl Into<String>) -> Self {
+        Self {
+            code: "AuthorizationRequired",
+            message: message.into(),
+        }
+    }
+
     pub fn validation(message: impl Into<String>) -> Self {
         Self {
             code: "ValidationError",

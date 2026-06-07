@@ -21,8 +21,25 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { confirmDryRunDeploy, generateDeployPlan, listProfiles, listTargets } from "./lib/api";
-import type { DeployPlan, Locale, ManifestSummary, ProfileSummary, TargetKind, TargetSummary, Theme } from "./lib/types";
+import {
+  confirmDryRunDeploy,
+  discoverTargets,
+  generateDeployPlan,
+  getSyncGovernance,
+  listProfiles,
+  listTargets,
+} from "./lib/api";
+import type {
+  DeployPlan,
+  Locale,
+  ManifestSummary,
+  ProfileSummary,
+  SyncGovernance,
+  TargetDiscoverySummary,
+  TargetKind,
+  TargetSummary,
+  Theme,
+} from "./lib/types";
 
 type ViewId =
   | "home"
@@ -131,6 +148,9 @@ export function App() {
   const [selectedProfileId, setSelectedProfileId] = useState("macos-dev");
   const [selectedTargetKind, setSelectedTargetKind] = useState<TargetKind>("Codex");
   const [deployPlan, setDeployPlan] = useState<DeployPlan | null>(null);
+  const [syncGovernance, setSyncGovernance] = useState<SyncGovernance | null>(null);
+  const [targetDiscoveries, setTargetDiscoveries] = useState<TargetDiscoverySummary[]>([]);
+  const [targetReadAuthorized, setTargetReadAuthorized] = useState(false);
   const [manifest, setManifest] = useState<ManifestSummary | null>(null);
   const t = copy[locale];
 
@@ -157,7 +177,13 @@ export function App() {
     if (!selectedProfileId || !selectedTargetKind) {
       return;
     }
-    void generateDeployPlan(selectedProfileId, selectedTargetKind).then(setDeployPlan);
+    void Promise.all([
+      generateDeployPlan(selectedProfileId, selectedTargetKind),
+      getSyncGovernance(selectedProfileId, selectedTargetKind),
+    ]).then(([nextPlan, nextGovernance]) => {
+      setDeployPlan(nextPlan);
+      setSyncGovernance(nextGovernance);
+    });
   }, [selectedProfileId, selectedTargetKind]);
 
   const activeTitle = useMemo(() => {
@@ -173,6 +199,12 @@ export function App() {
     }
     const nextManifest = await confirmDryRunDeploy(deployPlan);
     setManifest(nextManifest);
+  };
+
+  const authorizeTargetRead = async () => {
+    const discoveries = await discoverTargets(true);
+    setTargetReadAuthorized(true);
+    setTargetDiscoveries(discoveries);
   };
 
   return (
@@ -329,7 +361,17 @@ export function App() {
                 setSelectedTargetKind={setSelectedTargetKind}
               />
             ) : activeView === "sync" ? (
-              <SyncView locale={locale} plan={deployPlan} manifest={manifest} onConfirm={confirmDryRun} profile={selectedProfile} />
+              <SyncView
+                locale={locale}
+                plan={deployPlan}
+                manifest={manifest}
+                onAuthorizeTargetRead={authorizeTargetRead}
+                onConfirm={confirmDryRun}
+                profile={selectedProfile}
+                syncGovernance={syncGovernance}
+                targetDiscoveries={targetDiscoveries}
+                targetReadAuthorized={targetReadAuthorized}
+              />
             ) : (
               <FoundationSummary locale={locale} />
             )}
@@ -406,10 +448,24 @@ interface SyncViewProps {
   plan: DeployPlan | null;
   manifest: ManifestSummary | null;
   profile?: ProfileSummary;
+  syncGovernance: SyncGovernance | null;
+  targetDiscoveries: TargetDiscoverySummary[];
+  targetReadAuthorized: boolean;
+  onAuthorizeTargetRead: () => Promise<void>;
   onConfirm: () => Promise<void>;
 }
 
-function SyncView({ locale, plan, manifest, profile, onConfirm }: SyncViewProps) {
+function SyncView({
+  locale,
+  plan,
+  manifest,
+  profile,
+  syncGovernance,
+  targetDiscoveries,
+  targetReadAuthorized,
+  onAuthorizeTargetRead,
+  onConfirm,
+}: SyncViewProps) {
   return (
     <div className="sync-layout">
       {manifest ? (
@@ -449,6 +505,77 @@ function SyncView({ locale, plan, manifest, profile, onConfirm }: SyncViewProps)
           <span>{locale === "zh-CN" ? "确认 dry-run" : "Confirm dry-run"}</span>
         </button>
       </div>
+      <section className="target-discovery-panel">
+        <div className="section-title">
+          <h3>{locale === "zh-CN" ? "Safe Target Integration" : "Safe Target Integration"}</h3>
+          <span className="status-pill">{targetReadAuthorized ? "Authorized" : locale === "zh-CN" ? "本地读取未授权" : "Local read not authorized"}</span>
+        </div>
+        <p className="muted-line">
+          {locale === "zh-CN"
+            ? "默认只使用 fixture target；读取 ~/.codex 或 ~/.claude 需要显式授权，并且只返回安全摘要。"
+            : "Fixture targets stay default; reading ~/.codex or ~/.claude requires explicit authorization and returns safe summaries only."}
+        </p>
+        <button className="secondary-action" type="button" onClick={() => void onAuthorizeTargetRead()}>
+          <Search size={16} aria-hidden="true" />
+          <span>{locale === "zh-CN" ? "授权读取本地 target" : "Authorize local target read"}</span>
+        </button>
+        {targetDiscoveries.length > 0 ? (
+          <div className="target-discovery-list">
+            {targetDiscoveries.map((target) => (
+              <article key={target.kind}>
+                <div>
+                  <strong>{target.name}</strong>
+                  <span>{target.discovered ? "discovered" : target.schemaStatus}</span>
+                </div>
+                <small>{target.candidatePaths.join(" · ")}</small>
+                <em>{target.rawConfigPreview ?? "raw config hidden"}</em>
+              </article>
+            ))}
+          </div>
+        ) : null}
+      </section>
+      {syncGovernance ? (
+        <section className="governance-grid" aria-label="Sync governance">
+          <article>
+            <h3>Three-way Diff</h3>
+            <div className="governance-list">
+              {syncGovernance.threeWayDiff.map((entry) => (
+                <div key={entry.path}>
+                  <strong>{entry.path}</strong>
+                  <span>{entry.baseSummary}</span>
+                  <span>{entry.targetSummary}</span>
+                  <span>{entry.plannedSummary}</span>
+                </div>
+              ))}
+            </div>
+          </article>
+          <article>
+            <h3>Conflict Queue</h3>
+            <div className="governance-list">
+              {syncGovernance.conflicts.map((conflict) => (
+                <div key={conflict.id}>
+                  <strong>{conflict.path}</strong>
+                  <span>{conflict.summary}</span>
+                  <span>{conflict.resolution}</span>
+                </div>
+              ))}
+            </div>
+          </article>
+          <article>
+            <h3>Drift Detection</h3>
+            <p>{syncGovernance.drift.summary}</p>
+            <small>{syncGovernance.drift.detected ? `${syncGovernance.drift.count} drift signals` : "no drift"}</small>
+          </article>
+          <article>
+            <h3>Rollback Preview</h3>
+            <p>{syncGovernance.rollbackPreview.summary}</p>
+            <small>
+              backup {syncGovernance.rollbackPreview.backupRequired ? "required" : "optional"} · manifest{" "}
+              {syncGovernance.rollbackPreview.manifestRequired ? "required" : "optional"}
+            </small>
+          </article>
+        </section>
+      ) : null}
     </div>
   );
 }

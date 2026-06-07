@@ -4,11 +4,13 @@ use crate::domain::adapter::TargetKind;
 use crate::domain::deploy_plan::{DeployPlan, RiskLevel};
 use crate::domain::errors::CommandError;
 use crate::domain::manifest::ManifestSummary;
+use crate::domain::sync_governance::SyncGovernance;
 use crate::services::adapter_service::plan_deploy;
 use crate::services::app_paths::paths_for_app;
 use crate::services::privacy_service::scan_profile_for_secrets;
 use crate::services::profile_service::get_fixture_profile;
 use crate::services::storage_service::{latest_manifest, write_dry_run_manifest};
+use crate::services::sync_governance_service::build_sync_governance;
 
 #[tauri::command]
 pub fn generate_deploy_plan(
@@ -47,4 +49,9 @@ pub fn confirm_dry_run_deploy(
 pub fn get_latest_manifest(app: AppHandle) -> Result<Option<ManifestSummary>, CommandError> {
     let paths = paths_for_app(&app)?;
     latest_manifest(&paths)
+}
+
+#[tauri::command]
+pub fn get_sync_governance(profile_id: String, target_kind: TargetKind) -> SyncGovernance {
+    build_sync_governance(&profile_id, target_kind)
 }

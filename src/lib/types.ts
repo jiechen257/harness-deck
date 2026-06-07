@@ -48,3 +48,50 @@ export interface ManifestSummary {
   dryRun: boolean;
   operationCount: number;
 }
+
+export interface TargetDiscoverySummary {
+  kind: TargetKind;
+  name: string;
+  discovered: boolean;
+  candidatePaths: string[];
+  schemaStatus: string;
+  rawConfigPreview: string | null;
+}
+
+export interface DiffEntry {
+  path: string;
+  baseSummary: string;
+  targetSummary: string;
+  plannedSummary: string;
+  risk: RiskLevel;
+}
+
+export interface ConflictItem {
+  id: string;
+  path: string;
+  summary: string;
+  resolution: string;
+  risk: RiskLevel;
+}
+
+export interface DriftReport {
+  detected: boolean;
+  count: number;
+  summary: string;
+}
+
+export interface RollbackPreview {
+  backupRequired: boolean;
+  manifestRequired: boolean;
+  rollbackAvailableAfterRealWrite: boolean;
+  summary: string;
+}
+
+export interface SyncGovernance {
+  profileId: string;
+  targetKind: TargetKind;
+  threeWayDiff: DiffEntry[];
+  conflicts: ConflictItem[];
+  drift: DriftReport;
+  rollbackPreview: RollbackPreview;
+}
