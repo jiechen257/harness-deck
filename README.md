@@ -2,13 +2,14 @@
 
 HarnessDeck 是一个 macOS 菜单栏应用和管理工作台，目标是帮助用户用好 harness engineering。它把社区最佳实践发现、Harness Profile 管理、Claude/Codex 同步、日常操作、用量分析和持续优化放进同一个本地优先工作流。
 
-当前仓库处于产品设计阶段，尚未包含可运行 app 代码。
+当前仓库已经包含可本地运行的 Tauri 2 + React + TypeScript + Rust macOS 桌面应用骨架和 MVP fixture 工作流。
 
 ## 当前状态
 
 - 产品设计文档：[`docs/superpowers/specs/2026-06-07-harness-deck-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-design.md)
 - 目标平台：macOS
-- 计划技术栈：Tauri 2、React、TypeScript、Rust、SQLite、macOS Keychain
+- 当前技术栈：Tauri 2、React、TypeScript、Rust
+- 预留集成：SQLite、macOS Keychain
 - 首批 agent targets：Claude Code 和 Codex
 - 界面语言：支持简体中文和英文，默认显示简体中文
 - 界面主题：支持浅色和深色，默认浅色
@@ -51,7 +52,38 @@ HarnessDeck 采用本地优先设计：
 
 ## 开发状态
 
-当前没有安装、构建或测试命令。下一步是在产品设计文档通过 review 后，生成实施计划并初始化 Tauri + React + Rust 项目结构。
+当前实现为本地优先 fixture mode。应用默认显示简体中文和浅色主题，支持英文和深色切换。主窗口包含首页、发现、配置集、同步、运行、用量、洞察、守护和设置；菜单栏面板展示当前配置集、同步状态、成本、防睡状态和快捷动作。
+
+已实现的本地闭环：
+
+- 配置集 fixture、Codex / Claude Code fixture target、deploy plan、dry-run manifest。
+- 安全 target discovery，需要显式本地读取授权，只返回安全摘要。
+- Three-way diff、conflict queue、drift detection 和 rollback preview。
+- Account Workspace、mock Keychain reference、switch-plan preview 和 audit trail。
+- Usage / cost 聚合，带 Official、LocalLog、Estimated、Missing confidence。
+- Curated registry、`find-best-skill` scoring、GitHub discovery gate。
+- 本地 insight rules、feed 和 profile impact alert。
+- Wake Control mock/system-safe 状态，实验性合盖防睡需要显式确认。
+
+仍为 mock / fixture 的能力：
+
+- 不写入真实 Claude Code 或 Codex 配置。
+- Keychain 为 interface/mock，不保存 secret value。
+- Registry / GitHub discovery 不自动远程调用。
+- Wake Control 不修改系统电源策略。
+- SQLite 持久化仍预留，当前 manifest 以本地 JSON 文件记录。
+
+常用命令：
+
+```bash
+pnpm install
+pnpm tauri:dev
+pnpm lint
+pnpm typecheck
+pnpm test
+cargo test --manifest-path src-tauri/Cargo.toml
+pnpm tauri:build
+```
 
 ---
 
@@ -59,13 +91,14 @@ HarnessDeck 采用本地优先设计：
 
 HarnessDeck is a macOS menu bar app and management workbench for using harness engineering well. It brings community practice discovery, Harness Profile management, Claude/Codex sync, daily operation, usage analysis, and continuous improvement into one local-first workflow.
 
-This repository is in the product design stage. It does not contain runnable app code yet.
+This repository now contains a locally runnable Tauri 2 + React + TypeScript + Rust macOS desktop app skeleton and MVP fixture workflow.
 
 ## Current Status
 
 - Product design document: [`docs/superpowers/specs/2026-06-07-harness-deck-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-design.md)
 - Target platform: macOS
-- Planned stack: Tauri 2, React, TypeScript, Rust, SQLite, macOS Keychain
+- Current stack: Tauri 2, React, TypeScript, Rust
+- Reserved integrations: SQLite, macOS Keychain
 - First agent targets: Claude Code and Codex
 - Interface language: Simplified Chinese and English, with Simplified Chinese as the default
 - Interface theme: light and dark, with light as the default
@@ -108,4 +141,35 @@ HarnessDeck uses a local-first design:
 
 ## Development Status
 
-There are no install, build, or test commands yet. The next step is to create an implementation plan and initialize the Tauri + React + Rust project structure after the product design document passes review.
+The current implementation runs in local-first fixture mode. The app defaults to Simplified Chinese and the light theme, with English and dark theme switching available. The main window includes Home, Discover, Profiles, Sync, Operate, Usage, Insights, Guard, and Settings. The menu bar panel shows the current profile, sync status, cost, wake state, and quick actions.
+
+Implemented local loop:
+
+- Profile fixtures, Codex / Claude Code fixture targets, deploy plan, and dry-run manifest.
+- Safe target discovery with explicit local-read authorization and summary-only output.
+- Three-way diff, conflict queue, drift detection, and rollback preview.
+- Account Workspace, mock Keychain reference, switch-plan preview, and audit trail.
+- Usage / cost aggregation with Official, LocalLog, Estimated, and Missing confidence.
+- Curated registry, `find-best-skill` scoring, and GitHub discovery gate.
+- Local insight rules, feed, and profile impact alert.
+- Wake Control mock/system-safe state, with explicit confirmation for experimental lid-awake behavior.
+
+Mock / fixture capabilities:
+
+- No real Claude Code or Codex configuration writes.
+- Keychain is interface/mock-only and does not store secret values.
+- Registry / GitHub discovery does not perform automatic remote calls.
+- Wake Control does not change system power policy.
+- SQLite persistence is reserved; manifests are currently recorded as local JSON files.
+
+Common commands:
+
+```bash
+pnpm install
+pnpm tauri:dev
+pnpm lint
+pnpm typecheck
+pnpm test
+cargo test --manifest-path src-tauri/Cargo.toml
+pnpm tauri:build
+```
