@@ -138,6 +138,20 @@ describe("HarnessDeck app foundation", () => {
     expect(screen.queryByText(/sk-/)).not.toBeInTheDocument();
   });
 
+  it("renders guard policy with privacy keychain backup and real-write protection", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "守护" }));
+
+    expect(await screen.findByText("守护策略")).toBeInTheDocument();
+    expect(screen.getByText("不上传 prompt、源码、密钥或本地配置")).toBeInTheDocument();
+    expect(screen.getByText("keychain://HarnessDeck/accounts/openai")).toBeInTheDocument();
+    expect(screen.getByText("backup required before real write")).toBeInTheDocument();
+    expect(screen.getByText("real writes blocked")).toBeInTheDocument();
+  });
+
   it("renders registry templates and find-best-skill scoring without remote discovery", async () => {
     const user = userEvent.setup();
     render(<App />);

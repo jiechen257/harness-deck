@@ -459,6 +459,8 @@ export function App() {
               <UsageView locale={locale} usageSummary={usageSummary} />
             ) : activeView === "insights" ? (
               <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} insights={insights} locale={locale} />
+            ) : activeView === "guard" ? (
+              <GuardView accountWorkspace={accountWorkspace} locale={locale} />
             ) : activeView === "settings" ? (
               <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
             ) : (
@@ -816,6 +818,39 @@ function InsightsView({
           </article>
         ))}
       </section>
+    </div>
+  );
+}
+
+function GuardView({ accountWorkspace, locale }: { accountWorkspace: AccountWorkspace | null; locale: Locale }) {
+  return (
+    <div className="guard-workbench">
+      <section className="guard-hero">
+        <div>
+          <h3>{locale === "zh-CN" ? "守护策略" : "Guard Policy"}</h3>
+          <p>{locale === "zh-CN" ? "所有真实写入保持关闭；任何破坏性动作都需要 dry-run、manifest、backup 和显式确认。" : "All real writes stay disabled; destructive actions require dry-run, manifest, backup, and explicit confirmation."}</p>
+        </div>
+        <span className="status-pill">real writes blocked</span>
+      </section>
+
+      <div className="guard-grid">
+        <article>
+          <strong>Privacy</strong>
+          <span>不上传 prompt、源码、密钥或本地配置</span>
+        </article>
+        <article>
+          <strong>Keychain</strong>
+          <code>{accountWorkspace?.keychainRef.reference ?? "keychain://HarnessDeck/accounts/openai"}</code>
+        </article>
+        <article>
+          <strong>Backup</strong>
+          <span>backup required before real write</span>
+        </article>
+        <article>
+          <strong>Manifest</strong>
+          <span>dry-run manifest required before deploy</span>
+        </article>
+      </div>
     </div>
   );
 }

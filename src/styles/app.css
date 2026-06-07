@@ -757,7 +757,8 @@ button {
 
 .registry-workbench,
 .insight-workbench,
-.wake-workbench {
+.wake-workbench,
+.guard-workbench {
   display: grid;
   gap: 14px;
 }
@@ -765,6 +766,7 @@ button {
 .registry-hero,
 .insight-hero,
 .wake-hero,
+.guard-hero,
 .skill-recommendation,
 .experimental-wake-panel {
   display: flex;
@@ -779,13 +781,15 @@ button {
 
 .registry-hero h3,
 .insight-hero h3,
-.wake-hero h3 {
+.wake-hero h3,
+.guard-hero h3 {
   margin: 0;
 }
 
 .registry-hero p,
 .insight-hero p,
 .wake-hero p,
+.guard-hero p,
 .template-grid p,
 .skill-recommendation p,
 .insight-grid p,
@@ -796,7 +800,8 @@ button {
 
 .template-grid,
 .insight-grid,
-.wake-grid {
+.wake-grid,
+.guard-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
@@ -805,6 +810,7 @@ button {
 .template-grid article,
 .insight-grid article,
 .wake-grid article,
+.guard-grid article,
 .feed-list article {
   display: grid;
   gap: 8px;
@@ -831,8 +837,16 @@ button {
 .feed-list small,
 .wake-grid span,
 .wake-grid small,
+.guard-grid span,
 .experimental-wake-panel span {
   color: var(--muted);
+}
+
+.guard-grid code {
+  color: var(--gold);
+  font-family: "SF Mono", "Menlo", monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .score-board {
