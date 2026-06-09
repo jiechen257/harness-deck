@@ -255,23 +255,21 @@ export function App() {
     return () => window.removeEventListener("keydown", handleNativeShortcut);
   }, [activeView]);
 
+  const costMetric = usageSummary?.metrics.find((m) => m.id === "cost");
+  const todayCost = costMetric ? `${costMetric.value}${costMetric.unit}` : "$0.00";
+
   if (isMenuPanelWindow) {
     return (
       <div className="panel-shell" data-theme={theme}>
         <MenuBarPanel
           healthScore={healthScore}
-          highPriorityFeed={highPriorityFeed}
+          latestHotTitle={highPriorityFeed[0]?.title ?? null}
           locale={locale}
-          manifest={manifest}
+          onCrawl={refreshData}
           onOpenWorkbench={openWorkbench}
-          onRefresh={refreshData}
-          onRunDryRun={runDryRun}
-          onSwitchProfile={() => setActiveView("settings")}
-          selectedProfileName={selectedProfileName}
-          selectedTargetKind={selectedTargetKind}
+          pendingSuggestionCount={highPriorityFeed.length}
           standalone
-          t={t}
-          usageSummary={usageSummary}
+          todayCost={todayCost}
         />
       </div>
     );

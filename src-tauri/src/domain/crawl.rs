@@ -54,6 +54,16 @@ pub struct CrawlSummary {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TargetInfo {
+    pub kind: String,
+    pub display_name: String,
+    pub available: bool,
+    pub skills_count: usize,
+    pub config_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum InstallTarget {
     ClaudeCode,
     Codex,

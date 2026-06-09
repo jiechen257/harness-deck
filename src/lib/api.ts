@@ -23,6 +23,7 @@ import type {
   RegistrySkillTemplate,
   SyncGovernance,
   TargetDiscoverySummary,
+  TargetInfo,
   TargetKind,
   TargetSummary,
   UsageSummary,
@@ -565,4 +566,11 @@ export async function installSkill(request: InstallRequest): Promise<InstallResu
     installedPath: "",
     message: "Install not available in browser mode",
   }));
+}
+
+export async function listAvailableTargets(): Promise<TargetInfo[]> {
+  return call("list_available_targets", {}, () => [
+    { kind: "ClaudeCode", displayName: "Claude Code", available: false, skillsCount: 0, configPath: null },
+    { kind: "Codex", displayName: "Codex", available: false, skillsCount: 0, configPath: null },
+  ]);
 }

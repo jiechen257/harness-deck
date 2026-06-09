@@ -381,6 +381,15 @@ export interface CrawlSummary {
   agentUsed: AgentKind | null;
 }
 
+// Target Adapter
+export interface TargetInfo {
+  kind: string;
+  displayName: string;
+  available: boolean;
+  skillsCount: number;
+  configPath: string | null;
+}
+
 // Install
 export type InstallTarget = "ClaudeCode" | "Codex";
 export type InstallAction = "CopySkill" | "AppendRule" | "AddMcpServer";

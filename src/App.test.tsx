@@ -43,9 +43,11 @@ describe("Hone app foundation", () => {
     render(<App />);
 
     expect(screen.getByTestId("menu-panel-window")).toBeInTheDocument();
-    expect(screen.getByText("菜单栏面板")).toBeInTheDocument();
-    expect(screen.getByText("当前配置集")).toBeInTheDocument();
-    expect(screen.getByText("搜索配置集、同步、账号")).toBeInTheDocument();
+    expect(screen.getByLabelText("菜单栏面板")).toBeInTheDocument();
+    expect(screen.getByText("今日热点")).toBeInTheDocument();
+    expect(screen.getByText("待处理建议")).toBeInTheDocument();
+    expect(screen.getByText("更新热榜")).toBeInTheDocument();
+    expect(screen.getByText("打开工作台")).toBeInTheDocument();
   });
 
   it("switches from the default light theme to dark", async () => {
@@ -106,7 +108,6 @@ describe("Hone app foundation", () => {
     await user.click(within(navigation).getByRole("button", { name: "洞察" }));
 
     expect(await screen.findByText("洞察与优化")).toBeInTheDocument();
-    expect(screen.getByText("高优先")).toBeInTheDocument();
     expect(screen.getByText("配置集影响")).toBeInTheDocument();
   });
 

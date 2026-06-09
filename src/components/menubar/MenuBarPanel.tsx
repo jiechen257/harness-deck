@@ -1,83 +1,37 @@
-import { BarChart3, Gauge, Layers, RotateCw, Search, ShieldCheck, Shuffle, Zap } from "lucide-react";
+import { Gauge, RefreshCw, Sparkles } from "lucide-react";
 
-import type { FeedItem, Locale, ManifestSummary, TargetKind, UsageSummary } from "../../lib/types";
+import type { Locale } from "../../lib/types";
 import { MacChrome } from "../shared/MacChrome";
 import { HarnessLogo } from "../shared/HarnessLogo";
 
 export interface MenuBarPanelProps {
   healthScore: number;
-  highPriorityFeed: FeedItem[];
+  latestHotTitle: string | null;
   locale: Locale;
-  manifest: ManifestSummary | null;
+  onCrawl: () => void;
   onOpenWorkbench: () => void;
-  onRefresh: () => void;
-  onRunDryRun: () => Promise<void>;
-  onSwitchProfile: () => void;
-  selectedProfileName: string;
-  selectedTargetKind: TargetKind;
+  pendingSuggestionCount: number;
   standalone?: boolean;
-  t: Record<string, string>;
-  usageSummary: UsageSummary | null;
+  todayCost: string;
 }
 
 export function MenuBarPanel({
   healthScore,
-  highPriorityFeed,
+  latestHotTitle,
   locale,
-  manifest,
+  onCrawl,
   onOpenWorkbench,
-  onRefresh,
-  onRunDryRun,
-  onSwitchProfile,
-  selectedProfileName,
-  selectedTargetKind,
+  pendingSuggestionCount,
   standalone = false,
-  t,
-  usageSummary,
+  todayCost,
 }: MenuBarPanelProps) {
-  const costMetric = usageSummary?.metrics.find((item) => item.id === "cost");
-  const syncValue = manifest ? (locale === "zh-CN" ? "manifest 已写入" : "manifest written") : "93%";
-  const burnMetric = usageSummary ? `$${usageSummary.burnRateUsdPerHour.toFixed(2)}/h` : "$0.82/h";
-  const feedTitle = highPriorityFeed[0]?.title ?? (locale === "zh-CN" ? "暂无高优先事项" : "No high-priority items");
-  const panelMetrics = [
-    {
-      icon: Layers,
-      label: t.currentProfile,
-      value: selectedProfileName,
-      meta: `${selectedTargetKind} target`,
-      tone: "blue",
-    },
-    {
-      icon: Shuffle,
-      label: t.syncStatus,
-      value: syncValue,
-      meta: manifest?.id ?? (locale === "zh-CN" ? "manifest 待生成" : "manifest pending"),
-      tone: "green",
-    },
-    {
-      icon: BarChart3,
-      label: t.cost,
-      value: costMetric ? `${costMetric.value}${costMetric.unit}` : "$4.82",
-      meta: burnMetric,
-      tone: "gold",
-    },
-    {
-      icon: Zap,
-      label: t.wake,
-      value: t.awakeStandard,
-      meta: "mock/system-safe",
-      tone: "gold",
-    },
-  ];
-  const focusMeta = locale === "zh-CN" ? "来自本地 feed，只显示摘要" : "Local feed summary only";
-
   return (
     <aside
-      aria-label={t.menuPanel}
+      aria-label={locale === "zh-CN" ? "菜单栏面板" : "Menu Bar Panel"}
       className={standalone ? "menu-status-panel standalone" : "menu-status-panel"}
       data-testid={standalone ? "menu-panel-window" : undefined}
     >
-      <MacChrome compact={standalone} status={standalone ? "Pinned" : "Live"} title={t.menuPanel} />
+      <MacChrome compact={standalone} status={standalone ? "Pinned" : "Live"} title={locale === "zh-CN" ? "Hone" : "Hone"} />
 
       <div className="panel-health">
         <div className="panel-score">
@@ -85,75 +39,47 @@ export function MenuBarPanel({
           <strong>{healthScore}</strong>
         </div>
         <div>
-          <span>{t.nativeHealthLabel}</span>
-          <p>{t.nativePressure}</p>
+          <span>{locale === "zh-CN" ? "工作台健康度" : "Workbench health"}</span>
+          <p>{locale === "zh-CN" ? "本地优先就绪" : "Local-first ready"}</p>
         </div>
       </div>
 
-      <div className="mini-chips">
-        <span>{t.localFirst}</span>
-        <span>{t.fixture}</span>
-        <span>Keychain</span>
-        <span>{t.phaseZero}</span>
-      </div>
-
-      <button className="panel-search" type="button">
-        <Search size={16} aria-hidden="true" />
-        <span>{t.searchPlaceholder}</span>
-        <kbd>⌘K</kbd>
-      </button>
-
-      <div className="panel-status-list">
-        {panelMetrics.map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <article className={`panel-status-row ${metric.tone}`} key={metric.label}>
-              <span>
-                <Icon size={15} aria-hidden="true" />
-                {metric.label}
-              </span>
-              <strong>{metric.value}</strong>
-              <small>{metric.meta}</small>
-            </article>
-          );
-        })}
-      </div>
-
-      <div className="panel-actions" aria-label={t.quickActions}>
-        <button type="button" onClick={onOpenWorkbench}>
-          <Gauge size={16} aria-hidden="true" />
-          <span>{t.openWorkbench}</span>
-        </button>
-        <button type="button" onClick={() => void onRunDryRun()}>
-          <Zap size={16} aria-hidden="true" />
-          <span>{t.dryRun}</span>
-        </button>
-        <button type="button" onClick={onSwitchProfile}>
-          <Layers size={16} aria-hidden="true" />
-          <span>{t.switchProfile}</span>
-        </button>
-        <button type="button" onClick={onRefresh}>
-          <RotateCw size={16} aria-hidden="true" />
-          <span>{t.refresh}</span>
-        </button>
-      </div>
-
-      <section className="panel-safety-strip">
-        <div>
-          <span>{locale === "zh-CN" ? "安全边界" : "Safety boundary"}</span>
-          <strong>{locale === "zh-CN" ? "真实写入关闭" : "Real writes blocked"}</strong>
-        </div>
-        <ShieldCheck size={24} aria-hidden="true" />
-      </section>
-
+      {/* Today's hot topic */}
       <section className="panel-focus-card">
         <div className="table-title">
-          <span>{locale === "zh-CN" ? "下一步" : "Next"}</span>
-          <strong>{highPriorityFeed.length || 1}</strong>
+          <span>{locale === "zh-CN" ? "今日热点" : "Today's Hot"}</span>
         </div>
-        <strong>{feedTitle}</strong>
-        <p>{focusMeta}</p>
+        <strong>{latestHotTitle ?? (locale === "zh-CN" ? "点击下方更新热榜" : "Click below to update feed")}</strong>
       </section>
+
+      {/* Key metrics */}
+      <div className="panel-status-list">
+        <article className="panel-status-row teal">
+          <span>
+            <Sparkles size={15} aria-hidden="true" />
+            {locale === "zh-CN" ? "待处理建议" : "Pending Suggestions"}
+          </span>
+          <strong>{pendingSuggestionCount}</strong>
+          <small>{locale === "zh-CN" ? "来自洞察分析" : "from insights"}</small>
+        </article>
+        <article className="panel-status-row gold">
+          <span>{locale === "zh-CN" ? "今日成本" : "Today's Cost"}</span>
+          <strong>{todayCost}</strong>
+          <small>{locale === "zh-CN" ? "估算" : "estimated"}</small>
+        </article>
+      </div>
+
+      {/* Quick actions */}
+      <div className="panel-actions" aria-label={locale === "zh-CN" ? "快捷动作" : "Quick Actions"}>
+        <button type="button" onClick={onCrawl}>
+          <RefreshCw size={16} aria-hidden="true" />
+          <span>{locale === "zh-CN" ? "更新热榜" : "Update Feed"}</span>
+        </button>
+        <button type="button" onClick={onOpenWorkbench}>
+          <Gauge size={16} aria-hidden="true" />
+          <span>{locale === "zh-CN" ? "打开工作台" : "Open Workbench"}</span>
+        </button>
+      </div>
     </aside>
   );
 }

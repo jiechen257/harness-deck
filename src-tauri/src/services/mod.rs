@@ -10,6 +10,7 @@ pub mod profile_service;
 pub mod registry_service;
 pub mod storage_service;
 pub mod sync_governance_service;
+pub mod target_adapter;
 pub mod target_integration_service;
 pub mod usage_service;
 pub mod wake_service;

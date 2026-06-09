@@ -13,6 +13,8 @@ mod phase2_3_tests;
 mod phase4_5_tests;
 #[cfg(test)]
 mod phase6_8_tests;
+#[cfg(test)]
+mod target_adapter_tests;
 
 use tauri::menu::{Menu, MenuBuilder, MenuItem, SubmenuBuilder};
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
@@ -147,6 +149,7 @@ pub fn run() {
       commands::crawl_commands::crawl_all_sources,
       commands::crawl_commands::rank_crawl_results,
       commands::crawl_commands::install_skill_command,
+      commands::crawl_commands::list_available_targets,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
