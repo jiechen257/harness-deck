@@ -19,11 +19,13 @@ describe("HarnessDeck app foundation", () => {
     expect(screen.queryByRole("navigation", { name: "Brand navigation" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("菜单栏面板")).not.toBeInTheDocument();
 
-    expect(screen.getByText("HarnessDeck 工作台")).toBeInTheDocument();
+    expect(screen.getByText("HarnessDeck 控制台")).toBeInTheDocument();
+    expect(screen.getByText("产品工作流队列")).toBeInTheDocument();
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
-    for (const label of ["首页", "发现", "配置集", "同步", "运行", "用量", "洞察", "守护", "设置"]) {
+    for (const label of ["首页", "配置", "同步", "运行", "洞察"]) {
       expect(within(navigation).getByRole("button", { name: label })).toBeInTheDocument();
     }
+    expect(within(navigation).queryByRole("button", { name: "设置" })).not.toBeInTheDocument();
   });
 
   it("switches fixed UI copy to English", async () => {
@@ -32,10 +34,11 @@ describe("HarnessDeck app foundation", () => {
 
     await user.click(screen.getByRole("button", { name: "English" }));
 
-    expect(screen.getByText("HarnessDeck Workbench")).toBeInTheDocument();
+    expect(screen.getByText("HarnessDeck Console")).toBeInTheDocument();
+    expect(screen.getByText("Product workflow queue")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "HarnessDeck Command Center" })).not.toBeInTheDocument();
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
-    expect(within(navigation).getByRole("button", { name: "Profiles" })).toBeInTheDocument();
+    expect(within(navigation).getByRole("button", { name: "Configure" })).toBeInTheDocument();
     expect(screen.queryByText("Menu Bar Panel")).not.toBeInTheDocument();
   });
 
@@ -75,7 +78,7 @@ describe("HarnessDeck app foundation", () => {
     fireEvent.keyDown(window, { key: ",", metaKey: true });
     expect(await screen.findByText("Account Workspace")).toBeInTheDocument();
 
-    fireEvent.keyDown(window, { key: "4", metaKey: true });
+    fireEvent.keyDown(window, { key: "3", metaKey: true });
     expect(await screen.findByText("Deploy Plan")).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "Escape" });
@@ -91,7 +94,7 @@ describe("HarnessDeck app foundation", () => {
     render(<App />);
 
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
-    await user.click(within(navigation).getByRole("button", { name: "配置集" }));
+    await user.click(within(navigation).getByRole("button", { name: "配置" }));
 
     expect(await screen.findByRole("button", { name: /macOS Dev 配置集/ })).toBeInTheDocument();
     expect(screen.getByText("Codex fixture")).toBeInTheDocument();
@@ -150,7 +153,8 @@ describe("HarnessDeck app foundation", () => {
     render(<App />);
 
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
-    await user.click(within(navigation).getByRole("button", { name: "用量" }));
+    await user.click(within(navigation).getByRole("button", { name: "洞察" }));
+    await user.click(await screen.findByRole("button", { name: "用量" }));
 
     expect(await screen.findByText("用量与成本")).toBeInTheDocument();
     expect(screen.getByText("$4.82")).toBeInTheDocument();
@@ -165,7 +169,8 @@ describe("HarnessDeck app foundation", () => {
     render(<App />);
 
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
-    await user.click(within(navigation).getByRole("button", { name: "设置" }));
+    await user.click(within(navigation).getByRole("button", { name: "配置" }));
+    await user.click(await screen.findByRole("button", { name: "设置" }));
 
     expect(await screen.findByText("Account Workspace")).toBeInTheDocument();
     expect(screen.getByText("OpenAI")).toBeInTheDocument();
@@ -181,7 +186,8 @@ describe("HarnessDeck app foundation", () => {
     render(<App />);
 
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
-    await user.click(within(navigation).getByRole("button", { name: "守护" }));
+    await user.click(within(navigation).getByRole("button", { name: "同步" }));
+    await user.click(await screen.findByRole("button", { name: "守护" }));
 
     expect(await screen.findByText("守护策略")).toBeInTheDocument();
     expect(screen.getByText("不上传 prompt、源码、密钥或本地配置")).toBeInTheDocument();
@@ -195,7 +201,8 @@ describe("HarnessDeck app foundation", () => {
     render(<App />);
 
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
-    await user.click(within(navigation).getByRole("button", { name: "发现" }));
+    await user.click(within(navigation).getByRole("button", { name: "配置" }));
+    await user.click(await screen.findByRole("button", { name: "发现" }));
 
     expect(await screen.findByText("Registry 与 find-best-skill")).toBeInTheDocument();
     expect(screen.getByText("Tauri Desktop Guardrails")).toBeInTheDocument();

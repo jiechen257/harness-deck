@@ -663,7 +663,7 @@
         animation: signalPulse 4.8s ease-in-out infinite;
       }
 
-      .beidou-stage {
+      .hero-stage {
         position: relative;
         display: grid;
         place-items: center;
@@ -672,7 +672,7 @@
         min-height: 516px;
       }
 
-      .beidou-art {
+      .hero-art {
         position: relative;
         width: min(84%, 560px);
         padding: 18px;
@@ -684,7 +684,7 @@
           inset 0 0 0 1px rgba(255, 255, 255, 0.62);
       }
 
-      .beidou-art::after {
+      .hero-art::after {
         position: absolute;
         inset: 12% 14%;
         content: "";
@@ -695,7 +695,7 @@
         pointer-events: none;
       }
 
-      .beidou-logo {
+      .hero-logo {
         display: block;
         width: 100%;
         height: auto;
@@ -825,13 +825,13 @@
           linear-gradient(155deg, #020815 0%, #061529 44%, #082443 100%);
       }
 
-      html[data-theme="dark"] .beidou-art {
+      html[data-theme="dark"] .hero-art {
         width: min(96%, 760px);
         background: rgba(3, 9, 20, 0.42);
         box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
       }
 
-      html[data-theme="dark"] .beidou-logo {
+      html[data-theme="dark"] .hero-logo {
         opacity: 1;
         filter: drop-shadow(0 22px 40px rgba(0, 0, 0, 0.42));
       }
@@ -1130,7 +1130,7 @@
           padding: 10px;
         }
 
-        .beidou-stage {
+        .hero-stage {
           min-height: 360px;
         }
       }
@@ -1157,8 +1157,8 @@
       <section class="constellation-band" aria-label="Brand navigation">
         <button class="constellation-title" data-view="home" aria-label="打开首页">
           <img src="../../image/ChatGPT Image 2026年6月7日 17_40_47 (8).png" alt="" />
-          <span id="beidouTitle">HarnessDeck</span>
-          <small id="beidouSub">本地优先的配置集、同步与守护</small>
+          <span id="heroTitle">HarnessDeck</span>
+          <small id="heroSub">本地优先的配置集、同步与守护</small>
         </button>
         <div class="star-map">
           <button class="star-node" data-view="discover"><i data-lucide="sparkles"></i><span id="tabDiscover">发现</span></button>
@@ -1318,8 +1318,8 @@
         zh: {
           appTitle: "HarnessDeck 命令中心",
           appSubtitle: "本地 Harness 工作台",
-          beidouTitle: "HarnessDeck",
-          beidouSub: "本地优先的配置集、同步与守护",
+          heroTitle: "HarnessDeck",
+          heroSub: "本地优先的配置集、同步与守护",
           stageTabs: ["发现", "配置集", "同步", "运行", "用量", "洞察", "守护"],
           switchLang: "English",
           themeToDark: "深色",
@@ -1373,8 +1373,8 @@
         en: {
           appTitle: "HarnessDeck Command Deck",
           appSubtitle: "Local harness workbench",
-          beidouTitle: "HarnessDeck",
-          beidouSub: "Local-first profiles, sync and guardrails",
+          heroTitle: "HarnessDeck",
+          heroSub: "Local-first profiles, sync and guardrails",
           stageTabs: ["Discover", "Profiles", "Sync", "Operate", "Usage", "Insights", "Guard"],
           switchLang: "中文",
           themeToDark: "Dark",
@@ -1490,7 +1490,7 @@
         const zh = state.lang === "zh";
         const stageItems = stages[state.lang];
         const cards = stageItems.map((stage) => `<button class="stage-card" data-view="${stage.view}"><img class="module-logo" src="${stage.logo}" alt="" /><span><strong>${stage.name}</strong><small>${stage.desc}</small></span><span class="pill">${stage.status}</span></button>`).join("");
-        return `<div class="home-layout"><div class="surface home-hero"><div class="beidou-stage"><div class="beidou-art"><img class="beidou-logo" src="../../image-text/ChatGPT Image 2026年6月7日 17_41_18 (8).png" alt="${zh ? "北斗品牌图形" : "Beidou brand mark"}" /></div></div></div><div class="surface"><div class="surface-head">${zh ? "模块预览" : "Module previews"} <span class="pill ok">${zh ? "本地优先" : "Local-first"}</span></div><div class="stage-overview">${cards}</div></div></div>`;
+        return `<div class="home-layout"><div class="surface home-hero"><div class="hero-stage"><div class="hero-art"><img class="hero-logo" src="../../image-text/ChatGPT Image 2026年6月7日 17_41_18 (8).png" alt="${zh ? "品牌图形" : "Brand mark"}" /></div></div></div><div class="surface"><div class="surface-head">${zh ? "模块预览" : "Module previews"} <span class="pill ok">${zh ? "本地优先" : "Local-first"}</span></div><div class="stage-overview">${cards}</div></div></div>`;
       }
 
       function discoverBody() {
@@ -1575,8 +1575,8 @@
         const ids = {
           appTitle: t("appTitle"),
           appSubtitle: t("appSubtitle"),
-          beidouTitle: t("beidouTitle"),
-          beidouSub: t("beidouSub"),
+          heroTitle: t("heroTitle"),
+          heroSub: t("heroSub"),
           languageToggleLabel: t("switchLang"),
           themeToggleLabel: state.theme === "light" ? t("themeToDark") : t("themeToLight"),
           topCommandLabel: t("command"),

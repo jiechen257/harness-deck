@@ -18,7 +18,7 @@ This repository contains a locally runnable Tauri 2 + React + TypeScript + Rust 
 - First agent targets: Claude Code and Codex
 - Interface language: Simplified Chinese and English, with Simplified Chinese as the default
 - Interface theme: light and dark, with light as the default
-- Brand direction: Beidou navigation as visual language, with engineering-oriented feature names
+- Brand direction: engineering instrument aesthetic, with engineering-oriented feature names
 
 ## Product Loop
 
@@ -58,7 +58,7 @@ HarnessDeck uses a local-first design:
 
 ## Development Status
 
-The current implementation runs in local-first fixture mode. The app defaults to Simplified Chinese and the light theme, with English and dark theme switching available. The main window now follows the command deck prototype with a top command bar, Beidou brand status band, menu bar panel, and macOS-style workbench window. The workbench includes Home, Discover, Profiles, Sync, Operate, Usage, Insights, Guard, and Settings. A standalone Tauri menu bar panel renders through `index.html?panel=1` and shows the current profile, sync health, cost, wake state, and quick actions. The UI has also been adjusted against the native-feel audit with system typography, default cursors, platform focus rings, pressed states, WebKit context-menu suppression, and macOS-style shortcuts.
+The current implementation runs in local-first fixture mode. The app defaults to Simplified Chinese and the light theme, with English and dark theme switching available. The main window follows the command deck prototype with a top command bar, brand status band, menu bar panel, and macOS-style workbench window. The workbench includes Home, Discover, Profiles, Sync, Operate, Usage, Insights, Guard, and Settings. A standalone Tauri menu bar panel renders through `index.html?panel=1` and shows the current profile, sync health, cost, wake state, and quick actions. The UI has also been adjusted against the native-feel audit with system typography, default cursors, platform focus rings, pressed states, WebKit context-menu suppression, and macOS-style shortcuts.
 
 Implemented local loop:
 

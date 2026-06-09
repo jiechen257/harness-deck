@@ -1,109 +1,109 @@
-# HarnessDeck implementation plan
+# HarnessDeck 实现计划
 
-## Phase 0: Environment and Foundation
+## Phase 0：环境与基础
 
-- Install local project Tauri CLI dependency after creating package metadata.
-- Re-run version checks for macOS, Xcode, Node, pnpm, Rust, Cargo, rustup, and Tauri CLI.
-- Record environment results in project documentation.
-- Verify `pnpm tauri --version`.
-- Commit Phase 0.
+- 创建 package 元数据后安装本地项目 Tauri CLI 依赖。
+- 重新检查 macOS、Xcode、Node、pnpm、Rust、Cargo、rustup 和 Tauri CLI 版本。
+- 将环境结果记录到项目文档中。
+- 验证 `pnpm tauri --version`。
+- 提交 Phase 0。
 
-## Implementation-Design Phase 0: Project Foundation
+## 实现设计 Phase 0：项目基础
 
-- Add `package.json`, pnpm lockfile, Vite/React/TypeScript config, and Tauri config.
-- Add `src/` React app with Home, Discover, Profiles, Sync, Operate, Usage, Insights, Guard, and Settings.
-- Add menu bar panel surface inside the main UI and Tauri tray/menu configuration where feasible.
-- Implement default Chinese locale, English toggle, default light theme, and dark toggle.
-- Recreate core visual direction from the HTML prototype with real components and CSS tokens.
-- Verify lint, typecheck, frontend tests, and Tauri dev/build as far as the local environment allows.
-- Commit Phase 1.
+- 添加 `package.json`、pnpm lockfile、Vite/React/TypeScript 配置和 Tauri 配置。
+- 添加 `src/` React 应用，包含首页、发现、配置集、同步、运营、用量、洞察、防护和设置。
+- 在主 UI 中添加菜单栏面板，并在可行范围内配置 Tauri 托盘/菜单。
+- 实现默认中文语言、英文切换、默认浅色主题和深色切换。
+- 基于 HTML 原型用真实组件和 CSS token 重建核心视觉方向。
+- 验证 lint、typecheck、前端测试，以及本地环境允许范围内的 Tauri dev/build。
+- 提交 Phase 1。
 
-## Implementation-Design Phase 1: Local Core Loop
+## 实现设计 Phase 1：本地核心循环
 
-- Add Rust domain models for profiles, targets, deploy plans, manifests, usage, and guard policy.
-- Add fixtures for sample profiles and Codex/Claude Code targets.
-- Add Rust services for profile listing, target listing, secret scanning, deploy plan generation, app paths, and manifest storage.
-- Add Rust unit tests for profile validation, secret scanning, deploy plan generation, and manifest write/read.
-- Expose typed Tauri commands.
-- Wire frontend API calls to Tauri commands for profile list, target list, deploy plan, dry-run confirm, and latest manifest.
-- Show latest dry-run status in workbench and menu bar panel.
-- Commit implementation-design Phase 1.
+- 添加 Rust 领域模型：配置集、目标、部署计划、清单、用量和防护策略。
+- 添加示例配置集和 Codex/Claude Code 目标的 fixture。
+- 添加 Rust 服务：配置集列表、目标列表、密钥扫描、部署计划生成、应用路径和清单存储。
+- 添加 Rust 单元测试：配置集验证、密钥扫描、部署计划生成和清单读写。
+- 暴露类型化的 Tauri 命令。
+- 将前端 API 调用对接到 Tauri 命令：配置集列表、目标列表、部署计划、dry-run 确认和最新清单。
+- 在工作台和菜单栏面板中展示最新的 dry-run 状态。
+- 提交实现设计 Phase 1。
 
-## Implementation-Design Phase 2: Safe Target Integration
+## 实现设计 Phase 2：安全目标集成
 
-- Add opt-in local-read authorization model for target discovery.
-- Implement Claude Code and Codex discovery/read/validate services that return safe summaries.
-- Keep real writes unavailable unless backup, preview, confirm, manifest, verification, and rollback metadata are present.
-- Add tests proving fixture mode is default and real target read requires authorization.
+- 添加 opt-in 本地读取授权模型用于目标发现。
+- 实现 Claude Code 和 Codex 发现/读取/验证服务，返回安全摘要。
+- 在缺少备份、预览、确认、清单、验证和回滚元数据时保持真实写入不可用。
+- 添加测试证明 fixture 模式为默认，且真实目标读取需要授权。
 
-## Implementation-Design Phase 3: Sync Governance
+## 实现设计 Phase 3：同步治理
 
-- Implement three-way diff data model.
-- Implement conflict queue, drift detection, rollback preview, and backup metadata.
-- Show deploy plan/diff/conflict/rollback state in Sync.
-- Add tests for drift and conflict calculations.
-- Commit implementation-design Phases 2 and 3.
+- 实现三方 diff 数据模型。
+- 实现冲突队列、漂移检测、回滚预览和备份元数据。
+- 在同步视图中展示部署计划/diff/冲突/回滚状态。
+- 添加漂移和冲突计算的测试。
+- 提交实现设计 Phase 2 和 Phase 3。
 
-## Implementation-Design Phase 4: Account Workspace
+## 实现设计 Phase 4：账户工作区
 
-- Add account workspace model for provider, base URL, default model, budget, limits, and Keychain reference.
-- Add mock Keychain/reference service and audit trail entries.
-- Show account settings and switch-plan preview in UI.
-- Add tests for secret reference handling without storing secret values.
+- 添加账户工作区模型：提供商、Base URL、默认模型、预算、限额和 Keychain 引用。
+- 添加 mock Keychain/引用服务和审计轨迹条目。
+- 在 UI 中展示账户设置和切换计划预览。
+- 添加密钥引用处理的测试（不存储密钥值）。
 
-## Implementation-Design Phase 5: Usage And Cost
+## 实现设计 Phase 5：用量与费用
 
-- Add usage model with official, local-log, estimated, and missing confidence.
-- Implement local aggregation fixtures for tokens, cost, duration, drift, and burn rate.
-- Show source confidence labels in Usage and menu panel.
-- Add tests for confidence labeling and aggregation.
-- Commit implementation-design Phases 4 and 5.
+- 添加用量模型，含官方、本地日志、估算和缺失四种置信度。
+- 实现本地聚合 fixture：token 数、费用、时长、漂移和消耗速率。
+- 在用量视图和菜单面板中展示来源置信度标签。
+- 添加置信度标注和聚合的测试。
+- 提交实现设计 Phase 4 和 Phase 5。
 
-## Implementation-Design Phase 6: Registry And find-best-skill
+## 实现设计 Phase 6：注册中心与 find-best-skill
 
-- Add curated local registry fixtures.
-- Implement `find-best-skill` scoring by task match, quality, community signal, personal feedback, and safety risk.
-- Add optional GitHub discovery UI gate without automatic remote calls.
-- Add tests for scoring and safety risk display.
+- 添加策展的本地注册中心 fixture。
+- 实现 `find-best-skill` 评分：任务匹配度、质量、社区信号、个人反馈和安全风险。
+- 添加可选的 GitHub 发现 UI 管控（不自动发起远程调用）。
+- 添加评分和安全风险展示的测试。
 
-## Implementation-Design Phase 7: Insights And Feed
+## 实现设计 Phase 7：洞察与 Feed
 
-- Add local-rule insight engine for token anomalies, repeated failures, profile drift, and update impact.
-- Add feed model for official, community, registry, and profile impact alerts.
-- Show profile-related high-priority feed items in menu panel and full feed in workbench.
-- Add tests for local insight rules.
+- 添加本地规则洞察引擎：token 异常、重复失败、配置集漂移和更新影响。
+- 添加 Feed 模型：官方、社区、注册中心和配置集影响警报。
+- 在菜单面板中展示配置集相关的高优先级 Feed 条目，在工作台中展示完整 Feed。
+- 添加本地洞察规则的测试。
 
-## Implementation-Design Phase 8: Wake Control
+## 实现设计 Phase 8：唤醒控制
 
-- Add wake session model for standard awake, timed awake, display sleep, and experimental lid-awake state.
-- Use mock/system-safe implementation for controls that cannot be safely changed in this phase.
-- Require explicit confirmation for experimental lid-awake state.
-- Show wake state and quick actions in Operate and menu panel.
-- Add tests for confirmation gates.
-- Commit implementation-design Phases 6, 7, and 8.
+- 添加唤醒会话模型：标准唤醒、定时唤醒、显示器睡眠和实验性合盖唤醒状态。
+- 对无法在此阶段安全变更的控制使用 mock/system-safe 实现。
+- 实验性合盖唤醒需要显式确认。
+- 在运营视图和菜单面板中展示唤醒状态和快捷操作。
+- 添加确认管控的测试。
+- 提交实现设计 Phase 6、7 和 8。
 
-## Safety Boundaries
+## 安全边界
 
-- Ensure fixture mode is default and visible.
-- Ensure real writes are blocked in command surface.
-- Ensure no secrets are hardcoded.
-- Ensure Keychain is interface/mock only.
-- Ensure destructive operations require future dry-run, manifest, and backup.
-- Add tests for blocked real write behavior and secret detection.
-- Commit safety audit if changes are needed after the implementation-design phase commits.
+- 确保 fixture 模式默认启用且可见。
+- 确保真实写入在命令层面被阻止。
+- 确保无硬编码密钥。
+- 确保 Keychain 仅为接口/mock。
+- 确保破坏性操作需要未来的 dry-run、清单和备份。
+- 添加真实写入阻止行为和密钥检测的测试。
+- 如实现设计阶段提交后仍需变更，则提交安全审计。
 
-## Verification and Delivery
+## 验证与交付
 
-- Run `pnpm lint`.
-- Run `pnpm typecheck`.
-- Run `pnpm test`.
-- Run `cargo test --manifest-path src-tauri/Cargo.toml`.
-- Run `pnpm tauri build`.
-- Start the app with `pnpm tauri dev` or a project run script and verify launch state.
-- Summarize environment, installed dependencies, launch command, test command, build command, implemented features, mock features, and next recommendations.
-- Commit final delivery updates if files changed.
+- 运行 `pnpm lint`。
+- 运行 `pnpm typecheck`。
+- 运行 `pnpm test`。
+- 运行 `cargo test --manifest-path src-tauri/Cargo.toml`。
+- 运行 `pnpm tauri build`。
+- 使用 `pnpm tauri dev` 或项目运行脚本启动应用并验证启动状态。
+- 总结环境、已安装依赖、启动命令、测试命令、构建命令、已实现功能、mock 功能和后续建议。
+- 如有文件变更则提交最终交付更新。
 
-## Known Verification Commands
+## 已知验证命令
 
 ```bash
 pnpm lint
@@ -114,9 +114,9 @@ pnpm tauri build
 pnpm tauri dev
 ```
 
-## Guardrails
+## 护栏
 
-- Do not run `git push`.
-- Do not install system dependencies with sudo, brew, or shell profile edits.
-- Do not write real Claude/Codex configuration.
-- Do not upload prompts, source code, secrets, or local config.
+- 不执行 `git push`。
+- 不使用 sudo、brew 或 shell 配置编辑安装系统依赖。
+- 不写入真实 Claude/Codex 配置。
+- 不上传提示词、源代码、密钥或本地配置。

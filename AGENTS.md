@@ -6,7 +6,7 @@
 
 - 当前仓库已经进入可运行实现阶段。
 - 当前已有 Tauri 2 + React + TypeScript + Rust macOS 桌面应用、package 配置、测试和构建命令。
-- 当前主窗口对齐 command deck 原型，包含顶部命令栏、北斗品牌状态带、菜单栏面板和 macOS 窗口化工作台。
+- 当前主窗口对齐 command deck 原型，包含顶部命令栏、品牌状态带、菜单栏面板和 macOS 窗口化工作台。
 - 当前 Tauri 配置包含 `main` 管理窗口和 `menubar` 菜单栏面板窗口；`menubar` 通过 `index.html?panel=1` 渲染。
 - 当前默认仍为 fixture / mock mode，不直接写入真实 Claude Code、Codex 或系统电源配置。
 - 当前设计与实现来源：
@@ -45,7 +45,7 @@ MVP 必须保留完整闭环：
 ## UI/UX 约定
 
 - 复杂 UI 改动优先对齐 `docs/product-design/harnessdeck-command-deck-prototype.html`。
-- 北斗七星只作为品牌视觉语言，不进入信息架构，不使用天枢、天璇、瑶光等星名作为功能名。
+- 不使用星宿名（天枢、天璇、瑶光等）作为功能名，功能命名保持工程语义。
 - 中文界面中 `Profiles` 统一使用“配置集”。
 - 浅色主题使用浅金白底、低饱和星图、深蓝/鎏金点缀。
 - 深色主题使用玄夜蓝、鎏金星图风格。
@@ -101,3 +101,25 @@ pnpm tauri:build
 ```
 
 前端或桌面 UI 改动需要在可行时启动 `pnpm tauri:dev`，并用浏览器、Computer Use 或 macOS 桌面观察验证主窗口与菜单栏面板。
+
+<!-- TRELLIS:START -->
+# Trellis Instructions
+
+These instructions are for AI assistants working in this project.
+
+This project is managed by Trellis. The working knowledge you need lives under `.trellis/`:
+
+- `.trellis/workflow.md` — development phases, when to create tasks, skill routing
+- `.trellis/spec/` — package- and layer-scoped coding guidelines (read before writing code in a given layer)
+- `.trellis/workspace/` — per-developer journals and session traces
+- `.trellis/tasks/` — active and archived tasks (PRDs, research, jsonl context)
+
+If a Trellis command is available on your platform (e.g. `/trellis:finish-work`, `/trellis:continue`), prefer it over manual steps. Not every platform exposes every command.
+
+If you're using Codex or another agent-capable tool, additional project-scoped helpers may live in:
+- `.agents/skills/` — reusable Trellis skills
+- `.codex/agents/` — optional custom subagents
+
+Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
+
+<!-- TRELLIS:END -->

@@ -1,8 +1,8 @@
 import {
   BarChart3,
+  Cable,
   CheckCircle2,
-  Compass,
-  Database,
+  Command,
   Gauge,
   Home,
   Languages,
@@ -10,7 +10,6 @@ import {
   Moon,
   RotateCw,
   Search,
-  Settings,
   ShieldCheck,
   Shuffle,
   Sparkles,
@@ -18,7 +17,7 @@ import {
   TerminalSquare,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   confirmDryRunDeploy,
@@ -72,26 +71,44 @@ type ViewId =
 interface NavItem {
   id: ViewId;
   icon: typeof Home;
+  matches?: ViewId[];
   zh: string;
   en: string;
 }
 
 const navItems: NavItem[] = [
   { id: "home", icon: Home, zh: "首页", en: "Home" },
-  { id: "discover", icon: Search, zh: "发现", en: "Discover" },
-  { id: "profiles", icon: Layers, zh: "配置集", en: "Profiles" },
-  { id: "sync", icon: Shuffle, zh: "同步", en: "Sync" },
+  { id: "profiles", icon: Layers, matches: ["discover", "settings"], zh: "配置", en: "Configure" },
+  { id: "sync", icon: Shuffle, matches: ["guard"], zh: "同步", en: "Sync" },
   { id: "operate", icon: TerminalSquare, zh: "运行", en: "Operate" },
-  { id: "usage", icon: BarChart3, zh: "用量", en: "Usage" },
-  { id: "insights", icon: Sparkles, zh: "洞察", en: "Insights" },
-  { id: "guard", icon: ShieldCheck, zh: "守护", en: "Guard" },
-  { id: "settings", icon: Settings, zh: "设置", en: "Settings" },
+  { id: "insights", icon: Sparkles, matches: ["usage"], zh: "洞察", en: "Insights" },
 ];
+
+const viewLabels: Record<ViewId, { zh: string; en: string }> = {
+  home: { zh: "首页", en: "Home" },
+  discover: { zh: "发现", en: "Discover" },
+  profiles: { zh: "配置集", en: "Profiles" },
+  sync: { zh: "同步", en: "Sync" },
+  operate: { zh: "运行", en: "Operate" },
+  usage: { zh: "用量", en: "Usage" },
+  insights: { zh: "洞察", en: "Insights" },
+  guard: { zh: "守护", en: "Guard" },
+  settings: { zh: "设置", en: "Settings" },
+};
 
 const copy = {
   "zh-CN": {
     title: "HarnessDeck 命令中心",
     subtitle: "本地 Harness 工作台",
+    nativeStatusTitle: "HarnessDeck 控制台",
+    nativeStatusSubtitle: "本地 Harness 产品闭环",
+    nativeHealthLabel: "工作台健康度",
+    nativePressure: "安全同步就绪",
+    rewritePlan: "产品闭环",
+    phaseZero: "Dry-run",
+    statusWorkbench: "产品功能状态",
+    moduleTable: "产品工作流队列",
+    improvementQueue: "改进建议",
     switchLanguage: "English",
     switchThemeDark: "深色",
     switchThemeLight: "浅色",
@@ -119,12 +136,21 @@ const copy = {
     target: "目标",
     feed: "高优先",
     heroTitle: "把配置集、同步、运行、用量与守护压进一个本地优先的控制面。",
-    heroBody: "北斗视觉只作为品牌语言和状态氛围，功能命名保持工程语义。当前默认锁定 fixture mode，不触碰真实 Claude Code 或 Codex 配置。",
+    heroBody: "功能命名保持工程语义。当前默认锁定 fixture mode，不触碰真实 Claude Code 或 Codex 配置。",
     phaseStatus: "Local-first agent operations",
   },
   "en-US": {
     title: "HarnessDeck Command Center",
     subtitle: "Local Harness Workbench",
+    nativeStatusTitle: "HarnessDeck Console",
+    nativeStatusSubtitle: "Local Harness product loop",
+    nativeHealthLabel: "Workbench health",
+    nativePressure: "Safe sync ready",
+    rewritePlan: "Product loop",
+    phaseZero: "Dry-run",
+    statusWorkbench: "Product function status",
+    moduleTable: "Product workflow queue",
+    improvementQueue: "Improvement queue",
     switchLanguage: "中文",
     switchThemeDark: "Dark",
     switchThemeLight: "Light",
@@ -152,20 +178,35 @@ const copy = {
     target: "Target",
     feed: "High priority",
     heroTitle: "Profiles, sync, operation, and guardrails in one local control surface.",
-    heroBody: "Beidou visuals support navigation and status awareness while feature names stay engineering-oriented. Fixture mode is locked by default and does not touch real Claude Code or Codex config.",
+    heroBody: "Feature names stay engineering-oriented. Fixture mode is locked by default and does not touch real Claude Code or Codex config.",
     phaseStatus: "Local-first agent operations",
   },
 } satisfies Record<Locale, Record<string, string>>;
 
-const metricCards = [
-  { id: "profile", value: "macOS Dev", tone: "blue" },
-  { id: "sync", value: "Ready", tone: "green" },
-  { id: "cost", value: "$4.82", tone: "gold" },
-  { id: "wake", value: "On", tone: "teal" },
-] as const;
-
 function label(locale: Locale, item: NavItem) {
   return locale === "zh-CN" ? item.zh : item.en;
+}
+
+function viewLabel(locale: Locale, viewId: ViewId) {
+  const item = viewLabels[viewId];
+  return locale === "zh-CN" ? item.zh : item.en;
+}
+
+function isNavSelected(item: NavItem, activeView: ViewId) {
+  return item.id === activeView || Boolean(item.matches?.includes(activeView));
+}
+
+function secondaryViewsFor(activeView: ViewId): ViewId[] {
+  if (activeView === "discover" || activeView === "profiles" || activeView === "settings") {
+    return ["discover", "profiles", "settings"];
+  }
+  if (activeView === "sync" || activeView === "guard") {
+    return ["sync", "guard"];
+  }
+  if (activeView === "usage" || activeView === "insights") {
+    return ["usage", "insights"];
+  }
+  return [activeView];
 }
 
 function isEditableTarget(target: EventTarget | null) {
@@ -179,9 +220,23 @@ export function App() {
   });
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = window.localStorage.getItem("harnessdeck.theme");
-    return saved === "dark" ? "dark" : "light";
+    if (saved === "dark" || saved === "light") return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
-  const [activeView, setActiveView] = useState<ViewId>("home");
+  const [activeView, setActiveViewRaw] = useState<ViewId>("home");
+  const scrollPositions = useRef<Partial<Record<ViewId, number>>>({});
+  const contentRef = useRef<HTMLElement>(null);
+  const setActiveView = useCallback((next: ViewId) => {
+    if (contentRef.current) {
+      scrollPositions.current[activeView] = contentRef.current.scrollTop;
+    }
+    setActiveViewRaw(next);
+    requestAnimationFrame(() => {
+      if (contentRef.current) {
+        contentRef.current.scrollTop = scrollPositions.current[next] ?? 0;
+      }
+    });
+  }, [activeView]);
   const [profiles, setProfiles] = useState<ProfileSummary[]>([]);
   const [targets, setTargets] = useState<TargetSummary[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState("macos-dev");
@@ -278,9 +333,9 @@ export function App() {
   }, [selectedProfileId, selectedTargetKind]);
 
   const activeTitle = useMemo(() => {
-    const item = navItems.find((nav) => nav.id === activeView) ?? navItems[0];
-    return label(locale, item);
+    return viewLabel(locale, activeView);
   }, [activeView, locale]);
+  const secondaryViews = useMemo(() => secondaryViewsFor(activeView), [activeView]);
 
   const selectedProfile = profiles.find((profile) => profile.id === selectedProfileId) ?? profiles[0];
 
@@ -372,123 +427,153 @@ export function App() {
   }
 
   return (
-    <div className="app-shell workbench-app" data-theme={theme} data-testid="app-shell">
-      <section className="workbench-window native-workbench" aria-label={t.workbenchTitle}>
-        <header className="native-workbench-toolbar">
-          <div className="workbench-lockup">
-            <BrandGlyph />
-            <div>
-              <span>{t.workbenchTitle}</span>
-              <strong>{selectedProfileName}</strong>
-            </div>
-          </div>
-
-          <div className="workbench-toolbar-actions">
+    <div className="app-shell native-status-app" data-theme={theme} data-testid="app-shell">
+      <section className="native-window" aria-label={t.workbenchTitle}>
+        <header className="native-titlebar">
+          <TrafficLights />
+          <nav className="segmented-nav" aria-label="Workbench views">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const selected = isNavSelected(item, activeView);
+              return (
+                <button
+                  key={item.id}
+                  aria-label={label(locale, item)}
+                  aria-current={selected ? "page" : undefined}
+                  className={selected ? "segment active" : "segment"}
+                  type="button"
+                  onClick={() => setActiveView(item.id)}
+                >
+                  <Icon size={16} aria-hidden="true" />
+                  <span>{label(locale, item)}</span>
+                </button>
+              );
+            })}
+          </nav>
+          <div className="titlebar-actions">
             <button
               type="button"
               className="toolbar-button"
               onClick={() => setLocale(locale === "zh-CN" ? "en-US" : "zh-CN")}
             >
-              <Languages size={17} aria-hidden="true" />
+              <Languages size={16} aria-hidden="true" />
               <span>{t.switchLanguage}</span>
             </button>
             <button type="button" className="toolbar-button" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
-              {theme === "light" ? <Moon size={17} aria-hidden="true" /> : <SunMedium size={17} aria-hidden="true" />}
+              {theme === "light" ? <Moon size={16} aria-hidden="true" /> : <SunMedium size={16} aria-hidden="true" />}
               <span>{theme === "light" ? t.switchThemeDark : t.switchThemeLight}</span>
-            </button>
-            <button className="primary-action compact" type="button" onClick={() => void runDryRun()}>
-              <Zap size={17} aria-hidden="true" />
-              <span>{t.dryRun}</span>
             </button>
           </div>
         </header>
 
-        <div className="window-grid">
-          <aside className="rail">
-            <div className="rail-head">
-              <span>{t.lifecycle}</span>
-              <strong>Discover → Profile → Sync → Operate → Improve</strong>
-            </div>
-            <nav className="rail-nav" aria-label="Workbench views">
-              {navItems.map((item, index) => {
-                const Icon = item.icon;
-                const selected = item.id === activeView;
-                return (
-                  <button
-                    key={item.id}
-                    aria-label={label(locale, item)}
-                    aria-current={selected ? "page" : undefined}
-                    className={selected ? "rail-item active" : "rail-item"}
-                    type="button"
-                    onClick={() => setActiveView(item.id)}
-                  >
-                    <Icon size={17} aria-hidden="true" />
-                    <span>{label(locale, item)}</span>
-                    <small>{String(index + 1).padStart(2, "0")}</small>
-                  </button>
-                );
-              })}
-            </nav>
-          </aside>
-
-          <main className="workbench-main">
-            <div className="view-titlebar">
+        <main className="native-content" ref={contentRef}>
+          <section className="status-header">
+            <div className="health-lockup">
+              <ProductMark />
               <div>
-                <span>{activeTitle}</span>
-                <strong>{selectedProfileName}</strong>
+                <div className="score-line">
+                  <strong>90</strong>
+                  <span>{t.nativePressure}</span>
+                </div>
+                <p>{t.nativeStatusTitle}</p>
               </div>
-              <span className="status-pill">
-                <CheckCircle2 size={15} aria-hidden="true" />
-                Dry-run
-              </span>
             </div>
+            <div className="status-chips" aria-label={t.rewritePlan}>
+              <span>{t.localFirst}</span>
+              <span>{t.fixture}</span>
+              <span>{t.phaseZero}</span>
+              <span>Keychain</span>
+            </div>
+          </section>
 
-            <section className="view-panel prototype-view-panel">
-              {activeView === "discover" ? (
-                <DiscoverView registryTemplates={registryTemplates} skillRecommendation={skillRecommendation} />
-              ) : activeView === "profiles" ? (
-                <ProfileView
-                  locale={locale}
-                  profiles={profiles}
-                  selectedProfileId={selectedProfileId}
-                  setSelectedProfileId={setSelectedProfileId}
-                  targets={targets}
-                  selectedTargetKind={selectedTargetKind}
-                  setSelectedTargetKind={setSelectedTargetKind}
-                />
-              ) : activeView === "sync" ? (
-                <SyncView
-                  locale={locale}
-                  plan={deployPlan}
-                  manifest={manifest}
-                  onAuthorizeTargetRead={authorizeTargetRead}
-                  onConfirm={confirmDryRun}
-                  profile={selectedProfile}
-                  syncGovernance={syncGovernance}
-                  targetDiscoveries={targetDiscoveries}
-                  targetReadAuthorized={targetReadAuthorized}
-                />
-              ) : activeView === "operate" ? (
-                <OperateView
-                  confirmedWakeSession={confirmedWakeSession}
-                  locale={locale}
-                  onConfirmExperimentalWake={confirmExperimentalWake}
-                  wakeSummary={wakeSummary}
-                />
-              ) : activeView === "usage" ? (
-                <UsageView locale={locale} usageSummary={usageSummary} />
-              ) : activeView === "insights" ? (
-                <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} insights={insights} locale={locale} />
-              ) : activeView === "guard" ? (
-                <GuardView accountWorkspace={accountWorkspace} locale={locale} />
-              ) : activeView === "settings" ? (
-                <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
-              ) : (
-                <FoundationSummary locale={locale} />
-              )}
+          {activeView === "home" ? (
+            <NativeStatusDashboard
+              highPriorityFeed={highPriorityFeed}
+              locale={locale}
+              manifest={manifest}
+              onOpenWorkbench={openWorkbench}
+              onRunDryRun={runDryRun}
+              onSelectView={setActiveView}
+              selectedProfileName={selectedProfileName}
+              selectedTargetKind={selectedTargetKind}
+              t={t}
+              usageSummary={usageSummary}
+              wakeSummary={wakeSummary}
+            />
+          ) : (
+            <section className="detail-workspace">
+              <div className="detail-titlebar">
+                <div>
+                  <span>{activeTitle}</span>
+                  <strong>{selectedProfileName}</strong>
+                </div>
+                {secondaryViews.length > 1 ? (
+                  <div className="context-tabs" aria-label="Section views">
+                    {secondaryViews.map((viewId) => (
+                      <button
+                        key={viewId}
+                        aria-current={viewId === activeView ? "page" : undefined}
+                        className={viewId === activeView ? "context-tab active" : "context-tab"}
+                        type="button"
+                        onClick={() => setActiveView(viewId)}
+                      >
+                        {viewLabel(locale, viewId)}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="status-pill">
+                    <CheckCircle2 size={15} aria-hidden="true" />
+                    Dry-run
+                  </span>
+                )}
+              </div>
+
+              <section className="view-panel prototype-view-panel">
+                {activeView === "discover" ? (
+                  <DiscoverView registryTemplates={registryTemplates} skillRecommendation={skillRecommendation} />
+                ) : activeView === "profiles" ? (
+                  <ProfileView
+                    locale={locale}
+                    profiles={profiles}
+                    selectedProfileId={selectedProfileId}
+                    setSelectedProfileId={setSelectedProfileId}
+                    targets={targets}
+                    selectedTargetKind={selectedTargetKind}
+                    setSelectedTargetKind={setSelectedTargetKind}
+                  />
+                ) : activeView === "sync" ? (
+                  <SyncView
+                    locale={locale}
+                    plan={deployPlan}
+                    manifest={manifest}
+                    onAuthorizeTargetRead={authorizeTargetRead}
+                    onConfirm={confirmDryRun}
+                    profile={selectedProfile}
+                    syncGovernance={syncGovernance}
+                    targetDiscoveries={targetDiscoveries}
+                    targetReadAuthorized={targetReadAuthorized}
+                  />
+                ) : activeView === "operate" ? (
+                  <OperateView
+                    confirmedWakeSession={confirmedWakeSession}
+                    locale={locale}
+                    onConfirmExperimentalWake={confirmExperimentalWake}
+                    wakeSummary={wakeSummary}
+                  />
+                ) : activeView === "usage" ? (
+                  <UsageView locale={locale} usageSummary={usageSummary} />
+                ) : activeView === "insights" ? (
+                  <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} insights={insights} locale={locale} />
+                ) : activeView === "guard" ? (
+                  <GuardView accountWorkspace={accountWorkspace} locale={locale} />
+                ) : (
+                  <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
+                )}
+              </section>
             </section>
-          </main>
-        </div>
+          )}
+        </main>
       </section>
     </div>
   );
@@ -523,27 +608,67 @@ function MenuBarPanel({
 }: MenuBarPanelProps) {
   const costMetric = usageSummary?.metrics.find((item) => item.id === "cost");
   const syncValue = manifest ? (locale === "zh-CN" ? "manifest 已写入" : "manifest written") : "93%";
+  const burnMetric = usageSummary ? `$${usageSummary.burnRateUsdPerHour.toFixed(2)}/h` : "$0.82/h";
   const feedTitle = highPriorityFeed[0]?.title ?? (locale === "zh-CN" ? "暂无高优先事项" : "No high-priority items");
-  const rows = [
-    { label: t.dryRunPlanReady, value: manifest?.id ?? (locale === "zh-CN" ? "manifest 待生成" : "manifest pending") },
-    { label: t.target, value: `${selectedTargetKind} target` },
-    { label: t.feed, value: feedTitle },
+  const panelMetrics = [
+    {
+      icon: Layers,
+      label: t.currentProfile,
+      value: selectedProfileName,
+      meta: `${selectedTargetKind} target`,
+      tone: "blue",
+      bars: [54, 62, 58, 71, 67, 78, 72],
+    },
+    {
+      icon: Shuffle,
+      label: t.syncStatus,
+      value: syncValue,
+      meta: manifest?.id ?? (locale === "zh-CN" ? "manifest 待生成" : "manifest pending"),
+      tone: "green",
+      bars: [44, 51, 65, 72, 77, 84, 93],
+    },
+    {
+      icon: BarChart3,
+      label: t.cost,
+      value: costMetric ? `${costMetric.value}${costMetric.unit}` : "$4.82",
+      meta: burnMetric,
+      tone: "gold",
+      bars: [25, 34, 48, 42, 55, 49, 58],
+    },
+    {
+      icon: Zap,
+      label: t.wake,
+      value: t.awakeStandard,
+      meta: locale === "zh-CN" ? "mock/system-safe" : "mock/system-safe",
+      tone: "gold",
+    },
   ];
+  const focusMeta = locale === "zh-CN" ? "来自本地 feed，只显示摘要" : "Local feed summary only";
 
   return (
     <aside
       aria-label={t.menuPanel}
-      className={standalone ? "command-panel standalone" : "command-panel"}
+      className={standalone ? "menu-status-panel standalone" : "menu-status-panel"}
       data-testid={standalone ? "menu-panel-window" : undefined}
     >
       <MacChrome compact={standalone} status={standalone ? "Pinned" : "Live"} title={t.menuPanel} />
 
-      <div className="menu-product">
-        <BrandGlyph />
-        <div>
-          <strong>HarnessDeck</strong>
-          <span>{t.localReady}</span>
+      <div className="panel-health">
+        <div className="panel-score">
+          <ProductMark compact />
+          <strong>90</strong>
         </div>
+        <div>
+          <span>{t.nativeHealthLabel}</span>
+          <p>{t.nativePressure}</p>
+        </div>
+      </div>
+
+      <div className="mini-chips">
+        <span>{t.localFirst}</span>
+        <span>{t.fixture}</span>
+        <span>Keychain</span>
+        <span>{t.phaseZero}</span>
       </div>
 
       <button className="panel-search" type="button">
@@ -552,37 +677,20 @@ function MenuBarPanel({
         <kbd>⌘K</kbd>
       </button>
 
-      <div className="panel-metrics">
-        {metricCards.map((metric) => {
-          const labels = {
-            profile: t.currentProfile,
-            sync: t.syncStatus,
-            cost: t.cost,
-            wake: t.wake,
-          };
-          const values = {
-            profile: selectedProfileName,
-            sync: syncValue,
-            cost: costMetric ? `${costMetric.value} · ${costMetric.confidenceLabel}` : metric.value,
-            wake: t.awakeStandard,
-          };
-
+      <div className="panel-status-list">
+        {panelMetrics.map((metric) => {
+          const Icon = metric.icon;
           return (
-            <article className={`panel-metric ${metric.tone}`} key={metric.id}>
-              <span>{labels[metric.id]}</span>
-              <strong>{values[metric.id]}</strong>
+            <article className={`panel-status-row ${metric.tone}`} key={metric.label}>
+              <span>
+                <Icon size={15} aria-hidden="true" />
+                {metric.label}
+              </span>
+              <strong>{metric.value}</strong>
+              <small>{metric.meta}</small>
             </article>
           );
         })}
-      </div>
-
-      <div className="panel-row-group">
-        {rows.map((row) => (
-          <div className="panel-row" key={row.label}>
-            <span>{row.label}</span>
-            <strong>{row.value}</strong>
-          </div>
-        ))}
       </div>
 
       <div className="panel-actions" aria-label={t.quickActions}>
@@ -603,30 +711,400 @@ function MenuBarPanel({
           <span>{t.refresh}</span>
         </button>
       </div>
+
+      <section className="panel-safety-strip">
+        <div>
+          <span>{locale === "zh-CN" ? "安全边界" : "Safety boundary"}</span>
+          <strong>{locale === "zh-CN" ? "真实写入关闭" : "Real writes blocked"}</strong>
+        </div>
+        <ShieldCheck size={24} aria-hidden="true" />
+      </section>
+
+      <section className="panel-focus-card">
+        <div className="table-title">
+          <span>{locale === "zh-CN" ? "下一步" : "Next"}</span>
+          <strong>{highPriorityFeed.length || 1}</strong>
+        </div>
+        <strong>{feedTitle}</strong>
+        <p>{focusMeta}</p>
+      </section>
     </aside>
   );
+}
+
+interface NativeStatusDashboardProps {
+  highPriorityFeed: FeedItem[];
+  locale: Locale;
+  manifest: ManifestSummary | null;
+  onOpenWorkbench: () => void;
+  onRunDryRun: () => Promise<void>;
+  onSelectView: (viewId: ViewId) => void;
+  selectedProfileName: string;
+  selectedTargetKind: TargetKind;
+  t: Record<string, string>;
+  usageSummary: UsageSummary | null;
+  wakeSummary: WakeControlSummary | null;
+}
+
+function NativeStatusDashboard({
+  highPriorityFeed,
+  locale,
+  manifest,
+  onOpenWorkbench,
+  onRunDryRun,
+  onSelectView,
+  selectedProfileName,
+  selectedTargetKind,
+  t,
+  usageSummary,
+  wakeSummary,
+}: NativeStatusDashboardProps) {
+  const costMetric = usageSummary?.metrics.find((metric) => metric.id === "cost");
+  const nextAction = highPriorityFeed[0]?.title ?? (locale === "zh-CN" ? "先运行 dry-run，确认 Claude / Codex 同步计划" : "Run dry-run to confirm the Claude / Codex sync plan");
+  const cards = [
+    {
+      icon: Search,
+      label: locale === "zh-CN" ? "发现最佳实践" : "Discover",
+      value: "7",
+      unit: locale === "zh-CN" ? "源" : "src",
+      badge: "Registry",
+      meta: locale === "zh-CN" ? "本地 registry 与 find-best-skill 推荐" : "Local registry and find-best-skill recommendations",
+      tone: "blue",
+      bars: [38, 48, 52, 61, 68, 74, 82],
+      actionLabel: locale === "zh-CN" ? "查看推荐" : "Review",
+      onAction: () => onSelectView("discover"),
+    },
+    {
+      icon: Layers,
+      label: locale === "zh-CN" ? "配置集" : "Profiles",
+      value: "42",
+      unit: "rules",
+      badge: selectedProfileName,
+      meta: locale === "zh-CN" ? "维护 Harness Profile、skills、MCP 引用" : "Harness Profile, skills, and MCP references",
+      tone: "purple",
+      bars: [56, 63, 69, 72, 76, 74, 78],
+      actionLabel: locale === "zh-CN" ? "编辑配置集" : "Edit",
+      onAction: () => onSelectView("profiles"),
+    },
+    {
+      icon: Shuffle,
+      label: locale === "zh-CN" ? "安全同步" : "Safe Sync",
+      value: manifest ? "Done" : locale === "zh-CN" ? "就绪" : "Ready",
+      unit: "",
+      badge: selectedTargetKind,
+      meta: locale === "zh-CN" ? "Claude Code / Codex 走 dry-run、diff、manifest" : "Claude Code / Codex via dry-run, diff, and manifest",
+      tone: "teal",
+      bars: [44, 51, 65, 72, 77, 84, 93],
+      actionLabel: t.dryRun,
+      onAction: onRunDryRun,
+    },
+    {
+      icon: TerminalSquare,
+      label: locale === "zh-CN" ? "日常运行" : "Operate",
+      value: wakeSummary?.currentState.confirmed ? "Exp" : locale === "zh-CN" ? "标准" : "Std",
+      unit: "",
+      badge: t.wake,
+      meta: locale === "zh-CN" ? "菜单栏快捷动作、防睡、工作台入口" : "Menu bar actions, wake control, workbench entry",
+      tone: "gold",
+      bars: [38, 38, 41, 40, 42, 39],
+      actionLabel: locale === "zh-CN" ? "打开面板" : "Open panel",
+      onAction: () => onSelectView("operate"),
+    },
+    {
+      icon: BarChart3,
+      label: locale === "zh-CN" ? "用量与成本" : "Usage",
+      value: costMetric ? costMetric.value : "$4.82",
+      unit: costMetric?.unit ?? "",
+      badge: "5h",
+      meta: locale === "zh-CN" ? "token、成本、时长、置信度一起展示" : "Tokens, cost, duration, and confidence",
+      tone: "blue",
+      bars: [25, 34, 48, 42, 55, 49, 58],
+      actionLabel: locale === "zh-CN" ? "看异常" : "Inspect",
+      onAction: () => onSelectView("usage"),
+    },
+    {
+      icon: ShieldCheck,
+      label: locale === "zh-CN" ? "守护边界" : "Guard",
+      value: "100",
+      unit: "%",
+      badge: "Keychain",
+      meta: locale === "zh-CN" ? "默认不上传 prompt、源码、secret 或原始配置" : "No prompts, source, secrets, or raw config uploaded by default",
+      tone: "teal",
+      bars: [100, 100, 100, 100, 100, 100],
+      actionLabel: locale === "zh-CN" ? "审计边界" : "Audit",
+      onAction: () => onSelectView("guard"),
+    },
+  ];
+  const moduleRows = [
+    {
+      name: locale === "zh-CN" ? "Discover 最佳实践" : "Discover practices",
+      pid: "01",
+      cpu: "7",
+      memory: "Registry",
+      status: locale === "zh-CN" ? "可用" : "Ready",
+    },
+    {
+      name: locale === "zh-CN" ? "Profile 生成与维护" : "Profile authoring",
+      pid: "02",
+      cpu: "42",
+      memory: selectedProfileName,
+      status: locale === "zh-CN" ? "当前" : "Active",
+    },
+    {
+      name: locale === "zh-CN" ? "Claude / Codex 安全同步" : "Claude / Codex safe sync",
+      pid: "03",
+      cpu: manifest ? "Done" : "Ready",
+      memory: selectedTargetKind,
+      status: "Dry-run",
+    },
+    {
+      name: locale === "zh-CN" ? "菜单栏操作中心" : "Menu bar control",
+      pid: "04",
+      cpu: t.awakeStandard,
+      memory: t.quickActions,
+      status: locale === "zh-CN" ? "可操作" : "Actionable",
+    },
+    {
+      name: locale === "zh-CN" ? "Usage 成本观测" : "Usage intelligence",
+      pid: "05",
+      cpu: costMetric ? `${costMetric.value}${costMetric.unit}` : "$4.82",
+      memory: "LocalLog",
+      status: locale === "zh-CN" ? "估算" : "Estimated",
+    },
+    {
+      name: locale === "zh-CN" ? "Improve 建议队列" : "Improve queue",
+      pid: "06",
+      cpu: String(highPriorityFeed.length || 1),
+      memory: highPriorityFeed[0]?.title ?? "Profile drift",
+      status: locale === "zh-CN" ? "高优先" : "High",
+    },
+  ];
+  const improvements = [
+    {
+      label: locale === "zh-CN" ? "已清理" : "Cleared",
+      value: manifest ? "1" : "0",
+      detail: locale === "zh-CN" ? "dry-run manifest" : "dry-run manifest",
+    },
+    {
+      label: locale === "zh-CN" ? "待授权" : "Needs auth",
+      value: "2",
+      detail: "Codex / Claude Code",
+    },
+    {
+      label: locale === "zh-CN" ? "建议" : "Suggestions",
+      value: String(highPriorityFeed.length || 3),
+      detail: highPriorityFeed[0]?.title ?? "Profile drift",
+    },
+  ];
+  const safetyChecks = [
+    locale === "zh-CN" ? "真实写入关闭" : "Real writes blocked",
+    locale === "zh-CN" ? "先生成 plan / diff" : "Plan and diff first",
+    locale === "zh-CN" ? "Keychain 只存引用" : "Keychain references only",
+    locale === "zh-CN" ? "保留 backup / audit" : "Backup and audit retained",
+  ];
+
+  return (
+    <div className="status-dashboard">
+      <section className="hero-health-card command-brief">
+        <div>
+          <div className="metric-label">
+            <Sparkles size={18} aria-hidden="true" />
+            <span>{locale === "zh-CN" ? "今日工作台" : "Today"}</span>
+          </div>
+          <div className="command-score">
+            <strong>90</strong>
+            <span>{t.nativePressure}</span>
+          </div>
+          <p>{nextAction}</p>
+          <div className="hero-meta">
+            <span>{selectedProfileName}</span>
+            <span>{costMetric ? `${costMetric.value}${costMetric.unit}` : "$4.82"}</span>
+            <span>{manifest ? "manifest" : "fixture"}</span>
+          </div>
+          <div className="hero-actions">
+            <button className="primary-action compact" type="button" onClick={() => void onRunDryRun()}>
+              <Zap size={17} aria-hidden="true" />
+              <span>{t.dryRun}</span>
+            </button>
+            <button className="secondary-action" type="button" onClick={onOpenWorkbench}>
+              <Gauge size={17} aria-hidden="true" />
+              <span>{t.openWorkbench}</span>
+            </button>
+          </div>
+        </div>
+        <div className="phase-stack" aria-label={t.lifecycle}>
+          <span>Discover</span>
+          <span>Profile</span>
+          <span>Sync</span>
+          <span>Operate</span>
+          <span>Improve</span>
+        </div>
+      </section>
+
+      <section className="wide-status-card safety-card command-safety">
+        <div>
+          <div className="metric-label">
+            <ShieldCheck size={18} aria-hidden="true" />
+            <span>{locale === "zh-CN" ? "安全边界" : "Safety boundary"}</span>
+          </div>
+          <strong>100%</strong>
+          <p>
+            {locale === "zh-CN"
+              ? "默认 fixture/mock mode；任何同步都先生成 plan、diff、backup、manifest，并记录 audit trail。"
+              : "Fixture/mock mode stays default; every sync starts with plan, diff, backup, manifest, and audit trail."}
+          </p>
+        </div>
+        <div className="safety-checks">
+          {safetyChecks.map((item) => (
+            <span key={item}>
+              <CheckCircle2 size={15} aria-hidden="true" />
+              {item}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="metric-grid workflow-action-grid" aria-label={t.statusWorkbench}>
+        {cards.map((card) => (
+          <NativeMetricCard key={card.label} {...card} />
+        ))}
+      </section>
+
+      <section className="process-card">
+        <div className="table-title">
+          <span>{t.moduleTable}</span>
+          <strong>6</strong>
+        </div>
+        <div className="process-rows">
+          {moduleRows.map((row) => (
+            <div className="process-row" key={row.name}>
+              <strong>{row.name}</strong>
+              <span>{row.pid}</span>
+              <span>{row.cpu}</span>
+              <span>{row.memory}</span>
+              <em>{row.status}</em>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="cleanup-card">
+        <div className="table-title">
+          <span>{t.improvementQueue}</span>
+          <button type="button" onClick={onOpenWorkbench}>
+            {t.openWorkbench}
+            <ChevronRightIcon />
+          </button>
+        </div>
+        <div className="cleanup-grid">
+          {improvements.map((item) => (
+            <article key={item.label}>
+              <strong>{item.value}</strong>
+              <span>{item.label}</span>
+              <small>{item.detail}</small>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function NativeMetricCard({
+  badge,
+  bars,
+  icon: Icon,
+  label,
+  meta,
+  actionLabel,
+  onAction,
+  tone,
+  unit,
+  value,
+}: {
+  actionLabel?: string;
+  badge: string;
+  bars: number[];
+  icon: typeof Home;
+  label: string;
+  meta: string;
+  onAction?: () => Promise<void> | void;
+  tone: string;
+  unit: string;
+  value: string;
+}) {
+  return (
+    <article className={`native-metric-card ${tone}`}>
+      <div className="metric-head">
+        <span>
+          <Icon size={16} aria-hidden="true" />
+          {label}
+        </span>
+        <em>{badge}</em>
+      </div>
+      <div className="metric-value">
+        <strong>{value}</strong>
+        <span>{unit}</span>
+      </div>
+      <MiniBars values={bars} />
+      <small>{meta}</small>
+      {actionLabel ? (
+        <button className="metric-card-action" type="button" onClick={() => void onAction?.()}>
+          <span>{actionLabel}</span>
+          <ChevronRightIcon />
+        </button>
+      ) : null}
+    </article>
+  );
+}
+
+function MiniBars({ values }: { values: number[] }) {
+  const max = Math.max(...values, 100);
+  return (
+    <div className="mini-bars" aria-hidden="true">
+      {values.map((value, index) => (
+        <span key={`${value}-${index}`} style={{ height: `${Math.max(18, (value / max) * 100)}%` }} />
+      ))}
+    </div>
+  );
+}
+
+function ChevronRightIcon() {
+  return <span className="chevron-mark" aria-hidden="true" />;
 }
 
 function MacChrome({ compact = false, status, title }: { compact?: boolean; status?: string; title: string }) {
   return (
     <div className={compact ? "mac-chrome compact" : "mac-chrome"}>
-      <div className="panel-grabber" aria-hidden="true" />
+      {compact ? <div className="panel-grabber" aria-hidden="true" /> : <TrafficLights />}
       <span>{title}</span>
       {status ? <em>{status}</em> : null}
     </div>
   );
 }
 
-function BrandGlyph() {
+function TrafficLights() {
   return (
-    <div className="brand-glyph" aria-hidden="true">
+    <div className="traffic-lights" aria-hidden="true">
       <span />
       <span />
       <span />
-      <span />
-      <span />
-      <span />
-      <span />
+    </div>
+  );
+}
+
+function ProductMark({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={compact ? "product-mark compact" : "product-mark"} aria-hidden="true">
+      <Command className="product-mark-core" size={28} />
+      <span className="product-mark-badge shield">
+        <ShieldCheck size={13} />
+      </span>
+      {compact ? null : (
+        <span className="product-mark-badge cable">
+          <Cable size={13} />
+        </span>
+      )}
     </div>
   );
 }
@@ -1144,28 +1622,6 @@ function SettingsView({
           </article>
         ))}
       </section>
-    </div>
-  );
-}
-
-function FoundationSummary({ locale }: { locale: Locale }) {
-  return (
-    <div className="summary-grid">
-      <article>
-        <Compass size={18} aria-hidden="true" />
-        <strong>{locale === "zh-CN" ? "北斗视觉" : "Beidou visual"}</strong>
-        <p>{locale === "zh-CN" ? "低饱和星图和鎏金节点保留品牌方向。" : "Low-saturation star maps and gold nodes preserve the brand direction."}</p>
-      </article>
-      <article>
-        <Database size={18} aria-hidden="true" />
-        <strong>{locale === "zh-CN" ? "本地数据" : "Local data"}</strong>
-        <p>{locale === "zh-CN" ? "配置集、manifest、usage 和 guard 状态优先留在本机。" : "Profiles, manifests, usage, and guard state stay local-first."}</p>
-      </article>
-      <article>
-        <ShieldCheck size={18} aria-hidden="true" />
-        <strong>{locale === "zh-CN" ? "真实写入保护" : "Real-write protection"}</strong>
-        <p>{locale === "zh-CN" ? "真实配置写入需要确认、备份、验证和 rollback 元数据。" : "Real config writes require confirmation, backup, verification, and rollback metadata."}</p>
-      </article>
     </div>
   );
 }

@@ -1,90 +1,90 @@
-# Implement HarnessDeck macOS desktop app
+# 实现 HarnessDeck macOS 桌面应用
 
-## Goal
+## 目标
 
-Build HarnessDeck into a locally runnable macOS desktop app: a local-first AI agent configuration profile, sync, operation, usage, insight, and guard workbench using Tauri 2, React, TypeScript, and Rust.
+将 HarnessDeck 构建为可本地运行的 macOS 桌面应用：一个基于 Tauri 2、React、TypeScript 和 Rust 的本地优先 AI Agent 配置集管理、同步、运营、用量、洞察与防护工作台。
 
-## Requirements
+## 需求
 
-- Run on macOS as a Tauri 2 desktop app.
-- Default UI locale is Simplified Chinese; English switching is available.
-- Default UI theme is light; dark switching is available.
-- Chinese UI uses `配置集` for Profiles.
-- Beidou visual language is present through restrained star-map and navigation accents, not feature naming.
-- Main workbench contains Home, Discover, Profiles, Sync, Operate, Usage, Insights, Guard, and Settings.
-- Menu bar panel surface shows current profile, sync state, cost, wake state, and quick actions.
-- Use fixture mode by default and do not read or write real Claude Code or Codex config directories.
-- Model local profiles with rules, skills, MCP references, targets, and sync policy.
-- Provide Codex and Claude Code target adapters as fixtures or mocks.
-- Generate a deploy plan and preview diff for dry-run sync.
-- Confirming dry-run writes a local deployment manifest that can be viewed in the UI.
-- Represent backup, usage, guard, privacy, and Keychain boundaries in the product model.
-- Real write operations require explicit future confirmation, backup, manifest, and rollback design.
-- Implement the additional phases from `docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`: Safe Target Integration, Sync Governance, Account Workspace, Usage and Cost, Registry and `find-best-skill`, Insights and Feed, and Wake Control.
-- Real target discovery/read/validate for Claude Code and Codex may be added only behind explicit user authorization and must not write without backup, preview, confirm, manifest, and rollback.
-- Account Workspace must model provider, base URL, default model, budget, limits, and Keychain secret reference; Keychain writes can remain mock/interface until explicitly authorized.
-- Usage and cost must distinguish official, local-log, estimated, and missing confidence.
-- Registry and discovery must support curated local registry first and optional GitHub discovery only through explicit user action.
-- Insights and feed must default to local rules and safe update metadata.
-- Wake Control must support standard awake, timed awake, display sleep control state, and explicit confirmation flow for experimental lid-awake behavior.
-- No prompts, source code, secrets, or complete local logs are uploaded.
-- No API keys, tokens, or credentials are hardcoded.
-- Provide launch, test, and build commands.
-- Commit each completed phase after verification; do not push.
+- 以 Tauri 2 桌面应用形式在 macOS 上运行。
+- 默认 UI 语言为简体中文；支持切换英文。
+- 默认 UI 主题为浅色；支持切换深色。
+- 中文界面使用「配置集」表达 Profiles。
+- 视觉语言使用克制的导航色调，不以星宿名命名功能。
+- 主工作台包含：首页、发现、配置集、同步、运营、用量、洞察、防护、设置。
+- 菜单栏面板展示当前配置集、同步状态、费用、唤醒状态和快捷操作。
+- 默认使用 fixture 模式，不读写真实的 Claude Code 或 Codex 配置目录。
+- 本地建模配置集，包含规则、技能、MCP 引用、目标和同步策略。
+- 提供 Codex 和 Claude Code 目标适配器（fixture/mock）。
+- 生成部署计划并预览 diff 用于 dry-run 同步。
+- 确认 dry-run 后写入本地部署清单，可在 UI 中查看。
+- 在产品模型中体现备份、用量、防护、隐私和 Keychain 边界。
+- 真实写操作需要未来的显式确认、备份、清单和回滚设计。
+- 实现 `docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md` 中的附加阶段：安全目标集成、同步治理、账户工作区、用量与费用、注册中心与 `find-best-skill`、洞察与 Feed、唤醒控制。
+- 真实目标发现/读取/验证仅在用户显式授权后进行，且不允许在没有备份、预览、确认、清单和回滚的情况下写入。
+- 账户工作区须建模提供商、Base URL、默认模型、预算、限额和 Keychain 密钥引用；Keychain 写入在显式授权前可保持 mock/接口状态。
+- 用量与费用须区分官方、本地日志、估算和缺失四种置信度。
+- 注册中心和发现须优先支持策展的本地注册中心，GitHub 发现仅通过用户显式操作触发。
+- 洞察与 Feed 须默认使用本地规则和安全的更新元数据。
+- 唤醒控制须支持标准唤醒、定时唤醒、显示器睡眠控制状态，以及实验性合盖唤醒的显式确认流程。
+- 不上传提示词、源代码、密钥或完整本地日志。
+- 不硬编码 API Key、Token 或凭据。
+- 提供启动、测试和构建命令。
+- 每个阶段完成后提交 commit；不 push。
 
-## Acceptance Criteria
+## 验收标准
 
-- [ ] Environment detection results are recorded, including installed dependency versions.
-- [ ] Local Tauri CLI is available through project commands.
-- [ ] `pnpm tauri dev` can start the desktop app locally.
-- [ ] Main window displays Home, Discover, Profiles, Sync, Operate, Usage, Insights, Guard, and Settings.
-- [ ] Menu bar panel surface displays profile, sync, cost, wake, and quick actions.
-- [ ] Chinese default rendering is visible on first launch.
-- [ ] English toggle changes fixed UI copy.
-- [ ] Light default rendering is visible on first launch.
-- [ ] Dark toggle changes theme.
-- [ ] Beidou brand visuals are visible without star-name feature labels.
-- [ ] At least one sample profile is visible.
-- [ ] Profile switching works.
-- [ ] Local scan view lists fixture-discovered rules, skills, and MCP references.
-- [ ] Codex and Claude Code fixture targets are selectable.
-- [ ] Dry-run sync generates a deploy plan with operations and diff preview.
-- [ ] Dry-run confirmation writes a local manifest and updates UI state.
-- [ ] Drift, conflict, and suggestion views display local fixture data.
-- [ ] Usage view displays local usage/cost/duration/drift stats with confidence labeling.
-- [ ] Guard view shows privacy, Keychain reference, backup, and real-write protection state.
-- [ ] Settings view shows language and theme preferences.
-- [ ] Safe Target Integration view can discover/read/validate Claude Code and Codex targets when the user explicitly grants local-read authorization.
-- [ ] Sync Governance view supports three-way diff, conflict queue, drift detection, rollback preview, and blocked real writes without confirmation.
-- [ ] Account Workspace view models provider/model/budget settings and Keychain references without exposing secrets.
-- [ ] Registry view includes curated local templates and `find-best-skill` scoring.
-- [ ] Insights and Feed views show local-rule recommendations, profile impact alerts, and update feed entries.
-- [ ] Wake Control view includes standard awake, timed awake, display sleep control, and experimental lid-awake confirmation state.
-- [ ] Tests or minimum verification commands run and results are reported.
-- [ ] Final delivery lists implemented features, mock/fixture capabilities, launch command, test command, build command, and next-stage recommendations.
+- [ ] 环境检测结果已记录，包括已安装的依赖版本。
+- [ ] 本地 Tauri CLI 可通过项目命令使用。
+- [ ] `pnpm tauri dev` 可在本地启动桌面应用。
+- [ ] 主窗口显示：首页、发现、配置集、同步、运营、用量、洞察、防护、设置。
+- [ ] 菜单栏面板展示配置集、同步状态、费用、唤醒和快捷操作。
+- [ ] 首次启动可见中文默认渲染。
+- [ ] 英文切换可改变固定 UI 文案。
+- [ ] 首次启动可见浅色默认渲染。
+- [ ] 深色切换可改变主题。
+- [ ] 品牌视觉可见，无星宿名功能标签。
+- [ ] 至少一个示例配置集可见。
+- [ ] 配置集切换正常。
+- [ ] 本地扫描视图列出 fixture 发现的规则、技能和 MCP 引用。
+- [ ] Codex 和 Claude Code fixture 目标可选。
+- [ ] Dry-run 同步生成包含操作和 diff 预览的部署计划。
+- [ ] Dry-run 确认写入本地清单并更新 UI 状态。
+- [ ] 漂移、冲突和建议视图展示本地 fixture 数据。
+- [ ] 用量视图展示本地用量/费用/时长/漂移统计及置信度标签。
+- [ ] 防护视图展示隐私、Keychain 引用、备份和真实写保护状态。
+- [ ] 设置视图展示语言和主题偏好。
+- [ ] 安全目标集成视图可在用户显式授权本地读取时发现/读取/验证 Claude Code 和 Codex 目标。
+- [ ] 同步治理视图支持三方 diff、冲突队列、漂移检测、回滚预览，以及未确认时阻止真实写入。
+- [ ] 账户工作区视图建模提供商/模型/预算设置和 Keychain 引用，不暴露密钥。
+- [ ] 注册中心视图包含策展的本地模板和 `find-best-skill` 评分。
+- [ ] 洞察与 Feed 视图展示本地规则推荐、配置集影响警报和更新 Feed 条目。
+- [ ] 唤醒控制视图包含标准唤醒、定时唤醒、显示器睡眠控制和实验性合盖唤醒确认状态。
+- [ ] 测试或最小验证命令已运行并报告结果。
+- [ ] 最终交付列出已实现功能、mock/fixture 能力、启动命令、测试命令、构建命令和下阶段建议。
 
-## Definition of Done
+## 完成定义
 
-- Project contains Tauri 2 + React + TypeScript + Rust app structure.
-- Rust unit tests cover core profile/target/deploy/manifest/guard behavior.
-- Frontend tests cover locale/theme and main workflow rendering.
-- Lint, typecheck, tests, and build commands run in this session.
-- A local desktop launch is attempted and reported with evidence.
-- Phase commits exist locally and no push is performed.
+- 项目包含 Tauri 2 + React + TypeScript + Rust 应用结构。
+- Rust 单元测试覆盖核心配置集/目标/部署/清单/防护行为。
+- 前端测试覆盖语言/主题和主要工作流渲染。
+- lint、typecheck、测试和构建命令在本次会话中运行通过。
+- 已尝试本地桌面启动并报告启动证据。
+- 阶段提交已存在于本地，未执行 push。
 
-## Out of Scope
+## 不在范围内
 
-- Silent real Claude Code or Codex configuration writes.
-- Silent account switching.
-- Storing raw secrets outside Keychain.
-- Uploading prompts, source code, complete logs, or local config.
-- Remote LLM calls without explicit sanitized-summary consent.
-- Shell hook installation without explicit consent.
-- Production notarization and distribution packaging.
+- 静默写入真实 Claude Code 或 Codex 配置。
+- 静默切换账户。
+- 在 Keychain 之外存储原始密钥。
+- 上传提示词、源代码、完整日志或本地配置。
+- 未经显式脱敏摘要同意的远程 LLM 调用。
+- 未经显式同意的 Shell Hook 安装。
+- 生产环境公证和分发打包。
 
-## Technical Notes
+## 技术备注
 
-- Project root: `/Users/jiechen/per-pro/harness-deck`.
-- Existing source documents: `AGENTS.md`, `README.md`, `docs/superpowers/specs/2026-06-07-harness-deck-design.md`, `docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`.
-- Primary visual prototype: `docs/product-design/harnessdeck-command-deck-prototype.html`.
-- User confirmed continuation after Phase 0 environment check and allowed Trellis initialization.
+- 项目根目录：`/Users/zhici/per-pro/harness-deck`。
+- 现有源文档：`AGENTS.md`、`README.md`、`docs/superpowers/specs/2026-06-07-harness-deck-design.md`、`docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`。
+- 主要视觉原型：`docs/product-design/harnessdeck-command-deck-prototype.html`。
+- 用户在 Phase 0 环境检查后确认继续并允许 Trellis 初始化。

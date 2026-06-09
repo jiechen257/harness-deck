@@ -2,27 +2,57 @@
 
 ## State Sources
 
-- Local UI state: active view, selected profile, selected target, command palette state.
-- Persistent UI preferences: locale and theme.
-- Backend state: app paths, profile summaries, target summaries, deploy plans, latest manifest.
-- Fixture state: mock usage, drift, guard policy, and menu bar summary until real services exist.
+All state lives in React `useState` hooks inside `App.tsx`. No global state library.
 
-## Rules
-
-- Start with React state and small hooks. Do not add a global state library in Phase 1.
-- Use typed API wrappers for Rust data.
-- Keep fixture mode visible in UI.
-- Do not pretend missing data is official; use confidence labels such as `Missing`, `LocalLog`, or `Estimated`.
+| State | Type | Persistence |
+|-------|------|-------------|
+| `activeView` | `ViewId` | In-memory only |
+| `locale` | `Locale` | `localStorage` |
+| `theme` | `Theme` | `localStorage` |
+| `profiles` | `ProfileSummary[]` | Fetched from `api.ts` on view mount |
+| `targets` | `TargetSummary[]` | Fetched from `api.ts` on view mount |
+| `deployPlan` | `DeployPlan \| null` | Generated on demand |
+| `manifest` | `ManifestSummary \| null` | Written after dry-run confirmation |
 
 ## Locale State
 
-- Default `zh-CN`.
-- English option `en-US`.
-- Fixed UI copy must be keyed and translated.
-- User-generated names and paths stay as-is.
+- Default `zh-CN`, toggles to `en-US`.
+- All fixed UI copy is in the `copy` object inside `App.tsx`, keyed by locale:
+
+```tsx
+const copy = {
+  "zh-CN": {
+    title: "HarnessDeck 命令中心",
+    currentProfile: "当前配置集",
+    // ...
+  },
+  "en-US": {
+    title: "HarnessDeck Command Center",
+    currentProfile: "Current Profile",
+    // ...
+  },
+} satisfies Record<Locale, Record<string, string>>;
+```
+
+- Product-generated names (profile names, target names, file paths, manifest IDs) are never translated.
 
 ## Theme State
 
-- Default `light`.
-- `dark` must preserve the same information hierarchy.
-- Theme values should map to CSS variables, not component-level hardcoded palettes.
+- Default `light`, toggles to `dark`.
+- Applied via `data-theme` attribute on the app shell element:
+
+```tsx
+<div data-theme={theme} data-testid="app-shell">
+```
+
+- CSS variables are scoped under `[data-theme="dark"]` in `styles/app.css`.
+
+## Confidence Labels
+
+Usage metrics carry a `DataConfidence` field (`Official`, `LocalLog`, `Estimated`, `Missing`) that must be rendered as a visible badge. Do not display unconnected data sources as if they were authoritative.
+
+## Rules
+
+- No global state library. Plain React state + `useEffect` data fetching is sufficient.
+- Keep fixture mode visible in UI at all times.
+- Use typed API wrappers from `lib/api.ts` for all backend data.
