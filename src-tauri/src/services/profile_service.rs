@@ -3,6 +3,8 @@ use crate::domain::profile::{
     HarnessProfile, McpReference, ProfileMetadata, ProfileSummary, RuleEntry, SkillRef, SyncPolicy,
     ValidationReport,
 };
+use crate::readers::claude_reader;
+use crate::readers::codex_reader;
 
 pub fn list_fixture_profiles() -> Vec<HarnessProfile> {
     vec![
@@ -106,4 +108,48 @@ pub fn validate_profile(profile: &HarnessProfile) -> ValidationReport {
     });
 
     ValidationReport { valid, messages }
+}
+
+/// Build profiles from real local config data.
+/// Returns one "Claude Code" profile if `~/.claude/` exists, and one "Codex"
+/// profile if `~/.codex/` exists. Falls back to empty vec on failure.
+pub fn build_real_profiles() -> Vec<ProfileSummary> {
+    let mut profiles = Vec::new();
+
+    if let Some(claude) = claude_reader::read_claude_config() {
+        let mcp_count = claude.mcp_server_names.len();
+        let description = format!(
+            "{}个 MCP · {}个技能 · {}个 hook · {}个项目",
+            mcp_count, claude.skill_count, claude.hook_count, claude.project_count,
+        );
+        profiles.push(ProfileSummary {
+            id: "claude-code-real".to_string(),
+            name: "Claude Code".to_string(),
+            description,
+            rules: claude.permission_allow_count + claude.permission_deny_count,
+            skills: claude.skill_count,
+            mcp_references: mcp_count,
+            targets: vec![TargetKind::ClaudeCode],
+        });
+    }
+
+    if let Some(codex) = codex_reader::read_codex_config() {
+        let mcp_count = codex.mcp_server_names.len();
+        let model_label = codex.model.as_deref().unwrap_or("default");
+        let description = format!(
+            "模型 {} · {}个 MCP · {}个技能 · {}个受信项目",
+            model_label, mcp_count, codex.skill_count, codex.trusted_project_count,
+        );
+        profiles.push(ProfileSummary {
+            id: "codex-real".to_string(),
+            name: "Codex".to_string(),
+            description,
+            rules: 0,
+            skills: codex.skill_count,
+            mcp_references: mcp_count,
+            targets: vec![TargetKind::Codex],
+        });
+    }
+
+    profiles
 }

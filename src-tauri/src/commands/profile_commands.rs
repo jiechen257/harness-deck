@@ -2,12 +2,17 @@ use crate::domain::errors::CommandError;
 use crate::domain::profile::{HarnessProfile, ProfileSummary, ValidationReport};
 use crate::services::privacy_service::scan_profile_for_secrets;
 use crate::services::profile_service::{
-    get_fixture_profile, list_profile_summaries, validate_profile,
+    build_real_profiles, get_fixture_profile, list_profile_summaries, validate_profile,
 };
 
 #[tauri::command]
 pub fn list_profiles() -> Vec<ProfileSummary> {
-    list_profile_summaries()
+    let real = build_real_profiles();
+    if real.is_empty() {
+        list_profile_summaries()
+    } else {
+        real
+    }
 }
 
 #[tauri::command]

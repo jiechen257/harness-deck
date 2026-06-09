@@ -51,6 +51,21 @@ export interface ManifestSummary {
   operationCount: number;
 }
 
+export interface TargetConfigSummary {
+  model?: string;
+  editorMode?: string;
+  theme?: string;
+  mcpServerCount: number;
+  skillCount: number;
+  hookCount: number;
+  permissionAllowCount: number;
+  permissionDenyCount: number;
+  pluginCount: number;
+  startupCount: number;
+  projectCount: number;
+  version?: string;
+}
+
 export interface TargetDiscoverySummary {
   kind: TargetKind;
   name: string;
@@ -58,6 +73,7 @@ export interface TargetDiscoverySummary {
   candidatePaths: string[];
   schemaStatus: string;
   rawConfigPreview: string | null;
+  configSummary: TargetConfigSummary | null;
 }
 
 export interface DiffEntry {
@@ -154,6 +170,14 @@ export interface UsageSummary {
   metrics: UsageMetric[];
 }
 
+export interface LocalSkillEntry {
+  name: string;
+  title?: string;
+  description?: string;
+  source: string;
+  path: string;
+}
+
 export interface RegistrySkillTemplate {
   id: string;
   name: string;
@@ -216,4 +240,83 @@ export interface WakeSession {
 export interface WakeControlSummary {
   currentState: WakeSession;
   quickActions: WakeSession[];
+}
+
+// ---- Real data types ----
+
+export interface DataSourceInfo {
+  name: string;
+  path: string;
+  available: boolean;
+}
+
+export interface DailyActivityEntry {
+  date: string;
+  sessions: number;
+  messages: number;
+  toolCalls: number;
+}
+
+export interface ModelUsageItem {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  costUsd: number;
+}
+
+export interface CodexThreadItem {
+  id: string;
+  title: string | null;
+  createdAt: string;
+  model: string | null;
+  tokensUsed: number | null;
+  cwd: string | null;
+}
+
+export interface RealUsageSummary {
+  totalSessions: number;
+  totalMessages: number;
+  totalCostUsd: number;
+  totalTokens: number;
+  windowHours: number;
+  burnRatePerHour: number;
+  driftEvents: number;
+  dailyActivity: DailyActivityEntry[];
+  modelUsage: ModelUsageItem[];
+  codexThreadCount: number;
+  codexRecentThreads: CodexThreadItem[];
+  dataSources: DataSourceInfo[];
+  longestSessionMinutes: number | null;
+}
+
+export interface HealthFactor {
+  name: string;
+  score: number;
+  maxScore: number;
+  met: boolean;
+}
+
+export interface AppStatus {
+  appName: string;
+  version: string;
+  localeDefault: string;
+  themeDefault: string;
+  fixtureMode: boolean;
+  realWritesEnabled: boolean;
+  phase: string;
+  healthScore: number;
+  healthFactors: HealthFactor[];
+}
+
+export type RealInsightCategory = "TokenAnomaly" | "SessionActivity" | "ModelConcentration";
+
+export interface RealInsight {
+  id: string;
+  category: RealInsightCategory;
+  title: string;
+  summary: string;
+  severity: string;
+  evidence: string;
+  source: string;
 }

@@ -1,5 +1,6 @@
 pub mod commands;
 pub mod domain;
+pub mod readers;
 pub mod services;
 
 #[cfg(test)]
@@ -11,7 +12,7 @@ mod phase4_5_tests;
 #[cfg(test)]
 mod phase6_8_tests;
 
-use tauri::menu::{Menu, MenuItem};
+use tauri::menu::{Menu, MenuBuilder, MenuItem, SubmenuBuilder};
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, PhysicalPosition, Rect, Runtime};
 
@@ -49,6 +50,31 @@ pub fn run() {
       }
       let app_paths = services::app_paths::paths_for_app(app.handle())?;
       app_paths.ensure()?;
+
+      let app_submenu = SubmenuBuilder::new(app, "HarnessDeck")
+        .about(None)
+        .separator()
+        .hide()
+        .hide_others()
+        .show_all()
+        .separator()
+        .quit()
+        .build()?;
+      let edit_submenu = SubmenuBuilder::new(app, "Edit")
+        .undo()
+        .redo()
+        .separator()
+        .cut()
+        .copy()
+        .paste()
+        .select_all()
+        .build()?;
+      let app_menu = MenuBuilder::new(app)
+        .item(&app_submenu)
+        .item(&edit_submenu)
+        .build()?;
+      app.set_menu(app_menu)?;
+
       let panel = MenuItem::with_id(app, "open_menu_panel", "Open Menu Panel", true, None::<&str>)?;
       let open = MenuItem::with_id(app, "open_workbench", "Open Workbench", true, None::<&str>)?;
       let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
@@ -100,6 +126,7 @@ pub fn run() {
       commands::account_commands::get_account_workspace,
       commands::account_commands::preview_account_switch,
       commands::registry_commands::list_registry_templates,
+      commands::registry_commands::list_local_skills,
       commands::registry_commands::find_best_skill,
       commands::insight_commands::list_insights,
       commands::insight_commands::list_feed_items,
@@ -111,6 +138,8 @@ pub fn run() {
       commands::deploy_commands::get_latest_manifest,
       commands::deploy_commands::get_sync_governance,
       commands::usage_commands::get_usage_summary,
+      commands::usage_commands::get_real_usage_summary,
+      commands::insight_commands::list_real_insights,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

@@ -2,6 +2,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct LocalSkillEntry {
+    pub name: String,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub source: String,
+    pub path: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RegistrySkillTemplate {
     pub id: String,
     pub name: String,

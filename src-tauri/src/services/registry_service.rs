@@ -1,6 +1,42 @@
+use std::path::PathBuf;
+
 use crate::domain::registry::{
-    FindBestSkillResult, RegistrySkillTemplate, SkillScoreBreakdown,
+    FindBestSkillResult, LocalSkillEntry, RegistrySkillTemplate, SkillScoreBreakdown,
 };
+use crate::readers::skill_scanner;
+
+/// Scan real skill directories from ~/.claude/skills/ and ~/.codex/skills/.
+/// Returns merged and sorted results. Returns empty Vec on any error.
+pub fn local_skill_registry() -> Vec<LocalSkillEntry> {
+    let home = match home_dir() {
+        Some(h) => h,
+        None => return Vec::new(),
+    };
+
+    let claude_skills = skill_scanner::scan_skills(&home.join(".claude/skills"), "claude");
+    let codex_skills = skill_scanner::scan_skills(&home.join(".codex/skills"), "codex");
+
+    let mut entries: Vec<LocalSkillEntry> = claude_skills
+        .into_iter()
+        .chain(codex_skills)
+        .map(|meta| LocalSkillEntry {
+            name: meta.name,
+            title: meta.title,
+            description: meta.description,
+            source: meta.source,
+            path: meta.path,
+        })
+        .collect();
+
+    entries.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    entries
+}
+
+fn home_dir() -> Option<PathBuf> {
+    std::env::var("HOME")
+        .ok()
+        .map(PathBuf::from)
+}
 
 pub fn curated_registry_templates() -> Vec<RegistrySkillTemplate> {
     vec![
@@ -51,13 +87,117 @@ pub fn curated_registry_templates() -> Vec<RegistrySkillTemplate> {
 }
 
 pub fn find_best_skill(task: &str, allow_github_discovery: bool) -> FindBestSkillResult {
+    // Try real local skills first
+    let local_skills = local_skill_registry();
+
+    if !local_skills.is_empty() {
+        return find_best_from_local_skills(task, &local_skills, allow_github_discovery);
+    }
+
+    // Fallback to curated fixture templates
+    find_best_from_templates(task, allow_github_discovery)
+}
+
+fn find_best_from_local_skills(
+    task: &str,
+    skills: &[LocalSkillEntry],
+    allow_github_discovery: bool,
+) -> FindBestSkillResult {
+    let normalized_task = task.to_lowercase();
+    let task_words: Vec<&str> = normalized_task.split_whitespace().collect();
+
+    let mut best_idx = 0;
+    let mut best_score = 0.0_f64;
+
+    for (idx, skill) in skills.iter().enumerate() {
+        let score = score_local_skill(&task_words, skill);
+        if score > best_score {
+            best_score = score;
+            best_idx = idx;
+        }
+    }
+
+    let best = &skills[best_idx];
+
+    // Convert local skill to a RegistrySkillTemplate for the result
+    let recommended = RegistrySkillTemplate {
+        id: best.name.clone(),
+        name: best.title.clone().unwrap_or_else(|| best.name.clone()),
+        description: best
+            .description
+            .clone()
+            .unwrap_or_else(|| format!("Local {} skill", best.source)),
+        task_tags: Vec::new(),
+        quality_score: 0.7,
+        community_signal: 0.5,
+        personal_feedback: 0.6,
+        safety_risk: "Low".to_string(),
+        source: format!("local-{}", best.source),
+    };
+
+    let breakdown = SkillScoreBreakdown {
+        task_match: round_two(best_score.min(1.0)),
+        quality: 0.7,
+        community: 0.5,
+        personal: 0.6,
+        safety_penalty: 0.02,
+    };
+
+    let weighted = breakdown.task_match * 0.38
+        + breakdown.quality * 0.26
+        + breakdown.community * 0.14
+        + breakdown.personal * 0.16
+        - breakdown.safety_penalty * 0.06;
+
+    FindBestSkillResult {
+        task: task.to_string(),
+        recommended_skill: recommended,
+        score: round_two(weighted),
+        scoring: breakdown,
+        github_discovery_enabled: allow_github_discovery,
+        remote_call_performed: false,
+        safety_summary: "safety risk: Low".to_string(),
+    }
+}
+
+/// Score a local skill against task keywords.
+/// Checks name, title, and description for keyword matches.
+fn score_local_skill(task_words: &[&str], skill: &LocalSkillEntry) -> f64 {
+    if task_words.is_empty() {
+        return 0.2;
+    }
+
+    let name_lower = skill.name.to_lowercase();
+    let title_lower = skill
+        .title
+        .as_deref()
+        .unwrap_or("")
+        .to_lowercase();
+    let desc_lower = skill
+        .description
+        .as_deref()
+        .unwrap_or("")
+        .to_lowercase();
+
+    let searchable = format!("{} {} {}", name_lower, title_lower, desc_lower);
+
+    let matched = task_words
+        .iter()
+        .filter(|word| word.len() >= 2 && searchable.contains(**word))
+        .count();
+
+    let ratio = matched as f64 / task_words.len() as f64;
+    ratio.max(0.1)
+}
+
+fn find_best_from_templates(task: &str, allow_github_discovery: bool) -> FindBestSkillResult {
     let templates = curated_registry_templates();
     let mut best = templates[0].clone();
     let mut best_score = 0.0;
     let mut best_breakdown = score_template(task, &best);
 
-    for template in templates {
-        let breakdown = score_template(task, &template);
+    for template in &templates {
+        let breakdown = score_template(task, template);
         let score = breakdown.task_match * 0.38
             + breakdown.quality * 0.26
             + breakdown.community * 0.14
@@ -65,7 +205,7 @@ pub fn find_best_skill(task: &str, allow_github_discovery: bool) -> FindBestSkil
             - breakdown.safety_penalty * 0.06;
         if score > best_score {
             best_score = score;
-            best = template;
+            best = template.clone();
             best_breakdown = breakdown;
         }
     }

@@ -2,12 +2,16 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type {
   AccountWorkspace,
+  AppStatus,
   DeployPlan,
   FeedItem,
   FindBestSkillResult,
   Insight,
+  LocalSkillEntry,
   ManifestSummary,
   ProfileSummary,
+  RealInsight,
+  RealUsageSummary,
   RegistrySkillTemplate,
   SyncGovernance,
   TargetDiscoverySummary,
@@ -50,8 +54,8 @@ const fallbackTargets: TargetSummary[] = [
 const fallbackRegistryTemplates: RegistrySkillTemplate[] = [
   {
     id: "tauri-desktop-guardrails",
-    name: "Tauri Desktop Guardrails",
-    description: "Local-first macOS app safety, backup, manifest, and config write checks.",
+    name: "Tauri 桌面端守护规则",
+    description: "本地优先的 macOS 应用安全、备份、清单和配置写入检查。",
     taskTags: ["tauri", "desktop", "sync", "codex", "claude", "safety"],
     qualityScore: 0.94,
     communitySignal: 0.72,
@@ -61,8 +65,8 @@ const fallbackRegistryTemplates: RegistrySkillTemplate[] = [
   },
   {
     id: "prompt-ops-privacy",
-    name: "Prompt Ops Privacy Review",
-    description: "Checks prompt, log, token, and secret-handling boundaries before sync.",
+    name: "Prompt 隐私审查",
+    description: "在同步前检查 prompt、日志、token 和密钥处理边界。",
     taskTags: ["privacy", "guard", "secrets"],
     qualityScore: 0.9,
     communitySignal: 0.64,
@@ -72,8 +76,8 @@ const fallbackRegistryTemplates: RegistrySkillTemplate[] = [
   },
   {
     id: "experimental-hook-runner",
-    name: "Experimental Hook Runner",
-    description: "Prototype hook automation that remains gated until explicit install consent.",
+    name: "实验性 Hook 运行器",
+    description: "原型 hook 自动化，在用户显式同意安装前保持管控状态。",
     taskTags: ["hooks", "automation"],
     qualityScore: 0.68,
     communitySignal: 0.51,
@@ -83,35 +87,59 @@ const fallbackRegistryTemplates: RegistrySkillTemplate[] = [
   },
 ];
 
+const fallbackLocalSkills: LocalSkillEntry[] = [
+  {
+    name: "tauri-desktop-guardrails",
+    title: "Tauri Desktop Guardrails",
+    description: "Local-first macOS app safety, backup, manifest, and config write checks.",
+    source: "claude",
+    path: "~/.claude/skills/tauri-desktop-guardrails",
+  },
+  {
+    name: "prompt-ops-privacy",
+    title: "Prompt Ops Privacy Review",
+    description: "Checks prompt, log, token, and secret-handling boundaries before sync.",
+    source: "claude",
+    path: "~/.claude/skills/prompt-ops-privacy",
+  },
+  {
+    name: "experimental-hook-runner",
+    title: "Experimental Hook Runner",
+    description: "Prototype hook automation that remains gated until explicit install consent.",
+    source: "codex",
+    path: "~/.codex/skills/experimental-hook-runner",
+  },
+];
+
 const fallbackInsights: Insight[] = [
   {
     id: "insight-token-anomaly",
-    title: "Token anomaly",
-    summary: "Estimated token burn is 24% above this profile's five-hour baseline.",
+    title: "Token 用量异常",
+    summary: "预估 token 消耗比该配置集五小时基线高 24%。",
     severity: "medium",
     relatedProfileId: "macos-dev",
     source: "local-rule",
   },
   {
     id: "insight-repeated-failures",
-    title: "Repeated failures",
-    summary: "Two dry-run operations repeatedly require manual conflict review.",
+    title: "重复失败",
+    summary: "两次 dry-run 操作反复需要手动冲突审查。",
     severity: "medium",
     relatedProfileId: "macos-dev",
     source: "local-rule",
   },
   {
     id: "insight-profile-drift",
-    title: "Profile drift",
-    summary: "Target state differs from the last manifest in rules and skills.",
+    title: "配置集漂移",
+    summary: "目标状态与最近一次 manifest 在规则和技能上存在差异。",
     severity: "high",
     relatedProfileId: "macos-dev",
     source: "local-rule",
   },
   {
     id: "insight-update-impact",
-    title: "Update impact",
-    summary: "Registry update can improve sync guard wording without touching secrets.",
+    title: "更新影响",
+    summary: "注册表更新可改进同步守护措辞，不涉及密钥。",
     severity: "low",
     relatedProfileId: "macos-dev",
     source: "local-rule",
@@ -121,16 +149,16 @@ const fallbackInsights: Insight[] = [
 const fallbackFeedItems: FeedItem[] = [
   {
     id: "feed-profile-impact",
-    title: "Harness Profile impact alert",
-    summary: "A curated guardrail update affects the active macOS Dev profile.",
+    title: "Harness 配置集影响警报",
+    summary: "一项策划的守护规则更新影响了当前活跃的 macOS Dev 配置集。",
     priority: "High",
     source: "registry-cache",
     profileImpact: true,
   },
   {
     id: "feed-community-template",
-    title: "Community template update",
-    summary: "A privacy review template was refreshed in the local cache.",
+    title: "社区模板更新",
+    summary: "一个隐私审查模板在本地缓存中已刷新。",
     priority: "Normal",
     source: "community-cache",
     profileImpact: false,
@@ -158,6 +186,20 @@ async function call<T>(command: string, args: Record<string, unknown>, fallback:
 
 export async function listProfiles(): Promise<ProfileSummary[]> {
   return call("list_profiles", {}, () => fallbackProfiles);
+}
+
+export async function getAppStatus(): Promise<AppStatus> {
+  return call("get_app_status", {}, () => ({
+    appName: "HarnessDeck",
+    version: "0.1.0",
+    localeDefault: "zh-CN",
+    themeDefault: "light",
+    fixtureMode: true,
+    realWritesEnabled: false,
+    phase: "implementation-design-phase-0",
+    healthScore: 0,
+    healthFactors: [],
+  }));
 }
 
 export async function openWorkbench(): Promise<boolean> {
@@ -235,6 +277,7 @@ export async function discoverTargets(authorizedForLocalRead: boolean): Promise<
         candidatePaths: ["~/.codex/AGENTS.md", "~/.codex/config.toml"],
         schemaStatus: "target directory not found",
         rawConfigPreview: null,
+        configSummary: null,
       },
       {
         kind: "ClaudeCode",
@@ -243,6 +286,7 @@ export async function discoverTargets(authorizedForLocalRead: boolean): Promise<
         candidatePaths: ["~/.claude/CLAUDE.md", "~/.claude/settings.json"],
         schemaStatus: "target directory not found",
         rawConfigPreview: null,
+        configSummary: null,
       },
     ];
   });
@@ -369,8 +413,37 @@ export async function getUsageSummary(): Promise<UsageSummary> {
   }));
 }
 
+export async function getRealUsageSummary(): Promise<RealUsageSummary> {
+  return call("get_real_usage_summary", {}, () => ({
+    totalSessions: 0,
+    totalMessages: 0,
+    totalCostUsd: 0,
+    totalTokens: 0,
+    windowHours: 0,
+    burnRatePerHour: 0,
+    driftEvents: 0,
+    dailyActivity: [],
+    modelUsage: [],
+    codexThreadCount: 0,
+    codexRecentThreads: [],
+    dataSources: [
+      { name: "Claude Code stats", path: "~/.claude/stats-cache.json", available: false },
+      { name: "Codex threads", path: "~/.codex/state_5.sqlite", available: false },
+    ],
+    longestSessionMinutes: null,
+  }));
+}
+
+export async function listRealInsights(): Promise<RealInsight[]> {
+  return call("list_real_insights", {}, () => []);
+}
+
 export async function listRegistryTemplates(): Promise<RegistrySkillTemplate[]> {
   return call("list_registry_templates", {}, () => fallbackRegistryTemplates);
+}
+
+export async function listLocalSkills(): Promise<LocalSkillEntry[]> {
+  return call("list_local_skills", {}, () => fallbackLocalSkills);
 }
 
 export async function findBestSkill(task: string, allowGithubDiscovery: boolean): Promise<FindBestSkillResult> {

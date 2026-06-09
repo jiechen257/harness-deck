@@ -48,3 +48,21 @@ impl From<tauri::Error> for CommandError {
         Self::storage(error.to_string())
     }
 }
+
+impl From<toml::de::Error> for CommandError {
+    fn from(error: toml::de::Error) -> Self {
+        Self::storage(error.to_string())
+    }
+}
+
+impl From<rusqlite::Error> for CommandError {
+    fn from(error: rusqlite::Error) -> Self {
+        Self::storage(format!("SQLite error: {error}"))
+    }
+}
+
+impl From<serde_json::Error> for CommandError {
+    fn from(error: serde_json::Error) -> Self {
+        Self::storage(format!("JSON error: {error}"))
+    }
+}
