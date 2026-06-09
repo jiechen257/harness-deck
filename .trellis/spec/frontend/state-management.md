@@ -1,26 +1,27 @@
-# State Management
+# 状态管理
 
-## State Sources
+## 状态来源
 
-All state lives in React `useState` hooks inside `App.tsx`. No global state library.
+当前使用 React `useState` + 自定义 hook 管理状态。如果复杂度增长（跨组件状态共享、异步状态缓存等），可以引入状态管理库（如 Zustand、Jotai、TanStack Query 等），按需选择。
 
-| State | Type | Persistence |
-|-------|------|-------------|
-| `activeView` | `ViewId` | In-memory only |
-| `locale` | `Locale` | `localStorage` |
-| `theme` | `Theme` | `localStorage` |
-| `profiles` | `ProfileSummary[]` | Fetched from `api.ts` on view mount |
-| `targets` | `TargetSummary[]` | Fetched from `api.ts` on view mount |
-| `deployPlan` | `DeployPlan \| null` | Generated on demand |
-| `manifest` | `ManifestSummary \| null` | Written after dry-run confirmation |
+| 状态 | 类型 | 持久化 | 所在位置 |
+|------|------|--------|----------|
+| `locale` | `Locale` | `localStorage` | `hooks/useLocale.ts` |
+| `theme` | `Theme` | `localStorage` | `hooks/useTheme.ts` |
+| `activeView` | `ViewId` | 仅内存 | `Workbench.tsx` |
+| `profiles` | `ProfileSummary[]` | 从 `api.ts` 获取 | 视图组件 |
+| `targets` | `TargetSummary[]` | 从 `api.ts` 获取 | 视图组件 |
+| `deployPlan` | `DeployPlan \| null` | 按需生成 | `SyncView.tsx` |
+| `manifest` | `ManifestSummary \| null` | dry-run 确认后写入 | `SyncView.tsx` |
 
-## Locale State
+## Locale 状态
 
-- Default `zh-CN`, toggles to `en-US`.
-- All fixed UI copy is in the `copy` object inside `App.tsx`, keyed by locale:
+- 默认 `zh-CN`，可切换为 `en-US`。
+- 所有固定 UI 文案在 `constants/copy.ts` 中，按 locale 索引：
 
 ```tsx
-const copy = {
+// src/constants/copy.ts
+export const copy = {
   "zh-CN": {
     title: "HarnessDeck 命令中心",
     currentProfile: "当前配置集",
@@ -32,27 +33,30 @@ const copy = {
     // ...
   },
 } satisfies Record<Locale, Record<string, string>>;
+
+export type CopyStrings = (typeof copy)["zh-CN"];
 ```
 
-- Product-generated names (profile names, target names, file paths, manifest IDs) are never translated.
+- 产品生成的名称（配置集名、目标名、文件路径、manifest ID）不翻译。
 
-## Theme State
+## Theme 状态
 
-- Default `light`, toggles to `dark`.
-- Applied via `data-theme` attribute on the app shell element:
+- 默认 `light`，可切换为 `dark`。
+- 通过 `data-theme` 属性应用于 app shell 元素：
 
 ```tsx
 <div data-theme={theme} data-testid="app-shell">
 ```
 
-- CSS variables are scoped under `[data-theme="dark"]` in `styles/app.css`.
+- CSS 变量在 `styles/app.css` 中通过 `[data-theme="dark"]` 选择器定义。
 
-## Confidence Labels
+## 数据置信度标签
 
-Usage metrics carry a `DataConfidence` field (`Official`, `LocalLog`, `Estimated`, `Missing`) that must be rendered as a visible badge. Do not display unconnected data sources as if they were authoritative.
+用量指标携带 `DataConfidence` 字段（`Official`、`LocalLog`、`Estimated`、`Missing`），必须渲染为可见标签。不要将未连接的数据源显示为权威数据。
 
-## Rules
+## 规则
 
-- No global state library. Plain React state + `useEffect` data fetching is sufficient.
-- Keep fixture mode visible in UI at all times.
-- Use typed API wrappers from `lib/api.ts` for all backend data.
+- 状态方案按复杂度选择：简单场景用 React state + hook，复杂场景可引入状态管理库。
+- UI 中始终保持 fixture 模式可见。
+- 所有后端数据通过 `lib/api.ts` 的 typed 封装获取。
+- 状态提升到最小必要层级：全局偏好在 Shell 层，业务数据在各视图内部。

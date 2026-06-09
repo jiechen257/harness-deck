@@ -1,18 +1,18 @@
-# Database Guidelines
+# 数据库规范
 
-HarnessDeck is local-first. Persistent state belongs under the app data directory.
+HarnessDeck 采用本地优先架构，持久化状态存储在应用数据目录下。
 
-## App Data Layout
+## 应用数据布局
 
 ```text
 ~/Library/Application Support/HarnessDeck/
-  manifests/               # dry-run deployment manifests (JSON)
-  backups/                 # future backup snapshots
-  registry-cache/          # future curated registry cache
-  feed-cache/              # future feed cache
+  manifests/               # dry-run 部署 manifest（JSON）
+  backups/                 # 未来的备份快照
+  registry-cache/          # 未来的注册表缓存
+  feed-cache/              # 未来的 feed 缓存
 ```
 
-Path resolution uses `app_paths::paths_for_app()`:
+路径解析使用 `app_paths::paths_for_app()`：
 
 ```rust
 // src-tauri/src/services/app_paths.rs
@@ -26,21 +26,21 @@ pub fn paths_for_app<R: Runtime>(app: &AppHandle<R>) -> Result<AppPaths, Command
 }
 ```
 
-## Current Persistence
+## 当前持久化
 
-- Dry-run manifests are JSON files written to `manifests/` by `storage_service::write_dry_run_manifest`.
-- Profile fixtures are hardcoded in `profile_service.rs`, not loaded from disk.
-- No SQLite or Keychain in the current phase.
+- Dry-run manifest 是由 `storage_service::write_dry_run_manifest` 写入 `manifests/` 的 JSON 文件。
+- 配置集 fixture 硬编码在 `profile_service.rs` 中，不从磁盘加载。
+- 当前阶段无 SQLite 或 Keychain。
 
-## Future SQLite Rules
+## 未来 SQLite 规则
 
-- Store indexes, state, usage aggregation, feed cache, insights, and audit trail in SQLite.
-- Store full deployment manifests as files; only indexable metadata goes in SQLite.
-- Never store API keys, provider tokens, prompts, source code, or complete logs.
-- Migrations must be deterministic and covered by tests.
+- 在 SQLite 中存储索引、状态、用量聚合、feed 缓存、洞察和审计记录。
+- 完整部署 manifest 作为文件存储；仅可索引的元数据放入 SQLite。
+- 不存储 API key、provider token、prompt、源代码或完整日志。
+- 迁移必须是确定性的并有测试覆盖。
 
-## Backup Rules
+## 备份规则
 
-- Any future real write path must create a backup before writing.
-- A deployment manifest must include backup metadata before the write is complete.
-- Current phase exposes backup design and disabled UI state only.
+- 未来的真实写入路径必须在写入前创建备份。
+- 部署 manifest 必须在写入完成前包含备份元数据。
+- 当前阶段仅展示备份设计和禁用的 UI 状态。

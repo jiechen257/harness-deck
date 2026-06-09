@@ -1,13 +1,13 @@
-# Type Safety
+# 类型安全
 
-## TypeScript Rules
+## TypeScript 规则
 
-- Use TypeScript for all frontend source.
-- `@typescript-eslint/no-explicit-any` is set to `error` — no `any` allowed.
-- Define explicit union types for domain enums:
+- 所有前端源码使用 TypeScript。
+- `@typescript-eslint/no-explicit-any` 设为 `error`——禁止 `any`。
+- 使用显式联合类型定义领域枚举：
 
 ```tsx
-// src/lib/types.ts
+// src/lib/types.ts — 共享领域类型
 export type Locale = "zh-CN" | "en-US";
 export type Theme = "light" | "dark";
 export type TargetKind = "Codex" | "ClaudeCode";
@@ -17,44 +17,64 @@ export type DataConfidence = "Official" | "LocalLog" | "Estimated" | "Missing";
 export type WakeMode = "StandardAwake" | "TimedAwake" | "DisplaySleep" | "ExperimentalLidAwake";
 ```
 
-## Rust / TypeScript Contract
+```tsx
+// src/constants/types.ts — 前端独有类型
+export type ViewId =
+  | "home" | "discover" | "profiles" | "sync"
+  | "operate" | "usage" | "insights" | "guard" | "settings";
 
-All Rust domain structs use `#[serde(rename_all = "camelCase")]`. TypeScript interfaces must mirror the camelCase field names exactly:
+export interface NavItem {
+  id: ViewId;
+  icon: React.ComponentType;
+  matches?: ViewId[];
+  zh: string;
+  en: string;
+}
+```
+
+## Rust / TypeScript 契约
+
+所有 Rust domain 结构体使用 `#[serde(rename_all = "camelCase")]`。TypeScript 接口必须精确镜像 camelCase 字段名：
 
 ```rust
-// Rust side
+// Rust 侧
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProfileSummary {
     pub id: String,
-    pub mcp_references: usize,   // serializes as "mcpReferences"
+    pub mcp_references: usize,   // 序列化为 "mcpReferences"
 }
 ```
 
 ```tsx
-// TypeScript side
+// TypeScript 侧
 export interface ProfileSummary {
   id: string;
-  mcpReferences: number;         // matches camelCase serde output
+  mcpReferences: number;         // 匹配 camelCase serde 输出
 }
 ```
 
-If backend fields change, update TypeScript types and tests in the same commit.
+后端字段变更时，必须在同一次提交中更新 TypeScript 类型和测试。
 
-## Copy Typing
+## Copy 类型
 
-The `copy` object uses `satisfies Record<Locale, Record<string, string>>` to enforce that both locales have the same keys:
+`copy` 对象使用 `satisfies Record<Locale, Record<string, string>>` 确保两种语言有相同的 key：
 
 ```tsx
-const copy = {
+// src/constants/copy.ts
+export const copy = {
   "zh-CN": { title: "HarnessDeck 命令中心", /* ... */ },
   "en-US": { title: "HarnessDeck Command Center", /* ... */ },
 } satisfies Record<Locale, Record<string, string>>;
+
+export type CopyStrings = (typeof copy)["zh-CN"];
 ```
 
-## Validation
+组件通过 `CopyStrings` 类型接收 copy 对象，而不是通用的 `Record<string, string>`。
+
+## 验证
 
 ```bash
 pnpm typecheck    # tsc --noEmit
-pnpm lint         # eslint with no-explicit-any = error
+pnpm lint         # eslint + no-explicit-any = error
 ```

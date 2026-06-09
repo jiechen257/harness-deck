@@ -1,57 +1,76 @@
-# Backend Quality Guidelines
+# 后端质量规范
 
-## Test Organization
+## 测试组织
 
-Tests are organized by implementation phase in top-level test files:
+测试按领域域组织在 `src-tauri/src/tests/` 目录下，每个文件对应一个领域区域：
 
-| File | Coverage |
+| 文件 | 覆盖领域 |
 |------|----------|
-| `phase1_tests.rs` | Profile parsing, validation, secret scan, deploy plan, manifest write |
-| `phase2_3_tests.rs` | Target discovery authorization, sync governance |
-| `phase4_5_tests.rs` | Account workspace, Keychain references, usage confidence |
-| `phase6_8_tests.rs` | Registry scoring, insights, feed, wake control confirmation |
+| `profile_tests.rs` | 配置集解析和验证、缺失字段拒绝、秘密扫描 |
+| `deploy_tests.rs` | deploy plan 生成（含 dry-run 标记）、manifest 写入和读取 |
+| `target_tests.rs` | 目标发现需要显式授权、授权后返回安全摘要 |
+| `sync_governance_tests.rs` | 三方 diff、冲突队列、漂移检测、回滚预览 |
+| `account_tests.rs` | 账号工作区 Keychain 引用、模型切换预览 |
+| `usage_tests.rs` | 用量汇总、置信度标签 |
+| `registry_tests.rs` | 注册表模板列表、find-best-skill 评分和安全性 |
+| `insight_tests.rs` | 本地洞察、feed、高优先 feed |
+| `wake_tests.rs` | 防睡模式、实验性 lid-awake 确认流程 |
 
-### Example: Phase 1 test pattern
+### 测试命名
+
+测试函数名应描述被验证的行为，使用 `snake_case`：
 
 ```rust
-// src-tauri/src/phase1_tests.rs
 #[test]
-fn fixture_profiles_parse_and_validate() {
-    let profiles = list_fixture_profiles();
-    assert!(profiles.len() >= 2);
-    let report = validate_profile(&profiles[0]);
-    assert!(report.valid);
-}
+fn profile_validation_rejects_missing_required_fields() { /* ... */ }
 
 #[test]
-fn blocked_plan_cannot_be_confirmed() {
-    let plan = DeployPlan {
-        dry_run: true,
-        risk: RiskLevel::High,
-        // ...
-    };
-    // confirm_dry_run_deploy should reject high-risk plans
-}
+fn secret_scanner_catches_token_like_profile_content() { /* ... */ }
+
+#[test]
+fn target_discovery_requires_explicit_local_read_authorization() { /* ... */ }
 ```
 
-## Safety Constraints
+### 模块注册
 
-- Fixture mode is the default — no reading or writing real Claude Code or Codex config directories.
-- No shell hooks, remote LLM calls, or background log collection.
-- No hardcoded credentials or tokens.
-- Real write APIs exist as types and disabled UI concepts, not as callable commands.
-
-## Code Style
-
-- Pure functions in `domain/`, thin side-effect wrappers in `services/`, typed narrow handlers in `commands/`.
-- All domain structs use `#[serde(rename_all = "camelCase")]` to match TypeScript types.
-- Use `Default` impls for fixture defaults (see `SyncPolicy::default()`, `ProfileMetadata::default()`).
-- Use `From` impls for type conversions (see `ProfileSummary::from(&HarnessProfile)`).
-
-### Example: Domain struct with serde and Default
+在 `lib.rs` 中注册测试模块：
 
 ```rust
-// src-tauri/src/domain/profile.rs
+#[cfg(test)]
+mod tests;
+```
+
+`tests/mod.rs` 声明各测试子模块：
+
+```rust
+mod profile_tests;
+mod deploy_tests;
+mod target_tests;
+mod sync_governance_tests;
+mod account_tests;
+mod usage_tests;
+mod registry_tests;
+mod insight_tests;
+mod wake_tests;
+```
+
+## 安全约束
+
+- 当前阶段为 fixture 模式——不读写真实 Claude Code 或 Codex 配置目录。
+- 当前阶段不执行 shell hook、远程 LLM 调用或后台日志收集。
+- 不硬编码凭据或 token。
+- 真实写入 API 在备份/验证/回滚机制就绪后开放。
+
+## 代码风格
+
+- `domain/` 中使用纯函数，`services/` 中使用薄副作用封装，`commands/` 中使用 typed 窄处理器。
+- 所有 domain 结构体使用 `#[serde(rename_all = "camelCase")]` 以匹配 TypeScript 类型。
+- 使用 `Default` impl 定义 fixture 默认值（参见 `SyncPolicy::default()`、`ProfileMetadata::default()`）。
+- 使用 `From` impl 做类型转换（参见 `ProfileSummary::from(&HarnessProfile)`）。
+
+### 示例：带 serde 和 Default 的 domain 结构体
+
+```rust
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncPolicy {
@@ -73,10 +92,10 @@ impl Default for SyncPolicy {
 }
 ```
 
-## Verification
+## 验证命令
 
 ```bash
-cargo test --manifest-path src-tauri/Cargo.toml   # Rust tests
+cargo test --manifest-path src-tauri/Cargo.toml   # Rust 测试
 pnpm lint                                          # ESLint
 pnpm typecheck                                     # TypeScript
 pnpm test                                          # Vitest

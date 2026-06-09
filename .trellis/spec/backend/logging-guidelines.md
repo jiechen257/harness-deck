@@ -1,10 +1,10 @@
-# Logging Guidelines
+# 日志规范
 
-HarnessDeck logging is local-first and privacy-preserving.
+HarnessDeck 日志遵循本地优先和隐私保护原则。
 
-## Setup
+## 配置
 
-Logging uses `tauri-plugin-log` in debug builds only:
+日志使用 `tauri-plugin-log`，仅在 debug 构建中启用：
 
 ```rust
 // src-tauri/src/lib.rs
@@ -17,29 +17,29 @@ if cfg!(debug_assertions) {
 }
 ```
 
-No remote telemetry is configured.
+不配置远程遥测。
 
-## What To Log
+## 应该记录
 
-- App startup and version
-- App data path initialization (`app_paths::paths_for_app`)
-- Fixture profile loading
-- Fixture target loading
-- Deploy plan generation
-- Dry-run manifest creation
-- Explicit privacy or real-write confirmation events in future phases
+- 应用启动和版本
+- 应用数据路径初始化（`app_paths::paths_for_app`）
+- Fixture 配置集加载
+- Fixture 目标加载
+- Deploy plan 生成
+- Dry-run manifest 创建
+- 未来阶段中的显式隐私或真实写入确认事件
 
-## What Not To Log
+## 不应记录
 
-- Prompts
-- Source code
-- API keys, tokens, bearer strings, private keys
-- Full user config files
-- Full local logs imported from other tools
+- Prompt 内容
+- 源代码
+- API key、token、bearer 字符串、私钥
+- 完整用户配置文件
+- 从其他工具导入的完整本地日志
 
-## Audit Trail
+## 审计记录
 
-Audit trail events are product records, not debug logs. They are modeled as domain structs:
+审计记录是产品级记录，不是调试日志。它们建模为 domain 结构体：
 
 ```rust
 // src-tauri/src/domain/account_workspace.rs
@@ -51,4 +51,4 @@ pub struct AuditEntry {
 }
 ```
 
-Future real writes, account switches, rollback actions, privacy grants, and Keychain access must produce audit events with safe metadata — never raw secret values.
+未来的真实写入、账号切换、回滚操作、隐私授权和 Keychain 访问必须产生带安全元数据的审计事件——不含原始秘密值。

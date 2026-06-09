@@ -1,14 +1,24 @@
-# Component Guidelines
+# 组件规范
 
-## Component Shape
+## 组件形态
 
-All components are inline function components defined inside `App.tsx`. They use typed props and keep workflow state lifted to the `App` component.
+每个组件是一个独立文件中的函数组件，使用 typed props。文件名与组件名一致（PascalCase）。
 
-### Example: Inline view component
+### 示例：视图组件
 
 ```tsx
-// src/App.tsx — typical view component pattern
-function UsageView({ locale, t }: { locale: Locale; t: typeof copy["zh-CN"] }) {
+// src/components/views/UsageView.tsx
+import { useEffect, useState } from "react";
+import { getUsageSummary } from "../../lib/api";
+import type { Locale, UsageSummary } from "../../lib/types";
+import type { CopyStrings } from "../../constants/copy";
+
+interface UsageViewProps {
+  locale: Locale;
+  t: CopyStrings;
+}
+
+export function UsageView({ locale, t }: UsageViewProps) {
   const [usage, setUsage] = useState<UsageSummary | null>(null);
 
   useEffect(() => {
@@ -19,33 +29,35 @@ function UsageView({ locale, t }: { locale: Locale; t: typeof copy["zh-CN"] }) {
   return (
     <section className="view-section">
       <h2>{locale === "zh-CN" ? "用量与成本" : "Usage & Cost"}</h2>
-      {usage.metrics.map((m) => (
-        <div key={m.id} className="metric-row">
-          <span>{m.label}</span>
-          <span>{m.value} {m.unit}</span>
-          <span className={`confidence-badge confidence-${m.confidence.toLowerCase()}`}>
-            {m.confidenceLabel}
-          </span>
-        </div>
-      ))}
+      {/* ... */}
     </section>
   );
 }
 ```
 
-## Data Flow
+## 组件分层
 
-- Components receive `locale`, `t` (copy object), and callbacks as props.
-- Tauri IPC calls stay in `lib/api.ts` — components call the typed wrapper, not `invoke()` directly.
-- Fixture fallbacks in `api.ts` keep the app working in `pnpm dev` (browser) without the Rust backend.
+| 层级 | 目录 | 职责 |
+|------|------|------|
+| Shell | `App.tsx` | 窗口判断、全局键盘快捷键、locale/theme 提供 |
+| 布局 | `components/workbench/` | 主窗口骨架、侧边栏导航 |
+| 面板 | `components/menubar/` | 菜单栏弹出面板及子组件 |
+| 视图 | `components/views/` | 9 个业务视图，各自独立 |
+| 共享 | `components/shared/` | 跨视图复用的 UI 片段 |
 
-### Example: API dual-path pattern
+## 数据流
+
+- 组件通过 props 接收 `locale`、`t`（copy 对象）和回调。
+- Tauri IPC 调用保持在 `lib/api.ts` 中，组件调用 typed 封装函数，不直接调用 `invoke()`。
+- `api.ts` 中的 fixture 回退确保 `pnpm dev`（浏览器）无需 Rust 后端即可运行。
+
+### API 双路径模式
 
 ```tsx
 // src/lib/api.ts
-async function call<T>(command: string, args: Record<string, unknown>, fallback: () => T): Promise<T> {
+async function call<T>(cmd: string, args: Record<string, unknown>, fallback: () => T): Promise<T> {
   if (!isTauriRuntime()) return fallback();
-  return invoke<T>(command, args);
+  return invoke<T>(cmd, args);
 }
 
 export async function listProfiles(): Promise<ProfileSummary[]> {
@@ -53,23 +65,23 @@ export async function listProfiles(): Promise<ProfileSummary[]> {
 }
 ```
 
-## Visual Direction
+## 视觉方向
 
-- Light theme: warm gold-white base, low-saturation accents, deep blue and gilded details.
-- Dark theme: midnight blue surface, gold accents.
-- Dense developer-tool layout, clear dividers, compact controls.
-- No star-name feature labels. No generic marketing hero.
+- 浅色主题：温暖金白底色、低饱和度强调色、深蓝与描金细节。
+- 深色主题：午夜蓝表面、金色强调色。
+- 密集的开发者工具布局，清晰分隔线，紧凑控件。
+- 不使用星宿名作为功能标签，不使用营销风格 hero。
 
-## Controls
+## 控件
 
-- Icon buttons (from `lucide-react`) for compact commands.
-- Segmented controls for locale/theme/target switching.
-- Sidebar nav buttons for 5 primary groups; secondary views via sub-tabs.
-- Status pills for dry-run, fixture, risk, confidence, and disabled states.
+- 图标按钮（`lucide-react`）用于紧凑命令。
+- 分段控件用于 locale/theme/target 切换。
+- 侧边栏导航按钮：5 个主导航组，次要视图通过子标签页切换。
+- 状态标签用于 dry-run、fixture、risk、confidence、disabled 等状态。
 
-## Accessibility
+## 无障碍
 
-- Buttons must have visible text or an accessible label.
-- Keyboard focus styles must be visible.
-- State colors must be paired with text, not used alone.
-- Navigation uses `aria-current="page"` for the active view.
+- 按钮必须有可见文本或 `aria-label`。
+- 键盘焦点样式必须可见。
+- 状态颜色必须搭配文字，不能仅靠颜色区分。
+- 导航使用 `aria-current="page"` 标识当前视图。
