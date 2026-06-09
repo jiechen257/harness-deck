@@ -7,10 +7,14 @@ import type {
   AgentKind,
   AgentResult,
   AppStatus,
+  CrawlItem,
+  CrawlSummary,
   DeployPlan,
   FeedItem,
   FindBestSkillResult,
   Insight,
+  InstallRequest,
+  InstallResult,
   LocalSkillEntry,
   ManifestSummary,
   ProfileSummary,
@@ -536,4 +540,29 @@ function wakeSession(
     confirmed,
     implementation: "mock/system-safe",
   };
+}
+
+// Crawl Pipeline
+
+export async function crawlAllSources(customKeywords?: string[]): Promise<CrawlSummary> {
+  return call("crawl_all_sources", { customKeywords: customKeywords ?? null }, () => ({
+    results: [],
+    totalRaw: 0,
+    totalFiltered: 0,
+    totalRanked: 0,
+    agentUsed: null,
+  }));
+}
+
+export async function rankCrawlResults(items: CrawlItem[], agentKind: AgentKind): Promise<CrawlItem[]> {
+  return call("rank_crawl_results", { items, agentKind }, () => items);
+}
+
+export async function installSkill(request: InstallRequest): Promise<InstallResult> {
+  return call("install_skill_command", { request }, () => ({
+    success: false,
+    target: request.target,
+    installedPath: "",
+    message: "Install not available in browser mode",
+  }));
 }

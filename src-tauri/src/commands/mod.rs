@@ -1,6 +1,7 @@
 pub mod account_commands;
 pub mod app_commands;
 pub mod byoa_commands;
+pub mod crawl_commands;
 pub mod deploy_commands;
 pub mod insight_commands;
 pub mod profile_commands;

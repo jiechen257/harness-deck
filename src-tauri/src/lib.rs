@@ -144,6 +144,9 @@ pub fn run() {
       commands::insight_commands::list_real_insights,
       commands::byoa_commands::detect_agents,
       commands::byoa_commands::invoke_agent,
+      commands::crawl_commands::crawl_all_sources,
+      commands::crawl_commands::rank_crawl_results,
+      commands::crawl_commands::install_skill_command,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

@@ -347,3 +347,54 @@ export interface RealInsight {
   evidence: string;
   source: string;
 }
+
+// Crawl Pipeline
+export type CrawlSource = "GitHub" | "HackerNews" | "Reddit" | "LinuxDo" | "Curated";
+export type ItemType = "Repository" | "Discussion" | "Article";
+
+export interface CrawlItem {
+  id: string;
+  title: string;
+  url: string;
+  source: CrawlSource;
+  itemType: ItemType;
+  score: number | null;
+  summary: string | null;
+  author: string | null;
+  createdAt: string | null;
+  relevance: number | null;
+}
+
+export interface CrawlResult {
+  source: CrawlSource;
+  items: CrawlItem[];
+  crawledAt: string;
+  filterKeywords: string[];
+  error: string | null;
+}
+
+export interface CrawlSummary {
+  results: CrawlResult[];
+  totalRaw: number;
+  totalFiltered: number;
+  totalRanked: number;
+  agentUsed: AgentKind | null;
+}
+
+// Install
+export type InstallTarget = "ClaudeCode" | "Codex";
+export type InstallAction = "CopySkill" | "AppendRule" | "AddMcpServer";
+
+export interface InstallRequest {
+  sourceUrl: string;
+  target: InstallTarget;
+  action: InstallAction;
+  skillName: string;
+}
+
+export interface InstallResult {
+  success: boolean;
+  target: InstallTarget;
+  installedPath: string;
+  message: string;
+}
