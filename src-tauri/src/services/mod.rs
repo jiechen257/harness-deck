@@ -1,6 +1,7 @@
 pub mod account_service;
 pub mod adapter_service;
 pub mod app_paths;
+pub mod byoa_service;
 pub mod insight_service;
 pub mod privacy_service;
 pub mod profile_service;

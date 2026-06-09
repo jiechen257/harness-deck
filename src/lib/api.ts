@@ -2,6 +2,10 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type {
   AccountWorkspace,
+  AgentAvailability,
+  AgentInvocation,
+  AgentKind,
+  AgentResult,
   AppStatus,
   DeployPlan,
   FeedItem,
@@ -436,6 +440,22 @@ export async function getRealUsageSummary(): Promise<RealUsageSummary> {
 
 export async function listRealInsights(): Promise<RealInsight[]> {
   return call("list_real_insights", {}, () => []);
+}
+
+export async function detectAgents(): Promise<AgentAvailability[]> {
+  return call("detect_agents", {}, () => []);
+}
+
+export async function invokeAgent(invocation: AgentInvocation): Promise<AgentResult> {
+  return call("invoke_agent", { invocation }, () => ({
+    kind: invocation.kind,
+    exitCode: -1,
+    stdout: "",
+    stderr: "BYOA not available in browser mode",
+    parsedJson: null,
+    durationMs: 0,
+    timedOut: false,
+  }));
 }
 
 export async function listRegistryTemplates(): Promise<RegistrySkillTemplate[]> {

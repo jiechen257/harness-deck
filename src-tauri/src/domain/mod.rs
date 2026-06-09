@@ -1,6 +1,7 @@
 pub mod app;
 pub mod account_workspace;
 pub mod adapter;
+pub mod byoa;
 pub mod deploy_plan;
 pub mod errors;
 pub mod insights;

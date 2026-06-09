@@ -1,7 +1,7 @@
-import { BarChart3, CheckCircle2, Gauge, Layers, Search, ShieldCheck, Shuffle, TerminalSquare, Zap } from "lucide-react";
+import { BarChart3, CheckCircle2, Gauge, Search, Settings, Sparkles, Zap } from "lucide-react";
 
 import type { ViewId } from "../../constants/types";
-import type { FeedItem, Locale, ManifestSummary, TargetKind, UsageSummary, WakeControlSummary } from "../../lib/types";
+import type { FeedItem, Locale, ManifestSummary, TargetKind, UsageSummary } from "../../lib/types";
 import { ChevronRightIcon } from "../shared/ChevronRightIcon";
 
 interface HomeViewProps {
@@ -16,7 +16,6 @@ interface HomeViewProps {
   selectedTargetKind: TargetKind;
   t: Record<string, string>;
   usageSummary: UsageSummary | null;
-  wakeSummary: WakeControlSummary | null;
 }
 
 export function HomeView({
@@ -31,49 +30,18 @@ export function HomeView({
   selectedTargetKind,
   t,
   usageSummary,
-  wakeSummary,
 }: HomeViewProps) {
   const costMetric = usageSummary?.metrics.find((metric) => metric.id === "cost");
   const cards = [
     {
       icon: Search,
-      label: locale === "zh-CN" ? "发现最佳实践" : "Discover",
-      value: "7",
-      unit: locale === "zh-CN" ? "源" : "src",
-      badge: locale === "zh-CN" ? "注册表" : "Registry",
-      meta: locale === "zh-CN" ? "本地 registry 与 find-best-skill 推荐" : "Local registry and find-best-skill recommendations",
+      label: locale === "zh-CN" ? "发现范式" : "Discover",
+      value: locale === "zh-CN" ? "热榜" : "Feed",
+      unit: "",
+      badge: locale === "zh-CN" ? "多平台" : "Multi-source",
+      meta: locale === "zh-CN" ? "GitHub trending、HN、Reddit、linux.do 热门实践" : "Trending practices from GitHub, HN, Reddit, linux.do",
       tone: "blue",
       onAction: () => onSelectView("discover"),
-    },
-    {
-      icon: Layers,
-      label: locale === "zh-CN" ? "配置集" : "Profiles",
-      value: "42",
-      unit: locale === "zh-CN" ? "条规则" : "rules",
-      badge: selectedProfileName,
-      meta: locale === "zh-CN" ? "维护 Harness Profile、skills、MCP 引用" : "Harness Profile, skills, and MCP references",
-      tone: "purple",
-      onAction: () => onSelectView("profiles"),
-    },
-    {
-      icon: Shuffle,
-      label: locale === "zh-CN" ? "安全同步" : "Safe Sync",
-      value: manifest ? "Done" : locale === "zh-CN" ? "就绪" : "Ready",
-      unit: "",
-      badge: selectedTargetKind,
-      meta: locale === "zh-CN" ? "Claude Code / Codex 走 dry-run、diff、manifest" : "Claude Code / Codex via dry-run, diff, and manifest",
-      tone: "teal",
-      onAction: onRunDryRun,
-    },
-    {
-      icon: TerminalSquare,
-      label: locale === "zh-CN" ? "日常运行" : "Operate",
-      value: wakeSummary?.currentState.confirmed ? "Exp" : locale === "zh-CN" ? "标准" : "Std",
-      unit: "",
-      badge: t.wake,
-      meta: locale === "zh-CN" ? "菜单栏快捷动作、防睡、工作台入口" : "Menu bar actions, wake control, workbench entry",
-      tone: "gold",
-      onAction: () => onSelectView("operate"),
     },
     {
       icon: BarChart3,
@@ -81,19 +49,29 @@ export function HomeView({
       value: costMetric ? costMetric.value : "$4.82",
       unit: costMetric?.unit ?? "",
       badge: "5h",
-      meta: locale === "zh-CN" ? "token、成本、时长、置信度一起展示" : "Tokens, cost, duration, and confidence",
-      tone: "blue",
+      meta: locale === "zh-CN" ? "token、成本、时长、模型分布" : "Tokens, cost, duration, and model distribution",
+      tone: "purple",
       onAction: () => onSelectView("usage"),
     },
     {
-      icon: ShieldCheck,
-      label: locale === "zh-CN" ? "守护边界" : "Guard",
-      value: "100",
-      unit: "%",
-      badge: "Keychain",
-      meta: locale === "zh-CN" ? "默认不上传 prompt、源码、secret 或原始配置" : "No prompts, source, secrets, or raw config uploaded by default",
+      icon: Sparkles,
+      label: locale === "zh-CN" ? "洞察与优化" : "Insights",
+      value: String(highPriorityFeed.length || 3),
+      unit: locale === "zh-CN" ? "条建议" : "items",
+      badge: locale === "zh-CN" ? "AI 驱动" : "AI-driven",
+      meta: locale === "zh-CN" ? "基于用量数据生成优化建议，一键应用到配置" : "AI-generated optimization suggestions from usage data",
       tone: "teal",
-      onAction: () => onSelectView("guard"),
+      onAction: () => onSelectView("insights"),
+    },
+    {
+      icon: Settings,
+      label: locale === "zh-CN" ? "设置" : "Settings",
+      value: selectedProfileName,
+      unit: "",
+      badge: selectedTargetKind,
+      meta: locale === "zh-CN" ? "配置集、同步、守护策略、防睡控制" : "Profiles, sync, guard policy, wake control",
+      tone: "gold",
+      onAction: () => onSelectView("settings"),
     },
   ];
   const improvements = [
@@ -103,14 +81,9 @@ export function HomeView({
       detail: locale === "zh-CN" ? "dry-run 部署清单" : "dry-run manifest",
     },
     {
-      label: locale === "zh-CN" ? "待授权" : "Needs auth",
-      value: "2",
-      detail: "Codex / Claude Code",
-    },
-    {
-      label: locale === "zh-CN" ? "建议" : "Suggestions",
+      label: locale === "zh-CN" ? "待处理" : "Pending",
       value: String(highPriorityFeed.length || 3),
-      detail: highPriorityFeed[0]?.title ?? "Profile drift",
+      detail: locale === "zh-CN" ? "优化建议" : "suggestions",
     },
   ];
   return (
@@ -127,7 +100,7 @@ export function HomeView({
           <span>{costMetric ? `${costMetric.value}${costMetric.unit}` : "$4.82"}</span>
           <span className="home-safety-badge">
             <CheckCircle2 size={13} aria-hidden="true" />
-            {locale === "zh-CN" ? "安全边界 100%" : "Safety 100%"}
+            {locale === "zh-CN" ? "本地优先" : "Local-first"}
           </span>
         </div>
         <div className="home-summary-actions">

@@ -1,0 +1,47 @@
+{
+  "id": "hone-core-rewrite",
+  "name": "hone-core-rewrite",
+  "title": "Hone 核心重写：从 HarnessDeck 配置管理工作台转型为 AI coding 范式发现与优化工具",
+  "description": "基于产品方向 grill-me 决策，对 HarnessDeck 进行核心重写。保留 Tauri 骨架（双窗口、托盘、主题、国际化），重写视图层（9→5）、domain 模型、API 层。建立 BYOA 管道、Discover 信息聚合器、一键安装、Insights 闭环四个新核心能力。",
+  "status": "pending",
+  "dev_type": "feature",
+  "scope": "major",
+  "package": null,
+  "priority": "P0",
+  "creator": "jiechen",
+  "assignee": "jiechen",
+  "createdAt": "2026-06-09",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [
+    "phase-1-foundation",
+    "phase-2-discover-and-install",
+    "phase-3-feedback-loop",
+    "phase-4-extensibility"
+  ],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "README.md",
+    "CLAUDE.md",
+    "src/App.tsx",
+    "src/constants/navigation.ts",
+    "src/constants/types.ts",
+    "src/lib/types.ts",
+    "src/lib/api.ts",
+    "src/components/views/",
+    "src/components/menubar/MenuBarPanel.tsx",
+    "src-tauri/src/domain/",
+    "src-tauri/src/services/",
+    "src-tauri/src/commands/"
+  ],
+  "notes": "产品更名 HarnessDeck → Hone。决策来源：2026-06-09 grill-me session，19 个分支全部收敛。",
+  "meta": {
+    "origin": "grill-me-session-2026-06-09",
+    "decision_count": 19
+  }
+}

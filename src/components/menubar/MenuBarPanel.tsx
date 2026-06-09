@@ -81,7 +81,7 @@ export function MenuBarPanel({
 
       <div className="panel-health">
         <div className="panel-score">
-          <HarnessLogo size={28} />
+          <HarnessLogo size={32} />
           <strong>{healthScore}</strong>
         </div>
         <div>

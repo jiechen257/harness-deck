@@ -7,20 +7,37 @@ export function HarnessLogo({ size = 28 }: { size?: number }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
+      style={{ borderRadius: size * 0.22 }}
     >
-      <rect width="1024" height="1024" rx="228" fill="#111d3a" />
-      <g stroke="white" strokeWidth="2.5" strokeOpacity="0.18" strokeLinecap="round" fill="none">
-        <path d="M310,340 L260,500 L420,580 L490,420 Z" />
-        <path d="M490,420 L600,350 L700,370 L790,310" />
-      </g>
-      <circle cx="310" cy="340" r="14" fill="white" />
-      <circle cx="310" cy="340" r="6" fill="#5eead4" opacity="0.6" />
-      <circle cx="260" cy="500" r="11" fill="white" />
-      <circle cx="420" cy="580" r="10" fill="white" />
-      <circle cx="490" cy="420" r="9" fill="white" />
-      <circle cx="600" cy="350" r="13" fill="white" />
-      <circle cx="700" cy="370" r="11" fill="white" />
-      <circle cx="790" cy="310" r="10" fill="white" />
+      <defs>
+        <linearGradient id="hd-bg" x1="512" y1="0" x2="512" y2="1024" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#1e3a5f"/>
+          <stop offset="100%" stopColor="#0d1a2e"/>
+        </linearGradient>
+      </defs>
+
+      {/* Background */}
+      <rect width="1024" height="1024" rx="228" fill="url(#hd-bg)"/>
+
+      {/* Track backgrounds */}
+      <rect x="280" y="260" width="40" height="504" rx="20" fill="white" fillOpacity="0.07"/>
+      <rect x="492" y="260" width="40" height="504" rx="20" fill="white" fillOpacity="0.07"/>
+      <rect x="704" y="260" width="40" height="504" rx="20" fill="white" fillOpacity="0.07"/>
+
+      {/* Active fills below knobs */}
+      <rect x="280" y="480" width="40" height="284" rx="20" fill="#5eead4" fillOpacity="0.45"/>
+      <rect x="492" y="390" width="40" height="374" rx="20" fill="#5eead4" fillOpacity="0.45"/>
+      <rect x="704" y="570" width="40" height="194" rx="20" fill="#5eead4" fillOpacity="0.45"/>
+
+      {/* Fader knobs */}
+      <circle cx="300" cy="480" r="36" fill="white" fillOpacity="0.95"/>
+      <circle cx="300" cy="480" r="15" fill="#5eead4"/>
+
+      <circle cx="512" cy="390" r="36" fill="white" fillOpacity="0.95"/>
+      <circle cx="512" cy="390" r="15" fill="#5eead4"/>
+
+      <circle cx="724" cy="570" r="36" fill="white" fillOpacity="0.95"/>
+      <circle cx="724" cy="570" r="15" fill="#5eead4"/>
     </svg>
   );
 }

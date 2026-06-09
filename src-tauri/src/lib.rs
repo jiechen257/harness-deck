@@ -4,6 +4,8 @@ pub mod readers;
 pub mod services;
 
 #[cfg(test)]
+mod byoa_tests;
+#[cfg(test)]
 mod phase1_tests;
 #[cfg(test)]
 mod phase2_3_tests;
@@ -140,6 +142,8 @@ pub fn run() {
       commands::usage_commands::get_usage_summary,
       commands::usage_commands::get_real_usage_summary,
       commands::insight_commands::list_real_insights,
+      commands::byoa_commands::detect_agents,
+      commands::byoa_commands::invoke_agent,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

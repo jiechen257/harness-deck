@@ -1,91 +1,155 @@
-# HarnessDeck
+# Hone
 
 English documentation: [`README.en.md`](README.en.md)
 
-HarnessDeck 是一个 macOS 菜单栏应用和管理工作台，目标是帮助用户用好 harness engineering。它把社区最佳实践发现、Harness Profile 管理、Claude/Codex 同步、日常操作、用量分析和持续优化放进同一个本地优先工作流。
+Hone 是一个 macOS 菜单栏应用和工作台，帮助个人开发者发现、应用并持续优化 AI coding 范式。
 
-当前仓库已经包含可本地运行的 Tauri 2 + React + TypeScript + Rust macOS 桌面应用骨架和 MVP fixture 工作流。
+它从 GitHub trending、Hacker News、Reddit、linux.do 等社区热榜中聚合 harness engineering 的最新实践，支持一键安装到本地 AI coding 工具，并通过调用用户本地已有的 agent（BYOA）自动生成配置优化建议，形成 **发现 → 应用 → 观测 → 优化** 的完整闭环。
 
-## 当前状态
+## 核心理念
 
-- 产品设计文档：[`docs/superpowers/specs/2026-06-07-harness-deck-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-design.md)
-- 实现设计文档：[`docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md)
-- UI/UX 原型：[`docs/product-design/harnessdeck-command-deck-prototype.html`](docs/product-design/harnessdeck-command-deck-prototype.html)
-- 原生感参考：[`yetone/native-feel-skill`](https://github.com/yetone/native-feel-skill)
-- 目标平台：macOS
-- 当前技术栈：Tauri 2、React、TypeScript、Rust
-- 预留集成：SQLite、macOS Keychain
-- 首批 agent targets：Claude Code 和 Codex
-- 界面语言：支持简体中文和英文，默认显示简体中文
-- 界面主题：支持浅色和深色，默认浅色
-- 品牌方向：工程仪表风格，功能命名保持工程语义
+- **本地优先**：所有数据处理和 agent 调用均在本地完成，不跑后端服务
+- **BYOA (Bring Your Own Agent)**：复用用户本地已安装的 Claude Code / Codex CLI 执行推理，不直连 API，不绑定特定 provider
+- **完全开源**：面向个人重度 AI coding 用户，通过 GitHub 仓库分发
+- **macOS 原生体验**：系统字体、原生托盘、MenuBar 弹出面板、macOS 快捷键
 
 ## 产品闭环
 
 ```text
-Discover -> Profile -> Sync -> Operate -> Improve
+Discover → Apply → Observe → Optimize
+   ↑                              │
+   └──────────────────────────────┘
 ```
 
-- `Discover`：发现 harness engineering 的官方、社区和精选实践。
-- `Profile`：把实践沉淀为可复用的 Harness Profile。
-- `Sync`：把 Profile 安全部署到 Claude Code 和 Codex。
-- `Operate`：通过菜单栏控制中心管理 Profile、账号、用量、同步和防睡状态。
-- `Improve`：基于 token、成本、drift、冲突、失败和更新持续给出优化建议。
+- **Discover**：聚合多平台热榜和策展内容，发现仓库级的 harness engineering 范式（如 framework、curated collection、methodology），而非仅配置文件
+- **Apply**：一键安装 skill、rule、hook 到本地 `~/.claude/` 或 `~/.codex/`，低门槛应用
+- **Observe**：接入真实本地数据（token、成本、会话活动、模型分布），观测效果
+- **Optimize**：Insights 检测到异常或改进机会后，调用本地 agent 生成 Profile 修改建议，用户确认后自动写回配置
 
-## MVP 范围
+## 信息发现管道
 
-MVP 采用本地完整闭环，并预留可插拔远端集成。核心能力包括：
+Discover 不是模板市场，而是 **harness engineering 信息聚合器**，分为两个区域：
 
-- 菜单栏控制中心和二级工作台
-- Harness Profiles
-- Claude Code 和 Codex adapters
-- policy sync、three-way diff、backup、manifest、rollback
-- Account Workspace 和 Keychain secret storage
-- Claude/Codex 用量与成本视图，指标带 source confidence
-- 精选 registry、GitHub 发现和 `find-best-skill`
-- 本地规则洞察和 profile impact update feed
-- 标准防睡、定时防睡、显示器睡眠控制、实验性合盖防睡确认流
+### 工具雷达
+追踪 GitHub trending 中 harness engineering 相关的仓库，按 star 增速、活跃度、范式类型分类。手工策展的高质量仓库置顶。策展内容维护在独立的 [hone-registry](https://github.com/) 仓库，以 YAML 格式管理，支持社区 PR 贡献。
 
-## 隐私边界
+### 社区脉搏
+聚合 Hacker News、Reddit、linux.do 的热门讨论，按话题聚类。
 
-HarnessDeck 采用本地优先设计：
+### 数据管道
+```text
+多平台热榜爬取（用户手动触发，每日一次）
+    → 关键词粗筛（本地字符串匹配，瞬间完成）
+    → Agent 语义精排（打包粗筛结果，一次 agent 调用完成）
+    → 结构化展示
+```
 
-- 默认不上传 prompts、source code、完整 logs。
-- secrets 存入 macOS Keychain。
-- Profile files 和 SQLite 只保存 secret references。
-- 读取 logs、启用 hooks、调用本地 LLM、发送脱敏摘要到远端 LLM、启用实验性合盖防睡，都需要用户明确授权。
+客户端本地完成全部爬取和过滤，不依赖后端服务。
+
+## 功能结构
+
+### 5 个工作台视图
+
+| 视图 | 职责 |
+|------|------|
+| **Home** | 仪表盘，总览各模块状态 |
+| **Discover** | 信息聚合 + 一键安装 |
+| **Usage** | 真实用量和成本观测 |
+| **Insights** | 洞察 + AI 生成优化建议 + 闭环写回 |
+| **Settings** | 已安装配置管理、Profile 查看、高级同步、Guard 策略、Wake 控制 |
+
+### MenuBar 面板（每日一瞥）
+
+- 顶部：今日社区热点（最近一次爬取的 top 内容标题）
+- 中部：未处理的优化建议数 + 今日成本
+- 底部：「更新热榜」（触发爬取）和「打开工作台」快捷按钮
+
+### BYOA 管道
+
+通过 CLI 子进程调用用户本地的 AI coding agent：
+
+```text
+检测可用 agent（which claude / which codex）
+    → 非交互模式调用，传入结构化 prompt
+    → 要求 JSON 输出
+    → 解析结果，生成 Profile 修改建议或语义过滤结果
+```
+
+用于两个场景：
+1. Discover 的语义精排
+2. Insights 的优化建议生成
+
+### Target 支持
+
+MVP 聚焦 Claude Code + Codex，架构上采用 adapter pattern，后续可扩展到 Cursor、Windsurf、Copilot 等工具，只需新增 adapter。
+
+## 路线图
+
+```text
+Phase 1 — 地基
+  ├── BYOA 管道（检测 + 调用本地 agent CLI）
+  ├── 导航重构（9 → 5 视图）
+  └── Usage 接入真实数据
+
+Phase 2 — 核心链路前半
+  ├── Discover 重做（多平台爬取 + 粗筛 + 精排）
+  └── 一键安装（Discover → 本地环境）
+
+Phase 3 — 核心链路后半
+  ├── Insights 闭环（洞察 → agent 建议 → 确认写回）
+  └── MenuBar 重做（每日一瞥入口）
+
+Phase 4 — 扩展
+  └── Target adapter 抽象（支持更多 AI coding 工具）
+```
+
+## 技术栈
+
+- **框架**：Tauri 2 + React + TypeScript + Rust
+- **平台**：macOS only
+- **界面语言**：简体中文（默认）/ English
+- **界面主题**：浅色（默认）/ 深色
 
 ## 开发状态
 
-当前实现为本地优先 fixture mode。应用默认显示简体中文和浅色主题，支持英文和深色切换。主窗口对齐 command deck 原型，包含顶部命令栏、品牌状态带、菜单栏面板和 macOS 窗口化工作台。工作台包含首页、发现、配置集、同步、运行、用量、洞察、守护和设置；独立 Tauri 菜单栏面板通过 `index.html?panel=1` 渲染，展示当前配置集、同步健康度、成本、防睡状态和快捷动作。界面已按 native-feel audit 调整系统字体、默认 cursor、平台 focus ring、pressed 状态、右键菜单抑制和 macOS 风格快捷键。
+当前代码库处于 **核心重写前** 阶段。已有可运行的 Tauri 骨架（双窗口、托盘、主题切换、国际化、macOS 原生体验），视图层和 domain 模型将按新方向重写。
 
-已实现的本地闭环：
+保留的基础设施：
+- Tauri 双窗口架构（main + menubar）
+- 托盘图标和面板定位（`tray.rs`、`window.rs`）
+- 主题和语言切换（`useTheme`、`useLocale`）
+- CSS 主题系统（`[data-theme="dark"]`）
+- macOS 原生体验适配（系统字体、光标、右键菜单抑制、快捷键）
 
-- 配置集 fixture、Codex / Claude Code fixture target、deploy plan、dry-run manifest。
-- 安全 target discovery，需要显式本地读取授权，只返回安全摘要。
-- Three-way diff、conflict queue、drift detection 和 rollback preview。
-- Account Workspace、mock Keychain reference、switch-plan preview 和 audit trail。
-- Usage / cost 聚合，带 Official、LocalLog、Estimated、Missing confidence。
-- Curated registry、`find-best-skill` scoring、GitHub discovery gate。
-- 本地 insight rules、feed 和 profile impact alert。
-- Wake Control mock/system-safe 状态，实验性合盖防睡需要显式确认。
+重写范围：
+- 视图层（9 → 5）
+- Domain 模型（Profile 降级、Sync 降级为高级功能、新增 Discover 聚合模型）
+- API 层（fixture → 真实数据 + BYOA 管道）
+- MenuBar 面板内容
 
-仍为 mock / fixture 的能力：
+## 隐私边界
 
-- 不写入真实 Claude Code 或 Codex 配置。
-- Keychain 为 interface/mock，不保存 secret value。
-- Registry / GitHub discovery 不自动远程调用。
-- Wake Control 不修改系统电源策略。
-- SQLite 持久化仍预留，当前 manifest 以本地 JSON 文件记录。
+- 默认不上传 prompts、源代码、完整日志
+- Agent 调用在本地完成，不经过第三方服务
+- 爬取仅访问公开热榜页面
+- 读取本地 agent 配置目录需用户授权
 
-常用命令：
+## 开发命令
 
 ```bash
-pnpm install
-pnpm tauri:dev
-pnpm lint
-pnpm typecheck
-pnpm test
-cargo test --manifest-path src-tauri/Cargo.toml
-pnpm tauri:build
+pnpm install                                     # 安装依赖
+pnpm dev                                         # vite 开发服务器，localhost:1420
+pnpm tauri:dev                                   # 完整 Tauri 桌面应用（Rust + React）
+pnpm tauri:build                                 # 生产构建
+pnpm lint                                        # eslint，零警告要求
+pnpm typecheck                                   # tsc --noEmit
+pnpm test                                        # vitest run (jsdom)
+pnpm test:watch                                  # vitest watch 模式
+cargo test --manifest-path src-tauri/Cargo.toml  # Rust 测试
 ```
+
+## 相关文档
+
+- 产品设计文档：[`docs/superpowers/specs/2026-06-07-harness-deck-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-design.md)
+- 实现设计文档：[`docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md)
+- UI/UX 原型：[`docs/product-design/harnessdeck-command-deck-prototype.html`](docs/product-design/harnessdeck-command-deck-prototype.html)

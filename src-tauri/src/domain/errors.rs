@@ -35,6 +35,20 @@ impl CommandError {
             message: message.into(),
         }
     }
+
+    pub fn subprocess(message: impl Into<String>) -> Self {
+        Self {
+            code: "SubprocessError",
+            message: message.into(),
+        }
+    }
+
+    pub fn timeout(message: impl Into<String>) -> Self {
+        Self {
+            code: "TimeoutError",
+            message: message.into(),
+        }
+    }
 }
 
 impl From<std::io::Error> for CommandError {

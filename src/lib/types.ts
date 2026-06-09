@@ -309,6 +309,33 @@ export interface AppStatus {
   healthFactors: HealthFactor[];
 }
 
+// BYOA Pipeline
+export type AgentKind = "Claude" | "Codex";
+
+export interface AgentAvailability {
+  kind: AgentKind;
+  binaryPath: string | null;
+  version: string | null;
+  available: boolean;
+}
+
+export interface AgentInvocation {
+  kind: AgentKind;
+  prompt: string;
+  timeoutSecs: number;
+  requestJsonOutput: boolean;
+}
+
+export interface AgentResult {
+  kind: AgentKind;
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  parsedJson: unknown | null;
+  durationMs: number;
+  timedOut: boolean;
+}
+
 export type RealInsightCategory = "TokenAnomaly" | "SessionActivity" | "ModelConcentration";
 
 export interface RealInsight {

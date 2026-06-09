@@ -1,18 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { MenuBarPanel } from "./components/menubar/MenuBarPanel";
 import { HarnessLogo } from "./components/shared/HarnessLogo";
 import { DiscoverView } from "./components/views/DiscoverView";
-import { GuardView } from "./components/views/GuardView";
 import { HomeView } from "./components/views/HomeView";
 import { InsightsView } from "./components/views/InsightsView";
-import { OperateView } from "./components/views/OperateView";
-import { ProfileView } from "./components/views/ProfileView";
 import { SettingsView } from "./components/views/SettingsView";
-import { SyncView } from "./components/views/SyncView";
 import { UsageView } from "./components/views/UsageView";
 import { copy } from "./constants/copy";
-import { isNavSelected, navItems, navLabel, secondaryViewsFor, viewLabel } from "./constants/navigation";
+import { isNavSelected, navItems, navLabel } from "./constants/navigation";
 import type { ViewId } from "./constants/types";
 import { useLocale } from "./hooks/useLocale";
 import { useTheme } from "./hooks/useTheme";
@@ -84,14 +81,14 @@ export function App() {
   const [selectedTargetKind, setSelectedTargetKind] = useState<TargetKind>("Codex");
   const [deployPlan, setDeployPlan] = useState<DeployPlan | null>(null);
   const [syncGovernance, setSyncGovernance] = useState<SyncGovernance | null>(null);
-  const [targetDiscoveries, setTargetDiscoveries] = useState<TargetDiscoverySummary[]>([]);
-  const [targetReadAuthorized, setTargetReadAuthorized] = useState(false);
+  const [, setTargetDiscoveries] = useState<TargetDiscoverySummary[]>([]);
+  const [, setTargetReadAuthorized] = useState(false);
   const [accountWorkspace, setAccountWorkspace] = useState<AccountWorkspace | null>(null);
-  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
-  const [registryTemplates, setRegistryTemplates] = useState<RegistrySkillTemplate[]>([]);
-  const [localSkills, setLocalSkills] = useState<LocalSkillEntry[]>([]);
-  const [skillRecommendation, setSkillRecommendation] = useState<FindBestSkillResult | null>(null);
-  const [insights, setInsights] = useState<Insight[]>([]);
+  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null); // kept for MenuBarPanel
+  const [, setRegistryTemplates] = useState<RegistrySkillTemplate[]>([]);
+  const [, setLocalSkills] = useState<LocalSkillEntry[]>([]);
+  const [, setSkillRecommendation] = useState<FindBestSkillResult | null>(null);
+  const [, setInsights] = useState<Insight[]>([]); // fetch kept for fixture compat
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [highPriorityFeed, setHighPriorityFeed] = useState<FeedItem[]>([]);
   const [wakeSummary, setWakeSummary] = useState<WakeControlSummary | null>(null);
@@ -178,8 +175,6 @@ export function App() {
     });
   }, [selectedProfileId, selectedTargetKind]);
 
-  const secondaryViews = useMemo(() => secondaryViewsFor(activeView), [activeView]);
-
   const selectedProfile = profiles.find((profile) => profile.id === selectedProfileId) ?? profiles[0];
 
   const confirmDryRun = async () => {
@@ -193,6 +188,7 @@ export function App() {
     setTargetReadAuthorized(true);
     setTargetDiscoveries(discoveries);
   };
+  void authorizeTargetRead;
 
   const confirmExperimentalWake = async () => {
     const session = await requestWakeMode("ExperimentalLidAwake", true);
@@ -204,14 +200,13 @@ export function App() {
   const selectedProfileName = selectedProfile?.name ?? t.activeProfile;
   const healthScore = appStatus?.healthScore ?? 0;
   const runDryRun = async () => {
-    setActiveView("sync");
+    setActiveView("settings");
     await confirmDryRun();
   };
   const openWorkbench = () => {
     setActiveView("home");
     void openWorkbenchWindow();
   };
-  const switchProfile = () => setActiveView("profiles");
 
   const refreshData = useCallback(() => {
     void Promise.all([
@@ -271,7 +266,7 @@ export function App() {
           onOpenWorkbench={openWorkbench}
           onRefresh={refreshData}
           onRunDryRun={runDryRun}
-          onSwitchProfile={switchProfile}
+          onSwitchProfile={() => setActiveView("settings")}
           selectedProfileName={selectedProfileName}
           selectedTargetKind={selectedTargetKind}
           standalone
@@ -285,8 +280,16 @@ export function App() {
   return (
     <div className="app-shell native-status-app" data-theme={theme} data-testid="app-shell">
       <section className="native-window" aria-label={t.workbenchTitle}>
-        <header className="native-titlebar" data-tauri-drag-region="">
-          <nav className="segmented-nav" aria-label="Workbench views" data-tauri-drag-region="">
+        <header
+          className="native-titlebar"
+          onMouseDown={(e) => {
+            if (e.buttons === 1 && !(e.target as HTMLElement).closest("button, a, input, select, [role='menu']")) {
+              e.preventDefault();
+              getCurrentWindow().startDragging();
+            }
+          }}
+        >
+          <nav className="segmented-nav" aria-label="Workbench views">
             <div className="titlebar-brand-wrapper">
               <button
                 type="button"
@@ -294,15 +297,12 @@ export function App() {
                 aria-expanded={brandMenuOpen}
                 onClick={(e) => { e.stopPropagation(); setBrandMenuOpen(!brandMenuOpen); }}
               >
-                <HarnessLogo size={28} />
+                <HarnessLogo size={32} />
               </button>
               {brandMenuOpen ? (
                 <div className="brand-dropdown" role="menu" onClick={(e) => e.stopPropagation()}>
                   <button type="button" role="menuitem" onClick={() => { setActiveView("settings"); setBrandMenuOpen(false); }}>
                     {locale === "zh-CN" ? "设置" : "Settings"}
-                  </button>
-                  <button type="button" role="menuitem" onClick={() => { setActiveView("guard"); setBrandMenuOpen(false); }}>
-                    {locale === "zh-CN" ? "守护策略" : "Guard Policy"}
                   </button>
                   <button type="button" role="menuitem" onClick={() => { setActiveView("usage"); setBrandMenuOpen(false); }}>
                     {locale === "zh-CN" ? "用量统计" : "Usage Stats"}
@@ -316,7 +316,7 @@ export function App() {
                   </button>
                   <hr />
                   <button type="button" role="menuitem" onClick={() => setBrandMenuOpen(false)}>
-                    {locale === "zh-CN" ? "关于 HarnessDeck" : "About HarnessDeck"}
+                    {locale === "zh-CN" ? "关于 Hone" : "About Hone"}
                   </button>
                 </div>
               ) : null}
@@ -355,66 +355,32 @@ export function App() {
               selectedTargetKind={selectedTargetKind}
               t={t}
               usageSummary={usageSummary}
-              wakeSummary={wakeSummary}
             />
           ) : (
-            <section className={secondaryViews.length > 1 ? "detail-workspace has-sidebar" : "detail-workspace"}>
-              {secondaryViews.length > 1 ? (
-                <nav className="detail-sidebar" aria-label="Section views">
-                  {secondaryViews.map((viewId) => (
-                    <button
-                      key={viewId}
-                      aria-current={viewId === activeView ? "page" : undefined}
-                      className={viewId === activeView ? "sidebar-tab active" : "sidebar-tab"}
-                      type="button"
-                      onClick={() => setActiveView(viewId)}
-                    >
-                      {viewLabel(locale, viewId)}
-                    </button>
-                  ))}
-                </nav>
-              ) : null}
-
+            <section className="detail-workspace">
               <section className="view-panel">
                 {activeView === "discover" ? (
-                  <DiscoverView locale={locale} localSkills={localSkills} registryTemplates={registryTemplates} skillRecommendation={skillRecommendation} />
-                ) : activeView === "profiles" ? (
-                  <ProfileView
-                    locale={locale}
-                    profiles={profiles}
-                    selectedProfileId={selectedProfileId}
-                    setSelectedProfileId={setSelectedProfileId}
-                    targets={targets}
-                    selectedTargetKind={selectedTargetKind}
-                    setSelectedTargetKind={setSelectedTargetKind}
-                  />
-                ) : activeView === "sync" ? (
-                  <SyncView
-                    locale={locale}
-                    plan={deployPlan}
-                    manifest={manifest}
-                    onAuthorizeTargetRead={authorizeTargetRead}
-                    onConfirm={confirmDryRun}
-                    profile={selectedProfile}
-                    syncGovernance={syncGovernance}
-                    targetDiscoveries={targetDiscoveries}
-                    targetReadAuthorized={targetReadAuthorized}
-                  />
-                ) : activeView === "operate" ? (
-                  <OperateView
+                  <DiscoverView locale={locale} />
+                ) : activeView === "usage" ? (
+                  <UsageView locale={locale} />
+                ) : activeView === "insights" ? (
+                  <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} locale={locale} />
+                ) : (
+                  <SettingsView
+                    accountWorkspace={accountWorkspace}
                     confirmedWakeSession={confirmedWakeSession}
                     locale={locale}
                     onConfirmExperimentalWake={confirmExperimentalWake}
+                    profiles={profiles}
+                    selectedProfileId={selectedProfileId}
+                    selectedTargetKind={selectedTargetKind}
+                    setSelectedProfileId={setSelectedProfileId}
+                    setSelectedTargetKind={setSelectedTargetKind}
+                    syncGovernance={syncGovernance}
+                    targets={targets}
+                    theme={theme}
                     wakeSummary={wakeSummary}
                   />
-                ) : activeView === "usage" ? (
-                  <UsageView locale={locale} usageSummary={usageSummary} />
-                ) : activeView === "insights" ? (
-                  <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} insights={insights} locale={locale} />
-                ) : activeView === "guard" ? (
-                  <GuardView accountWorkspace={accountWorkspace} locale={locale} />
-                ) : (
-                  <SettingsView accountWorkspace={accountWorkspace} locale={locale} theme={theme} />
                 )}
               </section>
             </section>

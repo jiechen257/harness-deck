@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "HarnessDeck",
+  "productName": "Hone",
   "version": "0.1.0",
-  "identifier": "com.harnessdeck.desktop",
+  "identifier": "com.hone.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "HarnessDeck",
+        "title": "Hone",
         "titleBarStyle": "Overlay",
         "width": 1180,
         "height": 760,
@@ -24,7 +24,7 @@
       },
       {
         "label": "menubar",
-        "title": "HarnessDeck Menu Panel",
+        "title": "Hone Menu Panel",
         "url": "index.html?panel=1",
         "width": 356,
         "height": 640,
