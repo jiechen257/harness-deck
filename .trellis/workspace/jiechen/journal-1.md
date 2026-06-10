@@ -71,3 +71,39 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: 完成 Hone 闭环后端：skill + projection + intake
+
+**Date**: 2026-06-10
+**Task**: 完成 Hone 闭环后端：skill + projection + intake
+**Branch**: `main`
+
+### Summary
+
+完成 5/5 子任务：system practice skills（3 个 SKILL.md + 执行追踪，7 测试）、registry projection（symlink/adopt/rollback/health，6 测试）、signals intake（7 源 + 授权门控 + fixture，7 测试）。父任务验收 5/6。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e2d1ade` | (see git log) |
+| `57bff01` | (see git log) |
+| `b9fb0cc` | (see git log) |
+| `b2d18e9` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
