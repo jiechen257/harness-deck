@@ -1443,6 +1443,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-log",
+ "tempfile",
  "tokio",
  "toml 0.8.2",
  "ulid",

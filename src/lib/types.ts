@@ -482,3 +482,22 @@ export interface AuditEvent {
   outcome: string;
   createdAt: string;
 }
+
+// System Practice Skills
+export interface SystemSkillMeta {
+  id: string;
+  version: string;
+  description: string;
+  outputType: string;
+  enabled: boolean;
+  template: string;
+}
+
+export interface SkillExecutionResult {
+  skillId: string;
+  agentKind: string;
+  outputJson: string | null;
+  durationMs: number;
+  success: boolean;
+  error: string | null;
+}

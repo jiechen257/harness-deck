@@ -1,4 +1,4 @@
-pub const MIGRATIONS: &[&str] = &[CREATE_TABLES];
+pub const MIGRATIONS: &[&str] = &[CREATE_TABLES, ADD_SKILL_CONFIGS];
 
 const CREATE_TABLES: &str = "
 CREATE TABLE IF NOT EXISTS signal_cards (
@@ -111,5 +111,14 @@ CREATE TABLE IF NOT EXISTS refresh_records (
   outcome       TEXT NOT NULL DEFAULT 'success' CHECK(outcome IN ('success','failure','partial')),
   started_at    TEXT NOT NULL,
   finished_at   TEXT
+);
+";
+
+const ADD_SKILL_CONFIGS: &str = "
+CREATE TABLE IF NOT EXISTS system_skill_configs (
+  skill_id    TEXT PRIMARY KEY,
+  enabled     INTEGER NOT NULL DEFAULT 1,
+  version     TEXT,
+  updated_at  TEXT NOT NULL
 );
 ";

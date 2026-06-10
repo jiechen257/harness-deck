@@ -7,6 +7,7 @@ pub mod deploy_commands;
 pub mod insight_commands;
 pub mod profile_commands;
 pub mod registry_commands;
+pub mod skill_commands;
 pub mod suggestion_commands;
 pub mod target_commands;
 pub mod usage_commands;

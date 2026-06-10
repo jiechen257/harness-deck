@@ -7,6 +7,8 @@ pub mod services;
 #[cfg(test)]
 mod db_tests;
 #[cfg(test)]
+mod skill_tests;
+#[cfg(test)]
 mod byoa_tests;
 #[cfg(test)]
 mod phase1_tests;
@@ -172,6 +174,9 @@ pub fn run() {
       commands::db_commands::get_active_registry,
       commands::db_commands::set_registry_connection,
       commands::db_commands::list_audit_events,
+      commands::skill_commands::list_system_skills,
+      commands::skill_commands::execute_system_skill,
+      commands::skill_commands::toggle_system_skill,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

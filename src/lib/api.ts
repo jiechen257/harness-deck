@@ -28,6 +28,8 @@ import type {
   RealUsageSummary,
   RegistryConnection,
   RegistrySkillTemplate,
+  SkillExecutionResult,
+  SystemSkillMeta,
   SuggestionStatus,
   SyncGovernance,
   TargetDiscoverySummary,
@@ -701,4 +703,30 @@ export async function setRegistryConnection(path: string, registryType: string):
 
 export async function listAuditEvents(limit?: number): Promise<AuditEvent[]> {
   return call("list_audit_events", { limit: limit ?? null }, () => []);
+}
+
+// System Practice Skills
+
+export async function listSystemSkills(registryPath: string): Promise<SystemSkillMeta[]> {
+  return call("list_system_skills", { registryPath }, () => []);
+}
+
+export async function executeSystemSkill(
+  registryPath: string,
+  skillId: string,
+  variables: Record<string, string>,
+  agentKind: string,
+): Promise<SkillExecutionResult> {
+  return call("execute_system_skill", { registryPath, skillId, variables, agentKind }, () => ({
+    skillId,
+    agentKind,
+    outputJson: null,
+    durationMs: 0,
+    success: false,
+    error: "Not available in browser mode",
+  }));
+}
+
+export async function toggleSystemSkill(skillId: string, enabled: boolean): Promise<void> {
+  return call("toggle_system_skill", { skillId, enabled }, () => undefined);
 }
