@@ -718,11 +718,11 @@ logo 选择延期到用户查看 HTML 原型后决定。本阶段不直接替换
 
 ## Acceptance Criteria
 
-- [ ] PRD 明确区分“信息源采集”与“最佳实践闭环”的主次关系。
-- [ ] 与用户完成 grill-me 需求访谈，关键功能边界无开放阻塞项。
-- [ ] Product Design brief 被用户确认，包含产品目标、视觉来源、原型交互深度。
-- [ ] 新信息架构明确主视图、菜单栏面板、卡片模型和本地管理对象。
-- [ ] 后续实现前补齐 `design.md` 和 `implement.md`，覆盖数据模型、SQLite、agent 执行边界、同步 adapter 和验证方式。
+- [x] PRD 明确区分”信息源采集”与”最佳实践闭环”的主次关系。
+- [x] 与用户完成 grill-me 需求访谈，关键功能边界无开放阻塞项。
+- [x] Product Design brief 被用户确认，包含产品目标、视觉来源、原型交互深度。
+- [x] 新信息架构明确主视图、菜单栏面板、卡片模型和本地管理对象。
+- [x] 后续实现前补齐 `design.md` 和 `implement.md`，覆盖数据模型、SQLite、agent 执行边界、同步 adapter 和验证方式。
 - [ ] 后续文档更新能同步修正 `README.md`、`README.en.md`、AGENTS/CLAUDE 项目说明和旧原型偏差。
 
 ## Out Of Scope For This Planning Task
