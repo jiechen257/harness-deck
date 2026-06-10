@@ -38,3 +38,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: Hone SQLite 数据模型与持久化层实现
+
+**Date**: 2026-06-10
+**Task**: Hone SQLite 数据模型与持久化层实现
+**Branch**: `main`
+
+### Summary
+
+实现 10 张表的 SQLite schema、9 个 repo 模块、8 个 domain struct、6 个 Tauri commands、前端 API 封装，10 个测试全部通过
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `88c4358` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
