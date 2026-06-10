@@ -15,6 +15,7 @@ pub mod ops_script;
 pub mod practice;
 pub mod profile;
 pub mod projection;
+pub mod projection_plan;
 pub mod refresh;
 pub mod registry;
 pub mod registry_connection;

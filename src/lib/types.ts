@@ -501,3 +501,41 @@ export interface SkillExecutionResult {
   success: boolean;
   error: string | null;
 }
+
+// Projection
+export type ActionType = "create" | "update" | "skip" | "conflict";
+export type ProjectionModeType = "symlink" | "copy";
+
+export interface ProjectionAction {
+  assetId: string;
+  assetName: string;
+  registryPath: string;
+  targetPath: string;
+  mode: ProjectionModeType;
+  action: ActionType;
+  conflictReason: string | null;
+}
+
+export interface ProjectionPlan {
+  targetKind: string;
+  actions: ProjectionAction[];
+  creates: number;
+  updates: number;
+  skips: number;
+  conflicts: number;
+}
+
+export interface HealthFinding {
+  findingType: string;
+  severity: string;
+  assetId: string | null;
+  targetPath: string;
+  detail: string;
+}
+
+export interface AdoptResult {
+  assetId: string;
+  registryPath: string;
+  backupPath: string;
+  symlinkPath: string;
+}

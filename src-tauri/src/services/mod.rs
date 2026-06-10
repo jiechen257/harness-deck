@@ -9,6 +9,7 @@ pub mod install_history_service;
 pub mod install_service;
 pub mod privacy_service;
 pub mod profile_service;
+pub mod projection_service;
 pub mod registry_service;
 pub mod skill_service;
 pub mod storage_service;

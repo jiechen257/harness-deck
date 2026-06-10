@@ -28,6 +28,9 @@ import type {
   RealUsageSummary,
   RegistryConnection,
   RegistrySkillTemplate,
+  AdoptResult,
+  HealthFinding,
+  ProjectionPlan,
   SkillExecutionResult,
   SystemSkillMeta,
   SuggestionStatus,
@@ -729,4 +732,38 @@ export async function executeSystemSkill(
 
 export async function toggleSystemSkill(skillId: string, enabled: boolean): Promise<void> {
   return call("toggle_system_skill", { skillId, enabled }, () => undefined);
+}
+
+// Projection
+
+export async function previewProjection(registryPath: string, targetPath: string, targetKind: string): Promise<ProjectionPlan> {
+  return call("preview_projection", { registryPath, targetPath, targetKind }, () => ({
+    targetKind,
+    actions: [],
+    creates: 0,
+    updates: 0,
+    skips: 0,
+    conflicts: 0,
+  }));
+}
+
+export async function confirmProjection(registryPath: string, targetPath: string, targetKind: string): Promise<string[]> {
+  return call("confirm_projection", { registryPath, targetPath, targetKind }, () => []);
+}
+
+export async function adoptAsset(
+  targetPath: string, registryPath: string, registryDest: string,
+  assetType: string, backupPath: string, targetKind: string,
+): Promise<AdoptResult> {
+  return call("adopt_asset", { targetPath, registryPath, registryDest, assetType, backupPath, targetKind }, () => ({
+    assetId: "", registryPath: registryDest, backupPath: "", symlinkPath: targetPath,
+  }));
+}
+
+export async function rollbackProjection(projectionId: string): Promise<void> {
+  return call("rollback_projection", { projectionId }, () => undefined);
+}
+
+export async function checkProjectionHealth(targetKind: string): Promise<HealthFinding[]> {
+  return call("check_projection_health", { targetKind }, () => []);
 }

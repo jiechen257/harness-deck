@@ -7,6 +7,8 @@ pub mod services;
 #[cfg(test)]
 mod db_tests;
 #[cfg(test)]
+mod projection_tests;
+#[cfg(test)]
 mod skill_tests;
 #[cfg(test)]
 mod byoa_tests;
@@ -177,6 +179,11 @@ pub fn run() {
       commands::skill_commands::list_system_skills,
       commands::skill_commands::execute_system_skill,
       commands::skill_commands::toggle_system_skill,
+      commands::projection_commands::preview_projection,
+      commands::projection_commands::confirm_projection,
+      commands::projection_commands::adopt_asset,
+      commands::projection_commands::rollback_projection,
+      commands::projection_commands::check_projection_health,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

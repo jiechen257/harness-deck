@@ -4,6 +4,7 @@ pub mod byoa_commands;
 pub mod crawl_commands;
 pub mod db_commands;
 pub mod deploy_commands;
+pub mod projection_commands;
 pub mod insight_commands;
 pub mod profile_commands;
 pub mod registry_commands;
