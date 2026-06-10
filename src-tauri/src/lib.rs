@@ -12,18 +12,6 @@ mod intake_tests;
 mod projection_tests;
 #[cfg(test)]
 mod skill_tests;
-#[cfg(test)]
-mod byoa_tests;
-#[cfg(test)]
-mod phase1_tests;
-#[cfg(test)]
-mod phase2_3_tests;
-#[cfg(test)]
-mod phase4_5_tests;
-#[cfg(test)]
-mod phase6_8_tests;
-#[cfg(test)]
-mod target_adapter_tests;
 
 use tauri::menu::{Menu, MenuBuilder, MenuItem, SubmenuBuilder};
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
@@ -72,7 +60,7 @@ pub fn run() {
         .expect("failed to seed default sources");
       app.manage(std::sync::Mutex::new(database));
 
-      let app_submenu = SubmenuBuilder::new(app, "HarnessDeck")
+      let app_submenu = SubmenuBuilder::new(app, "Hone")
         .about(None)
         .separator()
         .hide()
@@ -101,7 +89,7 @@ pub fn run() {
       let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
       let tray_menu = Menu::with_items(app, &[&panel, &open, &quit])?;
       let mut tray_builder = TrayIconBuilder::new()
-        .tooltip("HarnessDeck")
+        .tooltip("Hone")
         .menu(&tray_menu)
         .show_menu_on_left_click(false)
         .on_tray_icon_event(|tray, event| {
@@ -137,48 +125,13 @@ pub fn run() {
     })
     .invoke_handler(tauri::generate_handler![
       commands::app_commands::get_app_status,
-      commands::app_commands::get_app_paths,
-      commands::app_commands::get_app_config,
-      commands::app_commands::set_app_config,
       commands::app_commands::open_workbench,
-      commands::profile_commands::list_profiles,
-      commands::profile_commands::get_profile,
-      commands::profile_commands::validate_profile_command,
-      commands::target_commands::list_targets,
-      commands::target_commands::discover_targets,
-      commands::account_commands::get_account_workspace,
-      commands::account_commands::preview_account_switch,
-      commands::registry_commands::list_registry_templates,
-      commands::registry_commands::list_local_skills,
-      commands::registry_commands::find_best_skill,
-      commands::insight_commands::list_insights,
-      commands::insight_commands::list_feed_items,
-      commands::insight_commands::list_high_priority_feed,
-      commands::wake_commands::get_wake_control,
-      commands::wake_commands::request_wake_mode_command,
-      commands::deploy_commands::generate_deploy_plan,
-      commands::deploy_commands::confirm_dry_run_deploy,
-      commands::deploy_commands::get_latest_manifest,
-      commands::deploy_commands::get_sync_governance,
-      commands::usage_commands::get_usage_summary,
-      commands::usage_commands::get_real_usage_summary,
-      commands::insight_commands::list_real_insights,
-      commands::byoa_commands::detect_agents,
-      commands::byoa_commands::invoke_agent,
-      commands::crawl_commands::crawl_all_sources,
-      commands::crawl_commands::rank_crawl_results,
-      commands::crawl_commands::install_skill_command,
-      commands::crawl_commands::list_available_targets,
-      commands::suggestion_commands::save_suggestion_command,
-      commands::suggestion_commands::update_suggestion_status_command,
-      commands::suggestion_commands::list_suggestions_command,
-      commands::suggestion_commands::list_install_history_command,
-      commands::suggestion_commands::revert_install_command,
       commands::db_commands::get_authorization_state,
       commands::db_commands::grant_authorization,
       commands::db_commands::revoke_authorization,
       commands::db_commands::get_active_registry,
       commands::db_commands::set_registry_connection,
+      commands::db_commands::list_signals,
       commands::db_commands::list_audit_events,
       commands::skill_commands::list_system_skills,
       commands::skill_commands::execute_system_skill,

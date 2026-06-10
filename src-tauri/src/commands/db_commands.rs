@@ -6,6 +6,7 @@ use crate::db::Database;
 use crate::domain::auth_state::AuthorizationEntry;
 use crate::domain::audit::AuditEvent;
 use crate::domain::registry_connection::{RegistryConnection, NewRegistryConnection};
+use crate::domain::signal::SignalCard;
 use crate::domain::errors::CommandError;
 
 #[tauri::command]
@@ -50,6 +51,14 @@ pub fn set_registry_connection(
 ) -> Result<RegistryConnection, CommandError> {
     let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
     db.insert_registry(&NewRegistryConnection { path, registry_type })
+}
+
+#[tauri::command]
+pub fn list_signals(
+    db: State<'_, Mutex<Database>>,
+) -> Result<Vec<SignalCard>, CommandError> {
+    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    db.list_signals()
 }
 
 #[tauri::command]

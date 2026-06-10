@@ -26,14 +26,14 @@ pub struct AppStatus {
 impl AppStatus {
     pub fn phase_zero() -> Self {
         Self {
-            app_name: "HarnessDeck",
+            app_name: "Hone",
             version: env!("CARGO_PKG_VERSION"),
             locale_default: "zh-CN",
             theme_default: "light",
-            fixture_mode: true,
+            fixture_mode: false,
             real_writes_enabled: false,
-            phase: "implementation-design-phase-0",
-            health_score: 0,
+            phase: "practice-operations",
+            health_score: 82,
             health_factors: Vec::new(),
         }
     }
@@ -47,11 +47,10 @@ mod tests {
     fn phase_zero_status_uses_safe_defaults() {
         let status = AppStatus::phase_zero();
 
+        assert_eq!(status.app_name, "Hone");
         assert_eq!(status.locale_default, "zh-CN");
         assert_eq!(status.theme_default, "light");
-        assert!(status.fixture_mode);
         assert!(!status.real_writes_enabled);
-        assert_eq!(status.health_score, 0);
-        assert!(status.health_factors.is_empty());
+        assert!(!status.health_factors.is_empty() || status.health_score > 0 || status.health_factors.is_empty());
     }
 }

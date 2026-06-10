@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Loader2, RefreshCw } from "lucide-react";
 
 import { getRealUsageSummary } from "../../lib/api";
 import type { Locale, RealUsageSummary } from "../../lib/types";
@@ -12,13 +13,51 @@ function formatTokens(n: number): string {
 
 export function UsageView({ locale }: { locale: Locale }) {
   const [realUsage, setRealUsage] = useState<RealUsageSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void getRealUsageSummary().then(setRealUsage);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getRealUsageSummary();
+      setRealUsage(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load usage data");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
+
+  if (loading) {
+    return (
+      <div className="usage-dashboard" style={{ display: "flex", alignItems: "center", gap: "8px", padding: "20px" }}>
+        <Loader2 size={16} className="spinning" />
+        <span className="muted-line">{locale === "zh-CN" ? "用量数据加载中..." : "Loading usage data..."}</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="usage-dashboard">
+        <div className="install-toast error" style={{ margin: "20px 0" }}>
+          {locale === "zh-CN" ? `加载失败：${error}` : `Load failed: ${error}`}
+        </div>
+        <button className="secondary-action compact" type="button" onClick={() => void fetchData()}>
+          <RefreshCw size={14} aria-hidden="true" />
+          <span>{locale === "zh-CN" ? "重试" : "Retry"}</span>
+        </button>
+      </div>
+    );
+  }
+
   if (!realUsage) {
-    return <p className="muted-line">{locale === "zh-CN" ? "用量数据加载中" : "Loading usage data"}</p>;
+    return <p className="muted-line">{locale === "zh-CN" ? "无数据" : "No data"}</p>;
   }
 
   const hasRealData = realUsage.dataSources.some((s) => s.available);
@@ -54,13 +93,19 @@ export function UsageView({ locale }: { locale: Locale }) {
             {formatTokens(realUsage.totalTokens)} tokens
           </p>
         </div>
-        <strong>
-          {realUsage.totalCostUsd > 0
-            ? `$${realUsage.totalCostUsd.toFixed(2)}`
-            : locale === "zh-CN"
-              ? "免费额度"
-              : "Free tier"}
-        </strong>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <strong>
+            {realUsage.totalCostUsd > 0
+              ? `$${realUsage.totalCostUsd.toFixed(2)}`
+              : locale === "zh-CN"
+                ? "免费额度"
+                : "Free tier"}
+          </strong>
+          <button className="secondary-action compact" type="button" onClick={() => void fetchData()}>
+            <RefreshCw size={13} aria-hidden="true" />
+            <span>{locale === "zh-CN" ? "刷新" : "Refresh"}</span>
+          </button>
+        </div>
       </section>
 
       <div className="confidence-strip" aria-label={locale === "zh-CN" ? "数据来源" : "Data sources"}>

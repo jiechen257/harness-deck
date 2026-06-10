@@ -1,16 +1,5 @@
-pub mod account_commands;
 pub mod app_commands;
-pub mod byoa_commands;
-pub mod crawl_commands;
 pub mod db_commands;
-pub mod deploy_commands;
 pub mod intake_commands;
 pub mod projection_commands;
-pub mod insight_commands;
-pub mod profile_commands;
-pub mod registry_commands;
 pub mod skill_commands;
-pub mod suggestion_commands;
-pub mod target_commands;
-pub mod usage_commands;
-pub mod wake_commands;

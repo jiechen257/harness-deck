@@ -1790,6 +1790,7 @@ textarea,
 .account-workspace,
 .registry-workbench,
 .insight-workbench,
+.history-workbench,
 .wake-workbench,
 .guard-workbench {
   display: grid;
@@ -2160,6 +2161,268 @@ textarea,
 .view-panel::-webkit-scrollbar-track,
 .native-content::-webkit-scrollbar-track {
   background: transparent;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin,
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* DiscoverView: install toast */
+.install-toast {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.install-toast.success {
+  border: 1px solid color-mix(in srgb, var(--teal) 36%, var(--line));
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+
+.install-toast.error {
+  border: 1px solid color-mix(in srgb, var(--red) 36%, var(--line));
+  background: color-mix(in srgb, var(--red) 8%, transparent);
+  color: var(--red);
+}
+
+/* DiscoverView: install target selector */
+.install-target-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.target-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.target-chip:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.target-chip.active {
+  border-color: color-mix(in srgb, var(--blue) 42%, var(--line));
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+/* DiscoverView: sections */
+.discover-section {
+  display: grid;
+  gap: 10px;
+}
+
+.discover-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+}
+
+.discover-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* DiscoverView: section badges */
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.section-badge.ranked {
+  background: color-mix(in srgb, var(--teal) 14%, transparent);
+  color: var(--teal);
+}
+
+/* DiscoverView: crawl card */
+.crawl-card {
+  display: grid;
+  gap: 8px;
+  min-height: 116px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 48%, transparent);
+  transition: border-color 0.15s;
+}
+
+.crawl-card:hover {
+  border-color: var(--line-strong);
+}
+
+.crawl-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.crawl-card-head a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.crawl-card-head a strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crawl-card-head a:hover {
+  color: var(--blue);
+}
+
+.star-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.crawl-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.crawl-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.crawl-card-footer small {
+  color: var(--muted);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* DiscoverView: install button */
+.install-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--teal) 36%, var(--line));
+  border-radius: 6px;
+  background: var(--teal-soft);
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.install-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--teal) 18%, transparent);
+  border-color: var(--teal);
+}
+
+.install-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* DiscoverView: confirm dialog */
+.install-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--window) 72%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.install-confirm-dialog {
+  width: min(400px, calc(100vw - 40px));
+  padding: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  box-shadow: 0 16px 48px color-mix(in srgb, #000 18%, transparent);
+}
+
+.install-confirm-dialog h4 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.install-confirm-dialog p {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.install-confirm-dialog code {
+  display: block;
+  margin: 8px 0 16px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border: 1px solid var(--line);
+  color: var(--gold);
+  font-size: 12px;
+  font-family: "SF Mono", "Menlo", monospace;
+  word-break: break-all;
+}
+
+.install-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 @media (prefers-reduced-motion: reduce) {

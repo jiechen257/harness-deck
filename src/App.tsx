@@ -14,44 +14,10 @@ import type { ViewId } from "./constants/types";
 import { useLocale } from "./hooks/useLocale";
 import { useTheme } from "./hooks/useTheme";
 import {
-  confirmDryRunDeploy,
-  discoverTargets,
-  findBestSkill,
-  generateDeployPlan,
-  getAccountWorkspace,
   getAppStatus,
-  getSyncGovernance,
-  getUsageSummary,
-  getWakeControl,
-  listFeedItems,
-  listHighPriorityFeed,
-  listInsights,
-  listLocalSkills,
-  listProfiles,
-  listRegistryTemplates,
-  listTargets,
   openWorkbench as openWorkbenchWindow,
-  requestWakeMode,
 } from "./lib/api";
-import type {
-  AccountWorkspace,
-  AppStatus,
-  DeployPlan,
-  FeedItem,
-  FindBestSkillResult,
-  Insight,
-  LocalSkillEntry,
-  ManifestSummary,
-  ProfileSummary,
-  RegistrySkillTemplate,
-  SyncGovernance,
-  TargetDiscoverySummary,
-  TargetKind,
-  TargetSummary,
-  UsageSummary,
-  WakeControlSummary,
-  WakeSession,
-} from "./lib/types";
+import type { AppStatus } from "./lib/types";
 
 function isEditableTarget(target: EventTarget | null) {
   return target instanceof HTMLElement && Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
@@ -75,26 +41,8 @@ export function App() {
     });
   }, [activeView]);
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
-  const [profiles, setProfiles] = useState<ProfileSummary[]>([]);
-  const [targets, setTargets] = useState<TargetSummary[]>([]);
-  const [selectedProfileId, setSelectedProfileId] = useState("macos-dev");
-  const [selectedTargetKind, setSelectedTargetKind] = useState<TargetKind>("Codex");
-  const [deployPlan, setDeployPlan] = useState<DeployPlan | null>(null);
-  const [syncGovernance, setSyncGovernance] = useState<SyncGovernance | null>(null);
-  const [, setTargetDiscoveries] = useState<TargetDiscoverySummary[]>([]);
-  const [, setTargetReadAuthorized] = useState(false);
-  const [accountWorkspace, setAccountWorkspace] = useState<AccountWorkspace | null>(null);
-  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null); // kept for MenuBarPanel
-  const [, setRegistryTemplates] = useState<RegistrySkillTemplate[]>([]);
-  const [, setLocalSkills] = useState<LocalSkillEntry[]>([]);
-  const [, setSkillRecommendation] = useState<FindBestSkillResult | null>(null);
-  const [, setInsights] = useState<Insight[]>([]); // fetch kept for fixture compat
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
-  const [highPriorityFeed, setHighPriorityFeed] = useState<FeedItem[]>([]);
-  const [wakeSummary, setWakeSummary] = useState<WakeControlSummary | null>(null);
-  const [confirmedWakeSession, setConfirmedWakeSession] = useState<WakeSession | null>(null);
-  const [manifest, setManifest] = useState<ManifestSummary | null>(null);
   const [appStatus, setAppStatus] = useState<AppStatus | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const t = copy[locale];
 
   useEffect(() => {
@@ -103,7 +51,6 @@ export function App() {
         event.preventDefault();
       }
     };
-
     document.addEventListener("contextmenu", suppressWebKitContextMenu);
     return () => document.removeEventListener("contextmenu", suppressWebKitContextMenu);
   }, []);
@@ -116,112 +63,21 @@ export function App() {
   }, [brandMenuOpen]);
 
   useEffect(() => {
-    void Promise.all([
-      listProfiles(),
-      listTargets(),
-      getAccountWorkspace(),
-      getUsageSummary(),
-      listRegistryTemplates(),
-      listLocalSkills(),
-      findBestSkill("sync Claude Code and Codex rules safely", false),
-      listInsights(),
-      listFeedItems(),
-      listHighPriorityFeed(),
-      getWakeControl(),
-      getAppStatus(),
-    ]).then(
-      ([
-        nextProfiles,
-        nextTargets,
-        nextAccountWorkspace,
-        nextUsageSummary,
-        nextRegistryTemplates,
-        nextLocalSkills,
-        nextSkillRecommendation,
-        nextInsights,
-        nextFeedItems,
-        nextHighPriorityFeed,
-        nextWakeSummary,
-        nextAppStatus,
-      ]) => {
-        setProfiles(nextProfiles);
-        setTargets(nextTargets);
-        setAccountWorkspace(nextAccountWorkspace);
-        setUsageSummary(nextUsageSummary);
-        setRegistryTemplates(nextRegistryTemplates);
-        setLocalSkills(nextLocalSkills);
-        setSkillRecommendation(nextSkillRecommendation);
-        setInsights(nextInsights);
-        setFeedItems(nextFeedItems);
-        setHighPriorityFeed(nextHighPriorityFeed);
-        setWakeSummary(nextWakeSummary);
-        setAppStatus(nextAppStatus);
-        setSelectedProfileId(nextProfiles[0]?.id ?? "macos-dev");
-        setSelectedTargetKind(nextTargets[0]?.kind ?? "Codex");
-      },
-    );
+    void getAppStatus().then(setAppStatus);
   }, []);
 
-  useEffect(() => {
-    if (!selectedProfileId || !selectedTargetKind) {
-      return;
-    }
-    void Promise.all([
-      generateDeployPlan(selectedProfileId, selectedTargetKind),
-      getSyncGovernance(selectedProfileId, selectedTargetKind),
-    ]).then(([nextPlan, nextGovernance]) => {
-      setDeployPlan(nextPlan);
-      setSyncGovernance(nextGovernance);
-    });
-  }, [selectedProfileId, selectedTargetKind]);
-
-  const selectedProfile = profiles.find((profile) => profile.id === selectedProfileId) ?? profiles[0];
-
-  const confirmDryRun = async () => {
-    if (!deployPlan) return;
-    const nextManifest = await confirmDryRunDeploy(deployPlan);
-    setManifest(nextManifest);
-  };
-
-  const authorizeTargetRead = async () => {
-    const discoveries = await discoverTargets(true);
-    setTargetReadAuthorized(true);
-    setTargetDiscoveries(discoveries);
-  };
-  void authorizeTargetRead;
-
-  const confirmExperimentalWake = async () => {
-    const session = await requestWakeMode("ExperimentalLidAwake", true);
-    setConfirmedWakeSession(session);
-    setWakeSummary((current) => (current ? { ...current, currentState: session } : current));
-  };
-
-  const isMenuPanelWindow = new URLSearchParams(window.location.search).get("panel") === "1";
-  const selectedProfileName = selectedProfile?.name ?? t.activeProfile;
   const healthScore = appStatus?.healthScore ?? 0;
-  const runDryRun = async () => {
-    setActiveView("settings");
-    await confirmDryRun();
-  };
+
   const openWorkbench = () => {
     setActiveView("home");
     void openWorkbenchWindow();
   };
 
   const refreshData = useCallback(() => {
-    void Promise.all([
-      getAccountWorkspace(),
-      getUsageSummary(),
-      listHighPriorityFeed(),
-      getAppStatus(),
-      listProfiles(),
-    ]).then(([nextAW, nextUsage, nextFeed, nextStatus, nextProfiles]) => {
-      setAccountWorkspace(nextAW);
-      setUsageSummary(nextUsage);
-      setHighPriorityFeed(nextFeed);
-      setAppStatus(nextStatus);
-      setProfiles(nextProfiles);
-    });
+    setRefreshing(true);
+    void getAppStatus()
+      .then(setAppStatus)
+      .finally(() => setRefreshing(false));
   }, []);
 
   useEffect(() => {
@@ -255,21 +111,18 @@ export function App() {
     return () => window.removeEventListener("keydown", handleNativeShortcut);
   }, [activeView]);
 
-  const costMetric = usageSummary?.metrics.find((m) => m.id === "cost");
-  const todayCost = costMetric ? `${costMetric.value}${costMetric.unit}` : "$0.00";
+  const isMenuPanelWindow = new URLSearchParams(window.location.search).get("panel") === "1";
 
   if (isMenuPanelWindow) {
     return (
       <div className="panel-shell" data-theme={theme}>
         <MenuBarPanel
           healthScore={healthScore}
-          latestHotTitle={highPriorityFeed[0]?.title ?? null}
           locale={locale}
-          onCrawl={refreshData}
+          onRefresh={refreshData}
           onOpenWorkbench={openWorkbench}
-          pendingSuggestionCount={highPriorityFeed.length}
+          refreshing={refreshing}
           standalone
-          todayCost={todayCost}
         />
       </div>
     );
@@ -343,16 +196,9 @@ export function App() {
           {activeView === "home" ? (
             <HomeView
               healthScore={healthScore}
-              highPriorityFeed={highPriorityFeed}
               locale={locale}
-              manifest={manifest}
-              onOpenWorkbench={openWorkbench}
-              onRunDryRun={runDryRun}
               onSelectView={setActiveView}
-              selectedProfileName={selectedProfileName}
-              selectedTargetKind={selectedTargetKind}
               t={t}
-              usageSummary={usageSummary}
             />
           ) : (
             <section className="detail-workspace">
@@ -362,23 +208,9 @@ export function App() {
                 ) : activeView === "usage" ? (
                   <UsageView locale={locale} />
                 ) : activeView === "insights" ? (
-                  <InsightsView feedItems={feedItems} highPriorityFeed={highPriorityFeed} locale={locale} />
+                  <InsightsView locale={locale} />
                 ) : (
-                  <SettingsView
-                    accountWorkspace={accountWorkspace}
-                    confirmedWakeSession={confirmedWakeSession}
-                    locale={locale}
-                    onConfirmExperimentalWake={confirmExperimentalWake}
-                    profiles={profiles}
-                    selectedProfileId={selectedProfileId}
-                    selectedTargetKind={selectedTargetKind}
-                    setSelectedProfileId={setSelectedProfileId}
-                    setSelectedTargetKind={setSelectedTargetKind}
-                    syncGovernance={syncGovernance}
-                    targets={targets}
-                    theme={theme}
-                    wakeSummary={wakeSummary}
-                  />
+                  <SettingsView locale={locale} theme={theme} />
                 )}
               </section>
             </section>
