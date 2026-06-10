@@ -24,17 +24,17 @@
 
 ## Acceptance Criteria
 
-- [ ] 原型不呈现为资讯流、爬虫平台或普通卡片收藏夹。
-- [ ] Home 第一屏能清楚表达 Signals、Practices、Local Assets、Review、Operations 的闭环状态和下一步入口。
-- [ ] Practice Library 的管道状态清晰可见。
-- [ ] Apply & Sync 的 symlink / adopt / conflict / audit 关系清晰可见。
-- [ ] MenuBar 面板不展示长资讯列表，不执行高风险动作，只提供状态和安全快捷入口。
-- [ ] 左侧 MenuBar panel 与右侧 Workbench 的产品表面边界清晰，不把 MenuBar panel 误做成工作台 sidebar。
-- [ ] 原型颜色、间距、卡片密度和状态色对齐用户提供的冷白蓝色参考图。
-- [ ] 原型不实现真实爬取、SQLite、agent 调用或文件写入。
-- [ ] 原型作为独立 HTML 文件交付，不修改现有 React app。
-- [ ] 原型包含 `Logo Lab`，至少展示 4 套 Hone logo 方向。
-- [ ] 每套 logo 都展示 app icon、工作台标题和 MenuBar panel 预览，便于用户后续选择。
+- [x] 原型不呈现为资讯流、爬虫平台或普通卡片收藏夹。
+- [x] Home 第一屏能清楚表达 Signals、Practices、Local Assets、Review、Operations 的闭环状态和下一步入口。
+- [x] Practice Library 的管道状态清晰可见。
+- [x] Apply & Sync 的 symlink / adopt / conflict / audit 关系清晰可见。
+- [x] MenuBar 面板不展示长资讯列表，不执行高风险动作，只提供状态和安全快捷入口。
+- [x] 左侧 MenuBar panel 与右侧 Workbench 的产品表面边界清晰，不把 MenuBar panel 误做成工作台 sidebar。
+- [x] 原型颜色、间距、卡片密度和状态色对齐用户提供的冷白蓝色参考图。
+- [x] 原型不实现真实爬取、SQLite、agent 调用或文件写入。
+- [x] 原型作为独立 HTML 文件交付，不修改现有 React app。
+- [x] 原型包含 `Logo Lab`，至少展示 4 套 Hone logo 方向。
+- [x] 每套 logo 都展示 app icon、工作台标题和 MenuBar panel 预览，便于用户后续选择。
 
 ## Dependencies
 
