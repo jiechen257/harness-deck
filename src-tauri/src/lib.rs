@@ -1,8 +1,11 @@
 pub mod commands;
+pub mod db;
 pub mod domain;
 pub mod readers;
 pub mod services;
 
+#[cfg(test)]
+mod db_tests;
 #[cfg(test)]
 mod byoa_tests;
 #[cfg(test)]
@@ -54,6 +57,12 @@ pub fn run() {
       }
       let app_paths = services::app_paths::paths_for_app(app.handle())?;
       app_paths.ensure()?;
+
+      let database = db::Database::open(&app_paths.db)
+        .expect("failed to open hone database");
+      database.seed_authorization()
+        .expect("failed to seed authorization state");
+      app.manage(std::sync::Mutex::new(database));
 
       let app_submenu = SubmenuBuilder::new(app, "HarnessDeck")
         .about(None)
@@ -121,6 +130,8 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
       commands::app_commands::get_app_status,
       commands::app_commands::get_app_paths,
+      commands::app_commands::get_app_config,
+      commands::app_commands::set_app_config,
       commands::app_commands::open_workbench,
       commands::profile_commands::list_profiles,
       commands::profile_commands::get_profile,
@@ -150,6 +161,17 @@ pub fn run() {
       commands::crawl_commands::rank_crawl_results,
       commands::crawl_commands::install_skill_command,
       commands::crawl_commands::list_available_targets,
+      commands::suggestion_commands::save_suggestion_command,
+      commands::suggestion_commands::update_suggestion_status_command,
+      commands::suggestion_commands::list_suggestions_command,
+      commands::suggestion_commands::list_install_history_command,
+      commands::suggestion_commands::revert_install_command,
+      commands::db_commands::get_authorization_state,
+      commands::db_commands::grant_authorization,
+      commands::db_commands::revoke_authorization,
+      commands::db_commands::get_active_registry,
+      commands::db_commands::set_registry_connection,
+      commands::db_commands::list_audit_events,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

@@ -8,21 +8,27 @@ use tauri::{AppHandle, Manager};
 #[serde(rename_all = "camelCase")]
 pub struct HarnessDeckPaths {
     pub base: PathBuf,
+    pub db: PathBuf,
     pub profiles: PathBuf,
     pub manifests: PathBuf,
     pub backups: PathBuf,
     pub registry_cache: PathBuf,
     pub feed_cache: PathBuf,
+    pub suggestions: PathBuf,
+    pub install_history: PathBuf,
 }
 
 impl HarnessDeckPaths {
     pub fn for_base(base: PathBuf) -> Self {
         Self {
+            db: base.join("hone.db"),
             profiles: base.join("profiles"),
             manifests: base.join("manifests"),
             backups: base.join("backups"),
             registry_cache: base.join("registry-cache"),
             feed_cache: base.join("feed-cache"),
+            suggestions: base.join("suggestions"),
+            install_history: base.join("install-history"),
             base,
         }
     }
@@ -35,6 +41,8 @@ impl HarnessDeckPaths {
             &self.backups,
             &self.registry_cache,
             &self.feed_cache,
+            &self.suggestions,
+            &self.install_history,
         ] {
             fs::create_dir_all(path)?;
         }
@@ -71,6 +79,8 @@ mod tests {
             "backups",
             "registry-cache",
             "feed-cache",
+            "suggestions",
+            "install-history",
         ] {
             assert!(base.join(child).is_dir(), "{child} directory should exist");
         }

@@ -407,3 +407,78 @@ export interface InstallResult {
   installedPath: string;
   message: string;
 }
+
+// App config
+export interface AppConfig {
+  registryLocalPath: string | null;
+}
+
+// Suggestion persistence
+export type SuggestionStatus = "Pending" | "Accepted" | "Dismissed";
+export type SuggestionAction = "CopySkill" | "AppendRule" | "AddMcpServer";
+
+export interface ProposedChange {
+  target: InstallTarget;
+  action: SuggestionAction;
+  skillName: string;
+  content: string;
+  targetPath: string;
+}
+
+export interface OptimizationSuggestion {
+  id: string;
+  insightId: string;
+  description: string;
+  proposedChange: ProposedChange;
+  confidence: number;
+  status: SuggestionStatus;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+// Install history
+export interface InstallHistoryEntry {
+  id: string;
+  suggestionId: string | null;
+  skillName: string;
+  target: InstallTarget;
+  installedPath: string;
+  backupPath: string | null;
+  installedAt: string;
+  reverted: boolean;
+  revertedAt: string | null;
+}
+
+// Hone data model
+export type AuthScope =
+  | "registry"
+  | "local_read"
+  | "external_signals"
+  | "write_projection"
+  | "script_execution";
+
+export interface AuthorizationEntry {
+  scope: AuthScope;
+  granted: boolean;
+  grantedAt: string | null;
+  revokedAt: string | null;
+}
+
+export interface RegistryConnection {
+  id: string;
+  path: string;
+  registryType: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  eventType: string;
+  entityType: string | null;
+  entityId: string | null;
+  detail: string | null;
+  outcome: string;
+  createdAt: string;
+}

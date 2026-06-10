@@ -6,21 +6,29 @@ import type {
   AgentInvocation,
   AgentKind,
   AgentResult,
+  AppConfig,
   AppStatus,
+  AuditEvent,
+  AuthorizationEntry,
+  AuthScope,
   CrawlItem,
   CrawlSummary,
   DeployPlan,
   FeedItem,
   FindBestSkillResult,
   Insight,
+  InstallHistoryEntry,
   InstallRequest,
   InstallResult,
   LocalSkillEntry,
   ManifestSummary,
+  OptimizationSuggestion,
   ProfileSummary,
   RealInsight,
   RealUsageSummary,
+  RegistryConnection,
   RegistrySkillTemplate,
+  SuggestionStatus,
   SyncGovernance,
   TargetDiscoverySummary,
   TargetInfo,
@@ -213,6 +221,14 @@ export async function getAppStatus(): Promise<AppStatus> {
 
 export async function openWorkbench(): Promise<boolean> {
   return call("open_workbench", {}, () => true);
+}
+
+export async function getAppConfig(): Promise<AppConfig> {
+  return call("get_app_config", {}, () => ({ registryLocalPath: null }));
+}
+
+export async function setAppConfig(config: AppConfig): Promise<void> {
+  return call("set_app_config", { config }, () => undefined);
 }
 
 export async function listTargets(): Promise<TargetSummary[]> {
@@ -443,8 +459,38 @@ export async function getRealUsageSummary(): Promise<RealUsageSummary> {
   }));
 }
 
+const fallbackRealInsights: RealInsight[] = [
+  {
+    id: "fixture-token-anomaly",
+    category: "TokenAnomaly",
+    title: "High token burn detected",
+    summary: "2 day(s) with message count >2 std dev above mean (45). Peak: 132 messages.",
+    severity: "medium",
+    evidence: "Anomaly dates: 2026-01-15, 2026-01-18. Mean: 45, StdDev: 28, Threshold: 101",
+    source: "stats-cache.json",
+  },
+  {
+    id: "fixture-session-activity",
+    category: "SessionActivity",
+    title: "Session frequency increasing",
+    summary: "Average 8.3 sessions/day over the past week, up from 4.1 sessions/day previously.",
+    severity: "low",
+    evidence: "Recent 7-day average: 8.3, prior 30-day average: 4.1",
+    source: "stats-cache.json",
+  },
+  {
+    id: "fixture-model-concentration",
+    category: "ModelConcentration",
+    title: "Single model dominance",
+    summary: "95% of tokens consumed by claude-sonnet-4-5-20250514. Consider diversifying for cost optimization.",
+    severity: "medium",
+    evidence: "claude-sonnet-4-5-20250514: 95.2%, claude-haiku-4-5-20251001: 4.8%",
+    source: "stats-cache.json",
+  },
+];
+
 export async function listRealInsights(): Promise<RealInsight[]> {
-  return call("list_real_insights", {}, () => []);
+  return call("list_real_insights", {}, () => fallbackRealInsights);
 }
 
 export async function detectAgents(): Promise<AgentAvailability[]> {
@@ -559,12 +605,55 @@ export async function rankCrawlResults(items: CrawlItem[], agentKind: AgentKind)
   return call("rank_crawl_results", { items, agentKind }, () => items);
 }
 
-export async function installSkill(request: InstallRequest): Promise<InstallResult> {
-  return call("install_skill_command", { request }, () => ({
+export async function installSkill(request: InstallRequest, suggestionId?: string): Promise<InstallResult> {
+  return call("install_skill_command", { request, suggestionId: suggestionId ?? null }, () => ({
     success: false,
     target: request.target,
     installedPath: "",
     message: "Install not available in browser mode",
+  }));
+}
+
+// Suggestion persistence
+
+export async function saveSuggestion(suggestion: OptimizationSuggestion): Promise<void> {
+  return call("save_suggestion_command", { suggestion }, () => undefined);
+}
+
+export async function updateSuggestionStatus(id: string, status: SuggestionStatus): Promise<OptimizationSuggestion> {
+  return call("update_suggestion_status_command", { id, status }, () => ({
+    id,
+    insightId: "",
+    description: "",
+    proposedChange: { target: "ClaudeCode" as const, action: "CopySkill" as const, skillName: "", content: "", targetPath: "" },
+    confidence: 0,
+    status,
+    createdAt: new Date().toISOString(),
+    resolvedAt: new Date().toISOString(),
+  }));
+}
+
+export async function listSuggestions(): Promise<OptimizationSuggestion[]> {
+  return call("list_suggestions_command", {}, () => []);
+}
+
+// Install history
+
+export async function listInstallHistory(): Promise<InstallHistoryEntry[]> {
+  return call("list_install_history_command", {}, () => []);
+}
+
+export async function revertInstall(entryId: string): Promise<InstallHistoryEntry> {
+  return call("revert_install_command", { entryId }, () => ({
+    id: entryId,
+    suggestionId: null,
+    skillName: "",
+    target: "ClaudeCode" as const,
+    installedPath: "",
+    backupPath: null,
+    installedAt: "",
+    reverted: true,
+    revertedAt: new Date().toISOString(),
   }));
 }
 
@@ -573,4 +662,43 @@ export async function listAvailableTargets(): Promise<TargetInfo[]> {
     { kind: "ClaudeCode", displayName: "Claude Code", available: false, skillsCount: 0, configPath: null },
     { kind: "Codex", displayName: "Codex", available: false, skillsCount: 0, configPath: null },
   ]);
+}
+
+// Hone data model
+
+export async function getAuthorizationState(): Promise<AuthorizationEntry[]> {
+  return call("get_authorization_state", {}, () => [
+    { scope: "registry" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
+    { scope: "local_read" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
+    { scope: "external_signals" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
+    { scope: "write_projection" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
+    { scope: "script_execution" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
+  ]);
+}
+
+export async function grantAuthorization(scope: AuthScope): Promise<void> {
+  return call("grant_authorization", { scope }, () => undefined);
+}
+
+export async function revokeAuthorization(scope: AuthScope): Promise<void> {
+  return call("revoke_authorization", { scope }, () => undefined);
+}
+
+export async function getActiveRegistry(): Promise<RegistryConnection | null> {
+  return call("get_active_registry", {}, () => null);
+}
+
+export async function setRegistryConnection(path: string, registryType: string): Promise<RegistryConnection> {
+  return call("set_registry_connection", { path, registryType }, () => ({
+    id: "fallback",
+    path,
+    registryType,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }));
+}
+
+export async function listAuditEvents(limit?: number): Promise<AuditEvent[]> {
+  return call("list_audit_events", { limit: limit ?? null }, () => []);
 }
