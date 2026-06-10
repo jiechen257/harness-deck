@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 3
+- **Total Sessions**: 4
 - **Last Active**: 2026-06-10
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~109 | Active |
+| `journal-1.md` | ~142 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 4 | 2026-06-10 | 全面清理旧逻辑，UI 对齐新数据模型 | `d952e70` | `main` |
 | 3 | 2026-06-10 | 完成 Hone 闭环后端：skill + projection + intake | `e2d1ade`, `57bff01`, `b9fb0cc`, `b2d18e9` | `main` |
 | 2 | 2026-06-10 | Hone SQLite 数据模型与持久化层实现 | `88c4358` | `main` |
 | 1 | 2026-06-10 | 产品原型深色主题修复与验收完成 | `052c995` | `main` |

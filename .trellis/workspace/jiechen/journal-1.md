@@ -107,3 +107,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: 全面清理旧逻辑，UI 对齐新数据模型
+
+**Date**: 2026-06-10
+**Task**: 全面清理旧逻辑，UI 对齐新数据模型
+**Branch**: `main`
+
+### Summary
+
+删除 40+ 旧 Rust 模块（-10155 行），重写 5 个 React 视图对齐新数据模型，清理旧 API/类型，更新 CLAUDE.md。父任务 6/6 验收完成并归档。45 Rust 测试 + 10 React 测试全部通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d952e70` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
