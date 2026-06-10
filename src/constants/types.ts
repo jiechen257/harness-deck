@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-export type ViewId = "home" | "discover" | "usage" | "insights" | "settings";
+export type ViewId = "home" | "library" | "apply" | "review" | "operations" | "settings";
 
 export interface NavItem {
   id: ViewId;

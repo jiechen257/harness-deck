@@ -100,7 +100,14 @@ export async function revokeAuthorization(scope: AuthScope): Promise<void> {
 // Registry
 
 export async function getActiveRegistry(): Promise<RegistryConnection | null> {
-  return call("get_active_registry", {}, () => null);
+  return call("get_active_registry", {}, () => ({
+    id: "fallback-registry",
+    path: "~/HoneRegistry",
+    registryType: "user",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }));
 }
 
 export async function setRegistryConnection(path: string, registryType: string): Promise<RegistryConnection> {
@@ -117,13 +124,63 @@ export async function setRegistryConnection(path: string, registryType: string):
 // Audit
 
 export async function listAuditEvents(limit?: number): Promise<AuditEvent[]> {
-  return call("list_audit_events", { limit: limit ?? null }, () => []);
+  return call("list_audit_events", { limit: limit ?? null }, () => [
+    { id: "audit-1", eventType: "projection.preview", entityType: "projection", entityId: "local-harness-review", detail: "2 symlinks repaired", outcome: "success", createdAt: new Date().toISOString() },
+    { id: "audit-2", eventType: "operations.preview", entityType: "script", entityId: "start-codex.sh", detail: "launchctl diff generated", outcome: "success", createdAt: new Date().toISOString() },
+    { id: "audit-3", eventType: "review.detected", entityType: "asset", entityId: "grill-me", detail: "unmanaged Codex skill detected", outcome: "warning", createdAt: new Date().toISOString() },
+  ]);
 }
 
 // Signals
 
 export async function listSignals(): Promise<SignalCard[]> {
-  return call("list_signals", {}, () => []);
+  return call("list_signals", {}, () => [
+    {
+      id: "codex-changelog",
+      title: "Codex Desktop 1.19.0 changes agent profile loading",
+      sourceUrl: "https://example.com/codex-changelog",
+      sourceTier: "official",
+      signalType: "changelog",
+      impact: "high",
+      confidence: "confirmed",
+      excerpt: "Profile loading and runtime assembly changed.",
+      publishedAt: new Date().toISOString(),
+      fetchedAt: new Date().toISOString(),
+      status: "inbox",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: "claude-code-release",
+      title: "Claude Code updates skill discovery behavior",
+      sourceUrl: "https://example.com/claude-code",
+      sourceTier: "official",
+      signalType: "changelog",
+      impact: "medium",
+      confidence: "confirmed",
+      excerpt: "Skill discovery now prefers local project scopes.",
+      publishedAt: new Date().toISOString(),
+      fetchedAt: new Date().toISOString(),
+      status: "inbox",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: "community-handoff",
+      title: "Community pattern: session handoff with registry-backed skills",
+      sourceUrl: "https://example.com/community",
+      sourceTier: "community",
+      signalType: "community",
+      impact: "medium",
+      confidence: "unverified",
+      excerpt: "Teams are versioning reusable local agent skills in Git.",
+      publishedAt: new Date().toISOString(),
+      fetchedAt: new Date().toISOString(),
+      status: "inbox",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ]);
 }
 
 export async function refreshSignals(sourceId?: string): Promise<string[]> {
@@ -131,7 +188,11 @@ export async function refreshSignals(sourceId?: string): Promise<string[]> {
 }
 
 export async function listSignalSources(): Promise<SourceConfig[]> {
-  return call("list_signal_sources", {}, () => []);
+  return call("list_signal_sources", {}, () => [
+    { id: "codex-changelog", name: "Codex Desktop changelog", sourceType: "changelog", sourceTier: "official", url: "https://example.com/codex", enabled: true, autoRefresh: false, updatedAt: new Date().toISOString() },
+    { id: "claude-code-changelog", name: "Claude Code changelog", sourceType: "changelog", sourceTier: "official", url: "https://example.com/claude", enabled: true, autoRefresh: false, updatedAt: new Date().toISOString() },
+    { id: "community-patterns", name: "Community practice signals", sourceType: "community", sourceTier: "community", url: "https://example.com/community", enabled: false, autoRefresh: false, updatedAt: new Date().toISOString() },
+  ]);
 }
 
 export async function toggleSignalSource(sourceId: string, enabled: boolean): Promise<void> {
@@ -173,10 +234,14 @@ export async function toggleSystemSkill(skillId: string, enabled: boolean): Prom
 export async function previewProjection(registryPath: string, targetPath: string, targetKind: string): Promise<ProjectionPlan> {
   return call("preview_projection", { registryPath, targetPath, targetKind }, () => ({
     targetKind,
-    actions: [],
-    creates: 0,
+    actions: [
+      { assetId: "local-harness-review", assetName: "local-harness-review", registryPath: `${registryPath}/system-skills/local-harness-review`, targetPath: `${targetPath}/local-harness-review`, mode: "symlink", action: "create", conflictReason: null },
+      { assetId: "normalize-practice-card", assetName: "normalize-practice-card", registryPath: `${registryPath}/system-skills/normalize-practice-card`, targetPath: `${targetPath}/normalize-practice-card`, mode: "symlink", action: "update", conflictReason: null },
+      { assetId: "context7-mcp", assetName: "context7 MCP fragment", registryPath: `${registryPath}/mcp/context7.toml`, targetPath: "~/.claude/settings/context7.toml", mode: "copy", action: "skip", conflictReason: "copy fallback" },
+    ],
+    creates: 1,
     updates: 0,
-    skips: 0,
+    skips: 1,
     conflicts: 0,
   }));
 }
@@ -199,5 +264,8 @@ export async function rollbackProjection(projectionId: string): Promise<void> {
 }
 
 export async function checkProjectionHealth(targetKind: string): Promise<HealthFinding[]> {
-  return call("check_projection_health", { targetKind }, () => []);
+  return call("check_projection_health", { targetKind }, () => [
+    { findingType: "broken_symlink", severity: "warn", assetId: "local-harness-review", targetPath: "~/.codex/skills/local-harness-review", detail: "Target symlink points to a missing registry path." },
+    { findingType: "missing_projection", severity: "info", assetId: "normalize-practice-card", targetPath: "~/.claude/skills/normalize-practice-card", detail: "Asset is ready in registry but not projected to Claude Code." },
+  ]);
 }

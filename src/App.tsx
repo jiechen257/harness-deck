@@ -1,15 +1,17 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { Bell, Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { MenuBarPanel } from "./components/menubar/MenuBarPanel";
 import { HarnessLogo } from "./components/shared/HarnessLogo";
-import { DiscoverView } from "./components/views/DiscoverView";
+import { ApplySyncView } from "./components/views/ApplySyncView";
 import { HomeView } from "./components/views/HomeView";
-import { InsightsView } from "./components/views/InsightsView";
+import { LocalReviewView } from "./components/views/LocalReviewView";
+import { OperationsView } from "./components/views/OperationsView";
+import { PracticeLibraryView } from "./components/views/PracticeLibraryView";
 import { SettingsView } from "./components/views/SettingsView";
-import { UsageView } from "./components/views/UsageView";
 import { copy } from "./constants/copy";
-import { isNavSelected, navItems, navLabel } from "./constants/navigation";
+import { isNavSelected, navItems, navLabel, viewLabel } from "./constants/navigation";
 import type { ViewId } from "./constants/types";
 import { useLocale } from "./hooks/useLocale";
 import { useTheme } from "./hooks/useTheme";
@@ -67,6 +69,14 @@ export function App() {
   }, []);
 
   const healthScore = appStatus?.healthScore ?? 0;
+  const pageSubtitle = {
+    home: locale === "zh-CN" ? "闭环状态总览" : "Loop status overview",
+    library: locale === "zh-CN" ? "信号 -> 实践 -> 资产 -> 归档" : "Signals -> Practices -> Assets -> Archived",
+    apply: locale === "zh-CN" ? "注册表仓库到 Claude Code / Codex 的安全投射" : "Safe projection from registry to Claude Code / Codex",
+    review: locale === "zh-CN" ? "本地 harness 资产结构诊断" : "Local harness asset diagnostics",
+    operations: locale === "zh-CN" ? "本机代理使用脚本的受控运行" : "Controlled local agent scripts",
+    settings: locale === "zh-CN" ? "registry、读取、网络、写入和脚本授权" : "Registry, read, network, write, and script permissions",
+  }[activeView];
 
   const openWorkbench = () => {
     setActiveView("home");
@@ -130,9 +140,9 @@ export function App() {
 
   return (
     <div className="app-shell native-status-app" data-theme={theme} data-testid="app-shell">
-      <section className="native-window" aria-label={t.workbenchTitle}>
+      <section className="native-window workbench-window" aria-label={t.workbenchTitle}>
         <header
-          className="native-titlebar"
+          className="native-titlebar workbench-topbar"
           onMouseDown={(e) => {
             if (e.buttons === 1 && !(e.target as HTMLElement).closest("button, a, input, select, [role='menu']")) {
               e.preventDefault();
@@ -155,8 +165,8 @@ export function App() {
                   <button type="button" role="menuitem" onClick={() => { setActiveView("settings"); setBrandMenuOpen(false); }}>
                     {locale === "zh-CN" ? "设置" : "Settings"}
                   </button>
-                  <button type="button" role="menuitem" onClick={() => { setActiveView("usage"); setBrandMenuOpen(false); }}>
-                    {locale === "zh-CN" ? "用量统计" : "Usage Stats"}
+                  <button type="button" role="menuitem" onClick={() => { setActiveView("review"); setBrandMenuOpen(false); }}>
+                    {locale === "zh-CN" ? "本地评审" : "Local Review"}
                   </button>
                   <hr />
                   <button type="button" role="menuitem" onClick={() => { setLocale(locale === "zh-CN" ? "en-US" : "zh-CN"); setBrandMenuOpen(false); }}>
@@ -190,9 +200,35 @@ export function App() {
               );
             })}
           </nav>
+          <div className="topbar-tools" aria-label={locale === "zh-CN" ? "工作台工具" : "Workbench tools"}>
+            <label className="topbar-search">
+              <Search size={14} aria-hidden="true" />
+              <input aria-label={locale === "zh-CN" ? "搜索" : "Search"} placeholder={locale === "zh-CN" ? "搜索 ⌘K" : "Search ⌘K"} />
+            </label>
+            <button className="topbar-tool-button" type="button">{locale === "zh-CN" ? "标志实验室" : "Logo Lab"}</button>
+            <button className="topbar-tool-button" type="button" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+              {theme === "light" ? (locale === "zh-CN" ? "深色" : "Dark") : (locale === "zh-CN" ? "浅色" : "Light")}
+            </button>
+            <button className="topbar-icon-button" type="button" aria-label={locale === "zh-CN" ? "通知" : "Notifications"}><Bell size={16} aria-hidden="true" /></button>
+            <span className="topbar-avatar" aria-label="Developer">D</span>
+          </div>
         </header>
 
         <main className="native-content" ref={contentRef}>
+          <section className="workbench-page-head">
+            <div>
+              <h2>{viewLabel(locale, activeView)}</h2>
+              <p>{pageSubtitle}</p>
+            </div>
+            <div className="page-head-actions">
+              <button className="action-button" type="button" onClick={() => setActiveView("settings")}>
+                {locale === "zh-CN" ? "首次设置" : "First Run"}
+              </button>
+              <button className="action-button primary" type="button" onClick={refreshData} disabled={refreshing}>
+                {refreshing ? (locale === "zh-CN" ? "刷新中..." : "Refreshing...") : (locale === "zh-CN" ? "刷新信号" : "Refresh Signals")}
+              </button>
+            </div>
+          </section>
           {activeView === "home" ? (
             <HomeView
               healthScore={healthScore}
@@ -203,12 +239,14 @@ export function App() {
           ) : (
             <section className="detail-workspace">
               <section className="view-panel">
-                {activeView === "discover" ? (
-                  <DiscoverView locale={locale} />
-                ) : activeView === "usage" ? (
-                  <UsageView locale={locale} />
-                ) : activeView === "insights" ? (
-                  <InsightsView locale={locale} />
+                {activeView === "library" ? (
+                  <PracticeLibraryView locale={locale} onSelectView={setActiveView} />
+                ) : activeView === "apply" ? (
+                  <ApplySyncView locale={locale} />
+                ) : activeView === "review" ? (
+                  <LocalReviewView locale={locale} />
+                ) : activeView === "operations" ? (
+                  <OperationsView locale={locale} />
                 ) : (
                   <SettingsView locale={locale} theme={theme} />
                 )}
