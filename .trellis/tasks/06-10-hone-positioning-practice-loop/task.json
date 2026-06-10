@@ -1,0 +1,32 @@
+{
+  "id": "hone-positioning-practice-loop",
+  "name": "hone-positioning-practice-loop",
+  "title": "Hone 产品定位校正与最佳实践闭环原型",
+  "description": "",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P0",
+  "creator": "jiechen",
+  "assignee": "jiechen",
+  "createdAt": "2026-06-10",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "06-10-product-prototype",
+    "06-10-data-model-storage",
+    "06-10-system-practice-skills",
+    "06-10-apply-sync-registry",
+    "06-10-signals-intake"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
