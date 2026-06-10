@@ -21,6 +21,7 @@ pub mod registry;
 pub mod registry_connection;
 pub mod registry_manifest;
 pub mod signal;
+pub mod source_config;
 pub mod suggestion;
 pub mod system_skill;
 pub mod sync_governance;

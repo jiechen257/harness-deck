@@ -7,6 +7,8 @@ pub mod services;
 #[cfg(test)]
 mod db_tests;
 #[cfg(test)]
+mod intake_tests;
+#[cfg(test)]
 mod projection_tests;
 #[cfg(test)]
 mod skill_tests;
@@ -66,6 +68,8 @@ pub fn run() {
         .expect("failed to open hone database");
       database.seed_authorization()
         .expect("failed to seed authorization state");
+      services::intake_service::seed_default_sources(&database)
+        .expect("failed to seed default sources");
       app.manage(std::sync::Mutex::new(database));
 
       let app_submenu = SubmenuBuilder::new(app, "HarnessDeck")
@@ -184,6 +188,10 @@ pub fn run() {
       commands::projection_commands::adopt_asset,
       commands::projection_commands::rollback_projection,
       commands::projection_commands::check_projection_health,
+      commands::intake_commands::refresh_signals,
+      commands::intake_commands::list_signal_sources,
+      commands::intake_commands::toggle_signal_source,
+      commands::intake_commands::toggle_auto_refresh,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

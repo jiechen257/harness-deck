@@ -32,6 +32,7 @@ import type {
   HealthFinding,
   ProjectionPlan,
   SkillExecutionResult,
+  SourceConfig,
   SystemSkillMeta,
   SuggestionStatus,
   SyncGovernance,
@@ -766,4 +767,22 @@ export async function rollbackProjection(projectionId: string): Promise<void> {
 
 export async function checkProjectionHealth(targetKind: string): Promise<HealthFinding[]> {
   return call("check_projection_health", { targetKind }, () => []);
+}
+
+// Signals Intake
+
+export async function refreshSignals(sourceId?: string): Promise<string[]> {
+  return call("refresh_signals", { sourceId: sourceId ?? null }, () => []);
+}
+
+export async function listSignalSources(): Promise<SourceConfig[]> {
+  return call("list_signal_sources", {}, () => []);
+}
+
+export async function toggleSignalSource(sourceId: string, enabled: boolean): Promise<void> {
+  return call("toggle_signal_source", { sourceId, enabled }, () => undefined);
+}
+
+export async function toggleAutoRefresh(sourceId: string, autoRefresh: boolean): Promise<void> {
+  return call("toggle_auto_refresh", { sourceId, autoRefresh }, () => undefined);
 }

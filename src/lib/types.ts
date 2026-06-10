@@ -533,6 +533,18 @@ export interface HealthFinding {
   detail: string;
 }
 
+// Signal Sources
+export interface SourceConfig {
+  id: string;
+  name: string;
+  sourceType: string;
+  sourceTier: string;
+  url: string | null;
+  enabled: boolean;
+  autoRefresh: boolean;
+  updatedAt: string;
+}
+
 export interface AdoptResult {
   assetId: string;
   registryPath: string;

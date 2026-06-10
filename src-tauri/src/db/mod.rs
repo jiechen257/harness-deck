@@ -9,6 +9,7 @@ pub mod auth_repo;
 pub mod registry_repo;
 pub mod refresh_repo;
 pub mod skill_config_repo;
+pub mod source_config_repo;
 
 use std::path::Path;
 

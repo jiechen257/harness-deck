@@ -1,4 +1,4 @@
-pub const MIGRATIONS: &[&str] = &[CREATE_TABLES, ADD_SKILL_CONFIGS];
+pub const MIGRATIONS: &[&str] = &[CREATE_TABLES, ADD_SKILL_CONFIGS, ADD_SOURCE_CONFIGS];
 
 const CREATE_TABLES: &str = "
 CREATE TABLE IF NOT EXISTS signal_cards (
@@ -120,5 +120,18 @@ CREATE TABLE IF NOT EXISTS system_skill_configs (
   enabled     INTEGER NOT NULL DEFAULT 1,
   version     TEXT,
   updated_at  TEXT NOT NULL
+);
+";
+
+const ADD_SOURCE_CONFIGS: &str = "
+CREATE TABLE IF NOT EXISTS source_configs (
+  id            TEXT PRIMARY KEY,
+  name          TEXT NOT NULL,
+  source_type   TEXT NOT NULL CHECK(source_type IN ('community','changelog','model_news')),
+  source_tier   TEXT NOT NULL CHECK(source_tier IN ('official','maintainer','community')),
+  url           TEXT,
+  enabled       INTEGER NOT NULL DEFAULT 0,
+  auto_refresh  INTEGER NOT NULL DEFAULT 0,
+  updated_at    TEXT NOT NULL
 );
 ";
