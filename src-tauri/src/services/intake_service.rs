@@ -14,6 +14,7 @@ struct DefaultSource {
 }
 
 const DEFAULT_SOURCES: &[DefaultSource] = &[
+    DefaultSource { id: "maintainer-registry-patterns", name: "Maintainer Registry Patterns", source_type: "community", source_tier: "maintainer", url: Some("https://github.com/zhici/my-agent-skill") },
     DefaultSource { id: "github-trending", name: "GitHub Trending", source_type: "community", source_tier: "community", url: Some("https://github.com/trending") },
     DefaultSource { id: "hackernews", name: "Hacker News", source_type: "community", source_tier: "community", url: Some("https://news.ycombinator.com") },
     DefaultSource { id: "reddit-ai-coding", name: "Reddit AI Coding", source_type: "community", source_tier: "community", url: Some("https://reddit.com/r/aicoding") },
@@ -94,6 +95,7 @@ pub fn refresh_all_enabled(db: &Database) -> Result<Vec<String>, CommandError> {
 
 fn generate_fixture_signals(source: &SourceConfig) -> Vec<NewSignalCard> {
     let now = chrono::Utc::now().to_rfc3339();
+    let confidence = if source.source_tier == "official" { "confirmed" } else { "unverified" };
     match source.source_type.as_str() {
         "changelog" => vec![NewSignalCard {
             title: format!("{} 最近更新", source.name),
@@ -101,18 +103,18 @@ fn generate_fixture_signals(source: &SourceConfig) -> Vec<NewSignalCard> {
             source_tier: source.source_tier.clone(),
             signal_type: "changelog".into(),
             impact: "medium".into(),
-            confidence: "confirmed".into(),
+            confidence: confidence.into(),
             excerpt: Some(format!("来自 {} 的产品更新信号（fixture）", source.name)),
             published_at: Some(now.clone()),
             fetched_at: now,
         }],
         "model_news" => vec![NewSignalCard {
             title: "模型能力更新信号".into(),
-            source_url: None,
-            source_tier: "official".into(),
+            source_url: source.url.clone(),
+            source_tier: source.source_tier.clone(),
             signal_type: "model_news".into(),
             impact: "medium".into(),
-            confidence: "confirmed".into(),
+            confidence: confidence.into(),
             excerpt: Some("模型能力或可用性变化（fixture）".into()),
             published_at: Some(now.clone()),
             fetched_at: now,
@@ -120,7 +122,7 @@ fn generate_fixture_signals(source: &SourceConfig) -> Vec<NewSignalCard> {
         _ => vec![NewSignalCard {
             title: format!("{} 社区实践讨论", source.name),
             source_url: source.url.clone(),
-            source_tier: "community".into(),
+            source_tier: source.source_tier.clone(),
             signal_type: "community_discussion".into(),
             impact: "low".into(),
             confidence: "unverified".into(),

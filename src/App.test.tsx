@@ -49,6 +49,9 @@ describe("Hone app foundation", () => {
     expect(screen.getByText("实践健康度")).toBeInTheDocument();
     expect(screen.getByText("本机运维")).toBeInTheDocument();
     expect(screen.getByText("快捷入口")).toBeInTheDocument();
+    expect(screen.getByText("刷新信号")).toBeInTheDocument();
+    expect(screen.getByText("打开本地评审")).toBeInTheDocument();
+    expect(screen.getByText("打开应用与同步")).toBeInTheDocument();
   });
 
   it("switches from the default light theme to dark", async () => {
@@ -102,6 +105,32 @@ describe("Hone app foundation", () => {
     expect(screen.getByText("注册表投射")).toBeInTheDocument();
   });
 
+  it("confirms the Apply & Sync projection plan in browser fixture mode", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "应用与同步" }));
+
+    const confirmButton = await screen.findByRole("button", { name: /确认投射/ });
+    await user.click(confirmButton);
+
+    expect(await screen.findByText("投射完成")).toBeInTheDocument();
+  });
+
+  it("shows adapter status and read-only diff in Apply & Sync", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "应用与同步" }));
+
+    expect(await screen.findByText("Adapter Status")).toBeInTheDocument();
+    await user.click((await screen.findAllByRole("button", { name: "查看差异" }))[0]);
+
+    expect(await screen.findByText("只读 Diff")).toBeInTheDocument();
+  });
+
   it("navigates to Local Review view", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -124,6 +153,20 @@ describe("Hone app foundation", () => {
     expect(screen.getByText("运行审计")).toBeInTheDocument();
   });
 
+  it("keeps Operations preview-first and blocks ungranted script execution", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "运维" }));
+
+    const previewButtons = screen.getAllByRole("button", { name: "预览计划" });
+    await user.click(previewButtons[0]);
+    await user.click(screen.getAllByRole("button", { name: "确认运行" })[0]);
+
+    expect(screen.getByText("需要先在设置中授予脚本执行权限。菜单栏不会直接运行高风险脚本。")).toBeInTheDocument();
+  });
+
   it("renders Settings with authorization and audit tabs", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -134,6 +177,7 @@ describe("Hone app foundation", () => {
     expect(await screen.findByText("通用")).toBeInTheDocument();
     expect(screen.getByText("授权")).toBeInTheDocument();
     expect(screen.getByText("审计")).toBeInTheDocument();
+    expect(screen.getByText("Registry Bootstrap")).toBeInTheDocument();
   });
 
   it("shows Hone branding in About menu", async () => {

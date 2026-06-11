@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  detectRegistryCandidates,
   getActiveRegistry,
   getAuthorizationState,
   grantAuthorization,
+  initializeRegistry,
   listAuditEvents,
   revokeAuthorization,
   setRegistryConnection,
+  useStarterRegistryReadonly,
 } from "../../lib/api";
-import type { AuditEvent, AuthorizationEntry, AuthScope, Locale, RegistryConnection, Theme } from "../../lib/types";
+import type { AuditEvent, AuthorizationEntry, AuthScope, Locale, RegistryCandidate, RegistryConnection, Theme } from "../../lib/types";
 
 interface SettingsViewProps {
   locale: Locale;
@@ -48,37 +51,142 @@ export function SettingsView({ locale, theme }: SettingsViewProps) {
 function GeneralTab({ locale, theme }: { locale: Locale; theme: Theme }) {
   const [registry, setRegistry] = useState<RegistryConnection | null>(null);
   const [registryInput, setRegistryInput] = useState("");
+  const [candidates, setCandidates] = useState<RegistryCandidate[]>([]);
+  const [registryError, setRegistryError] = useState<string | null>(null);
   const zh = locale === "zh-CN";
 
-  useEffect(() => {
-    void getActiveRegistry().then((r) => {
+  const loadRegistry = useCallback(async () => {
+    const [r, nextCandidates] = await Promise.all([getActiveRegistry(), detectRegistryCandidates()]);
       setRegistry(r);
       if (r) setRegistryInput(r.path);
-    });
+      setCandidates(nextCandidates);
   }, []);
+
+  useEffect(() => {
+    void loadRegistry().catch((error: unknown) => setRegistryError(error instanceof Error ? error.message : String(error)));
+  }, [loadRegistry]);
+
+  const saveRegistry = async (path: string, registryType: string) => {
+    setRegistryError(null);
+    try {
+      const conn = await setRegistryConnection(path, registryType);
+      setRegistry(conn);
+      setRegistryInput(conn.path);
+      await loadRegistry();
+    } catch (error) {
+      setRegistryError(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const initializeAt = async (path: string) => {
+    setRegistryError(null);
+    try {
+      const conn = await initializeRegistry(path);
+      setRegistry(conn);
+      setRegistryInput(conn.path);
+      await loadRegistry();
+    } catch (error) {
+      setRegistryError(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const useStarter = async () => {
+    setRegistryError(null);
+    try {
+      const conn = await useStarterRegistryReadonly();
+      setRegistry(conn);
+      setRegistryInput(conn.path);
+      await loadRegistry();
+    } catch (error) {
+      setRegistryError(error instanceof Error ? error.message : String(error));
+    }
+  };
 
   const handleSave = async () => {
     if (!registryInput.trim()) return;
-    const conn = await setRegistryConnection(registryInput.trim(), "user");
-    setRegistry(conn);
+    await saveRegistry(registryInput.trim(), "user");
+  };
+
+  const handleCandidate = (candidate: RegistryCandidate) => {
+    if (candidate.registryType === "starter") {
+      void useStarter();
+      return;
+    }
+    if (candidate.exists) {
+      void saveRegistry(candidate.path, candidate.registryType === "initialized" ? "initialized" : "user");
+      return;
+    }
+    void initializeAt(candidate.path);
   };
 
   return (
     <div className="settings-section">
-      <h3 className="section-title">{zh ? "注册表路径" : "Registry Path"}</h3>
-      <div className="input-row">
-        <input type="text" className="text-input" value={registryInput} onChange={(e) => setRegistryInput(e.target.value)} placeholder="~/HoneRegistry" />
-        <button className="action-button primary" onClick={handleSave}>{zh ? "保存" : "Save"}</button>
-      </div>
-      {registry && (
-        <p className="field-hint">
-          {zh ? "类型" : "Type"}: {registry.registryType} · {zh ? "活跃" : "Active"}: {registry.isActive ? "✓" : "✗"}
-        </p>
-      )}
+      <section className="settings-group">
+        <h3 className="section-title">{zh ? "注册表路径" : "Registry Path"}</h3>
+        <p className="field-hint">{zh ? "Git 管理的 registry 仓库路径，存放 skills、rules、hooks 和 MCP 片段。" : "Git-managed registry repo path for skills, rules, hooks, and MCP fragments."}</p>
+        <div className="input-row">
+          <input type="text" className="text-input" value={registryInput} onChange={(e) => setRegistryInput(e.target.value)} placeholder="~/HoneRegistry" />
+          <button className="action-button primary" onClick={handleSave}>{zh ? "保存" : "Save"}</button>
+        </div>
+        {registry && (
+          <div className="settings-meta-row">
+            <span className={`badge ${registry.isActive ? "badge-good" : ""}`}>{zh ? "类型" : "Type"}: {registry.registryType}</span>
+            <span className={`badge ${registry.isActive ? "badge-good" : "badge-warn"}`}>{registry.isActive ? (zh ? "已连接" : "Connected") : (zh ? "未连接" : "Disconnected")}</span>
+          </div>
+        )}
+        {registryError ? <p className="empty-hint">{registryError}</p> : null}
+      </section>
 
-      <h3 className="section-title" style={{ marginTop: 24 }}>{zh ? "外观" : "Appearance"}</h3>
-      <p className="field-hint">{zh ? "当前主题" : "Current theme"}: {theme}</p>
-      <p className="field-hint">{zh ? "当前语言" : "Current locale"}: {locale}</p>
+      <section className="settings-group">
+        <h3 className="section-title">{zh ? "Registry Bootstrap" : "Registry Bootstrap"}</h3>
+        <p className="field-hint">{zh ? "优先复用已有 registry；没有时可初始化 ~/HoneRegistry，或使用 starter read-only。" : "Reuse an existing registry first; initialize ~/HoneRegistry when needed, or use the starter read-only registry."}</p>
+        <div className="item-list">
+          {candidates.map((candidate) => (
+            <div key={`${candidate.registryType}-${candidate.path}`} className="list-row">
+              <div className="row-primary">
+                <strong>{candidate.path}</strong>
+                <span className="row-meta">{candidate.reason} · {candidate.registryType}</span>
+              </div>
+              <div className="inline-actions">
+                <span className={`badge ${candidate.active ? "badge-good" : candidate.exists ? "badge-info" : "badge-warn"}`}>
+                  {candidate.active ? (zh ? "当前" : "Active") : candidate.exists ? (zh ? "已存在" : "Exists") : (zh ? "可初始化" : "Can init")}
+                </span>
+                <button className="action-button" type="button" onClick={() => handleCandidate(candidate)}>
+                  {candidate.registryType === "starter" ? (zh ? "使用只读 starter" : "Use starter") : candidate.exists ? (zh ? "选择" : "Select") : (zh ? "初始化" : "Initialize")}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="settings-group">
+        <h3 className="section-title">{zh ? "外观" : "Appearance"}</h3>
+        <div className="settings-appearance-grid">
+          <div className="settings-appearance-item">
+            <div><strong>{zh ? "主题" : "Theme"}</strong><span className="field-hint">{zh ? "浅色或深色模式" : "Light or dark mode"}</span></div>
+            <span className="badge">{theme === "light" ? (zh ? "浅色" : "Light") : (zh ? "深色" : "Dark")}</span>
+          </div>
+          <div className="settings-appearance-item">
+            <div><strong>{zh ? "语言" : "Language"}</strong><span className="field-hint">{zh ? "界面显示语言" : "Display language"}</span></div>
+            <span className="badge">{locale === "zh-CN" ? "中文" : "English"}</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="settings-group">
+        <h3 className="section-title">{zh ? "数据" : "Data"}</h3>
+        <div className="settings-appearance-grid">
+          <div className="settings-appearance-item">
+            <div><strong>{zh ? "数据库" : "Database"}</strong><span className="field-hint">hone.db (SQLite)</span></div>
+            <span className="badge badge-good">{zh ? "正常" : "OK"}</span>
+          </div>
+          <div className="settings-appearance-item">
+            <div><strong>{zh ? "审计日志" : "Audit Log"}</strong><span className="field-hint">{zh ? "所有变更和操作都被记录" : "All changes and operations are logged"}</span></div>
+            <span className="badge badge-good">{zh ? "已启用" : "Enabled"}</span>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

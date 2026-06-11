@@ -12,7 +12,8 @@ mod tests {
         let db = test_db();
         intake_service::seed_default_sources(&db).expect("seed");
         let sources = db.list_source_configs().expect("list");
-        assert_eq!(sources.len(), 7);
+        assert_eq!(sources.len(), 8);
+        assert!(sources.iter().any(|s| s.id == "maintainer-registry-patterns" && s.source_tier == "maintainer"));
         assert!(sources.iter().any(|s| s.id == "github-trending"));
         assert!(sources.iter().any(|s| s.id == "codex-changelog"));
         assert!(sources.iter().any(|s| s.id == "model-news"));
@@ -25,7 +26,7 @@ mod tests {
         intake_service::seed_default_sources(&db).expect("first");
         intake_service::seed_default_sources(&db).expect("second");
         let sources = db.list_source_configs().expect("list");
-        assert_eq!(sources.len(), 7);
+        assert_eq!(sources.len(), 8);
     }
 
     #[test]
@@ -101,6 +102,28 @@ mod tests {
         let ids = intake_service::refresh_source(&db, "hackernews").expect("refresh");
         let signal = db.get_signal(&ids[0]).expect("get");
         assert_eq!(signal.source_tier, "community");
+        assert_eq!(signal.confidence, "unverified");
+    }
+
+    #[test]
+    fn model_fact_from_non_official_source_is_unverified() {
+        let db = test_db();
+        db.seed_authorization().expect("seed auth");
+        db.grant_authorization("external_signals").expect("grant");
+        db.upsert_source_config(
+            "repo-model-news",
+            "Repository Model Notes",
+            "model_news",
+            "maintainer",
+            Some("https://example.com/repo-model-news"),
+        ).expect("upsert source");
+        db.set_source_enabled("repo-model-news", true).expect("enable");
+
+        let ids = intake_service::refresh_source(&db, "repo-model-news").expect("refresh");
+        let signal = db.get_signal(&ids[0]).expect("signal");
+
+        assert_eq!(signal.source_tier, "maintainer");
+        assert_eq!(signal.signal_type, "model_news");
         assert_eq!(signal.confidence, "unverified");
     }
 }

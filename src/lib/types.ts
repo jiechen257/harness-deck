@@ -102,6 +102,100 @@ export interface SignalCard {
   updatedAt: string;
 }
 
+// Practice loop
+
+export interface PracticeCard {
+  id: string;
+  title: string;
+  practiceType: string;
+  summary: string | null;
+  scenarios: string | null;
+  comparable: string | null;
+  applicability: string | null;
+  generatedBy: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PracticeDraft {
+  title: string;
+  practiceType: string;
+  summary: string;
+  scenarios: string[];
+  comparable: string[];
+  canGenerateAsset: boolean;
+  suggestedAssetTypes: string[];
+}
+
+export interface NormalizeResult {
+  signalId: string;
+  success: boolean;
+  draft: PracticeDraft | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  durationMs: number | null;
+}
+
+export interface LocalAsset {
+  id: string;
+  practiceId: string | null;
+  assetType: string;
+  registryPath: string;
+  checksum: string | null;
+  isSystem: boolean;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LoopMetric {
+  labelZh: string;
+  labelEn: string;
+  value: string;
+}
+
+export interface LoopSection {
+  id: string;
+  nameZh: string;
+  nameEn: string;
+  count: number;
+  captionZh: string;
+  captionEn: string;
+  metrics: LoopMetric[];
+  actionZh: string;
+  actionEn: string;
+  view: string;
+  tone: string;
+}
+
+export interface LoopDecision {
+  titleZh: string;
+  titleEn: string;
+  detailZh: string;
+  detailEn: string;
+  count: number;
+  severity: string;
+  view: string;
+}
+
+export interface TargetHealthSummary {
+  name: string;
+  detail: string;
+  score: number;
+  status: string;
+}
+
+export interface LoopSummary {
+  healthScore: number;
+  sections: LoopSection[];
+  decisions: LoopDecision[];
+  targets: TargetHealthSummary[];
+  recentAudits: AuditEvent[];
+  updatedAt: string;
+  fixtureMode: boolean;
+}
+
 // Authorization
 
 export type AuthScope =
@@ -127,6 +221,16 @@ export interface RegistryConnection {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RegistryCandidate {
+  path: string;
+  registryType: string;
+  exists: boolean;
+  writable: boolean;
+  readOnly: boolean;
+  active: boolean;
+  reason: string;
 }
 
 // Audit
@@ -196,6 +300,68 @@ export interface ProjectionPlan {
   updates: number;
   skips: number;
   conflicts: number;
+}
+
+export interface ProjectionExecutionResult {
+  targetKind: string;
+  executedProjectionIds: string[];
+  skipped: number;
+  conflicts: number;
+}
+
+export interface ProjectionTarget {
+  targetKind: string;
+  label: string;
+  targetPath: string;
+  exists: boolean;
+  recommended: boolean;
+}
+
+export interface DiffPayload {
+  sourcePath: string;
+  targetPath: string;
+  sourceExists: boolean;
+  targetExists: boolean;
+  sourceText: string | null;
+  targetText: string | null;
+  diffHunks: string[];
+  readError: string | null;
+}
+
+export interface DriftTimelineItem {
+  id: string;
+  assetId: string;
+  targetKind: string;
+  targetPath: string;
+  status: string;
+  firstDetectedAt: string | null;
+  lastCheckedAt: string | null;
+  relatedEvent: string | null;
+}
+
+export interface AdapterCapability {
+  targetKind: string;
+  label: string;
+  detect: boolean;
+  readConfig: boolean;
+  previewProjection: boolean;
+  writeProjection: boolean;
+  rollback: boolean;
+  healthCheck: boolean;
+  supported: boolean;
+  note: string;
+}
+
+export interface Projection {
+  id: string;
+  assetId: string;
+  targetKind: string;
+  targetPath: string;
+  mode: string;
+  status: string;
+  lastChecked: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface HealthFinding {

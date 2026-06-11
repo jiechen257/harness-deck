@@ -1,0 +1,31 @@
+{
+  "id": "hone-real-mvp-loop-p0-p2",
+  "name": "hone-real-mvp-loop-p0-p2",
+  "title": "Hone 真实 MVP 闭环 P0-P2",
+  "description": "",
+  "status": "completed",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "jiechen",
+  "assignee": "jiechen",
+  "createdAt": "2026-06-10",
+  "completedAt": "2026-06-11",
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "06-10-p1-loop-ux-recovery-menubar",
+    "06-10-p2-sources-registry-diff-adapter",
+    "06-10-p0-apply-sync-confirmation",
+    "06-10-p0-loop-state-system-skills"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

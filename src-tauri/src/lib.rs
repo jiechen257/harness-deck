@@ -9,6 +9,8 @@ mod db_tests;
 #[cfg(test)]
 mod intake_tests;
 #[cfg(test)]
+mod loop_tests;
+#[cfg(test)]
 mod projection_tests;
 #[cfg(test)]
 mod skill_tests;
@@ -131,11 +133,25 @@ pub fn run() {
       commands::db_commands::revoke_authorization,
       commands::db_commands::get_active_registry,
       commands::db_commands::set_registry_connection,
+      commands::db_commands::detect_registry_candidates,
+      commands::db_commands::initialize_registry,
+      commands::db_commands::use_starter_registry_readonly,
       commands::db_commands::list_signals,
       commands::db_commands::list_audit_events,
+      commands::loop_commands::list_practices,
+      commands::loop_commands::list_local_assets,
+      commands::loop_commands::get_loop_summary,
+      commands::loop_commands::normalize_signal,
+      commands::loop_commands::create_practice_from_signal,
+      commands::loop_commands::create_local_asset_from_practice,
       commands::skill_commands::list_system_skills,
       commands::skill_commands::execute_system_skill,
       commands::skill_commands::toggle_system_skill,
+      commands::projection_commands::list_projection_targets,
+      commands::projection_commands::list_adapter_capabilities,
+      commands::projection_commands::list_projections,
+      commands::projection_commands::list_drift_timeline,
+      commands::projection_commands::preview_asset_diff,
       commands::projection_commands::preview_projection,
       commands::projection_commands::confirm_projection,
       commands::projection_commands::adopt_asset,

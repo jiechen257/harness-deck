@@ -1,13 +1,17 @@
+import { useState } from "react";
+
 import type { Locale } from "../../lib/types";
 
 const scripts = [
-  ["~/start-codex.sh", "Codex proxy", "launchctl 环境和 Codex 重启控制", "运行中", "badge-good"],
-  ["~/dsleep", "Sleep guard", "caffeinate 防睡，需要停止入口", "活跃", "badge-warn"],
-  ["~/dwake", "Wake display", "pmset displaysleepnow 快捷动作", "空闲", "badge-info"],
+  ["~/start-codex.sh", "Codex proxy", "launchctl 环境和 Codex 重启控制", "运行中", "badge-good", "high"],
+  ["~/dsleep", "Sleep guard", "caffeinate 防睡，需要停止入口", "活跃", "badge-warn", "medium"],
+  ["~/dwake", "Wake display", "pmset displaysleepnow 快捷动作", "空闲", "badge-info", "medium"],
 ] as const;
 
 export function OperationsView({ locale }: { locale: Locale }) {
   const zh = locale === "zh-CN";
+  const [previewedScript, setPreviewedScript] = useState<string | null>(null);
+  const [blockedScript, setBlockedScript] = useState<string | null>(null);
 
   return (
     <div className="view-content">
@@ -20,14 +24,24 @@ export function OperationsView({ locale }: { locale: Locale }) {
       </div>
 
       <div className="compact-card-grid">
-        {scripts.map(([path, name, detail, status, tone]) => (
+        {scripts.map(([path, name, detail, status, tone, risk]) => (
           <article key={path} className="info-block">
             <div className="surface-head"><h3>{name}</h3><span className={`badge ${tone}`}>{status}</span></div>
             <code className="row-path">{path}</code>
             <p>{detail}</p>
+            <span className={`badge ${risk === "high" ? "badge-warn" : "badge-info"}`}>{zh ? "风险" : "Risk"}: {risk}</span>
+            {previewedScript === path ? (
+              <div className="ops-preview-block">
+                <strong>{zh ? "预览计划" : "Preview plan"}</strong>
+                <p>{zh ? "将生成命令差异、检查授权和记录审计；当前未执行系统写入。" : "Generates command diff, checks authorization, and records audit; no system write has run."}</p>
+              </div>
+            ) : null}
+            {blockedScript === path ? (
+              <p className="empty-hint">{zh ? "需要先在设置中授予脚本执行权限。菜单栏不会直接运行高风险脚本。" : "Grant script execution in Settings first. The menu bar never runs high-risk scripts directly."}</p>
+            ) : null}
             <div className="inline-actions">
-              <button className="action-button" type="button">{zh ? "预览" : "Preview"}</button>
-              <button className="action-button primary" type="button">{zh ? "确认运行" : "Confirm Run"}</button>
+              <button className="action-button" type="button" onClick={() => { setPreviewedScript(path); setBlockedScript(null); }}>{zh ? "预览计划" : "Preview Plan"}</button>
+              <button className="action-button primary" type="button" disabled={previewedScript !== path} onClick={() => setBlockedScript(path)}>{zh ? "确认运行" : "Confirm Run"}</button>
             </div>
           </article>
         ))}

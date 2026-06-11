@@ -1,23 +1,48 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 
-import { checkProjectionHealth, listAuditEvents, listRealInsights } from "../../lib/api";
-import type { AuditEvent, HealthFinding, Locale, RealInsight } from "../../lib/types";
+import { checkProjectionHealth, listAuditEvents, listDriftTimeline, listProjectionTargets, listRealInsights } from "../../lib/api";
+import type { AuditEvent, DriftTimelineItem, HealthFinding, Locale, ProjectionTarget, RealInsight } from "../../lib/types";
+import { LoopStepper } from "../shared/LoopStepper";
 
 export function LocalReviewView({ locale }: { locale: Locale }) {
   const [insights, setInsights] = useState<RealInsight[]>([]);
   const [findings, setFindings] = useState<HealthFinding[]>([]);
   const [audits, setAudits] = useState<AuditEvent[]>([]);
+  const [targets, setTargets] = useState<ProjectionTarget[]>([]);
+  const [timeline, setTimeline] = useState<DriftTimelineItem[]>([]);
+  const [targetKind, setTargetKind] = useState("codex");
+  const [error, setError] = useState<string | null>(null);
   const zh = locale === "zh-CN";
 
+  const loadData = useCallback(async (nextTargetKind = targetKind) => {
+    setError(null);
+    try {
+      const [nextInsights, nextTargets, nextFindings, nextAudits, nextTimeline] = await Promise.all([
+        listRealInsights(),
+        listProjectionTargets(),
+        checkProjectionHealth(nextTargetKind),
+        listAuditEvents(20),
+        listDriftTimeline(nextTargetKind),
+      ]);
+      setInsights(nextInsights);
+      setTargets(nextTargets);
+      setFindings(nextFindings);
+      setAudits(nextAudits);
+      setTimeline(nextTimeline);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : String(loadError));
+    }
+  }, [targetKind]);
+
   useEffect(() => {
-    void Promise.all([listRealInsights(), checkProjectionHealth("codex"), listAuditEvents(20)])
-      .then(([nextInsights, nextFindings, nextAudits]) => {
-        setInsights(nextInsights);
-        setFindings(nextFindings);
-        setAudits(nextAudits);
-      });
-  }, []);
+    void loadData();
+  }, [loadData]);
+
+  const handleTargetChange = (nextTargetKind: string) => {
+    setTargetKind(nextTargetKind);
+    void loadData(nextTargetKind);
+  };
 
   return (
     <div className="view-content">
@@ -26,23 +51,61 @@ export function LocalReviewView({ locale }: { locale: Locale }) {
           <h2 className="view-title">{zh ? "本地评审" : "Local Review"}</h2>
           <p className="view-subtitle">{zh ? "聚焦 registry、Claude/Codex target、projection state 和实践关系。" : "Focused on registry, Claude/Codex targets, projection state, and practice relations."}</p>
         </div>
+        <label className="field-stack review-target-select">
+          <span>{zh ? "检查目标" : "Review target"}</span>
+          <select value={targetKind} onChange={(event) => handleTargetChange(event.target.value)}>
+            {targets.map((target) => (
+              <option key={target.targetKind} value={target.targetKind}>{target.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {error ? (
+        <div className="info-block warning-block">
+          <strong>{zh ? "评审读取失败" : "Review load failed"}</strong>
+          <p>{error}</p>
+        </div>
+      ) : null}
+
+      <div className="review-summary-strip">
+        <div className="review-stat">
+          <strong>{findings.length}</strong>
+          <span>{zh ? "发现" : "Findings"}</span>
+        </div>
+        <div className="review-stat">
+          <strong>{findings.filter((f) => f.severity === "warn").length}</strong>
+          <span>{zh ? "警告" : "Warnings"}</span>
+        </div>
+        <div className="review-stat">
+          <strong>{insights.length}</strong>
+          <span>{zh ? "建议" : "Suggestions"}</span>
+        </div>
+        <div className="review-stat">
+          <strong>{audits.length}</strong>
+          <span>{zh ? "审计记录" : "Audit records"}</span>
+        </div>
       </div>
 
       <div className="review-grid">
         <section className="card-section">
           <h3 className="section-title"><ShieldCheck size={14} aria-hidden="true" />{zh ? "评审发现" : "Review Findings"}</h3>
-          <div className="item-list">
-            {findings.map((finding) => (
-              <div key={`${finding.findingType}-${finding.targetPath}`} className="list-row">
-                <div className="row-primary">
-                  <strong>{finding.findingType === "broken_symlink" ? (zh ? "断链" : "Broken symlink") : (zh ? "缺失投射" : "Missing projection")}</strong>
-                  <span className="row-meta">{finding.detail}</span>
-                  <code className="row-path">{finding.targetPath}</code>
+          <LoopStepper activeStep="review" locale={locale} />
+          {findings.length === 0 ? (
+            <p className="empty-hint">{zh ? "未检测到问题，所有投射状态正常。" : "No issues detected. All projections are healthy."}</p>
+          ) : (
+            <div className="item-list">
+              {findings.map((finding) => (
+                <div key={`${finding.findingType}-${finding.targetPath}`} className="list-row">
+                  <div className="row-primary">
+                    <strong>{finding.findingType === "broken_symlink" ? (zh ? "断链" : "Broken symlink") : (zh ? "缺失投射" : "Missing projection")}</strong>
+                    <span className="row-meta">{finding.detail}</span>
+                    <code className="row-path">{finding.targetPath}</code>
+                  </div>
+                  <span className={`badge ${finding.severity === "warn" ? "badge-warn" : "badge-info"}`}>{finding.severity}</span>
                 </div>
-                <span className={`badge ${finding.severity === "warn" ? "badge-warn" : "badge-info"}`}>{finding.severity}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
         <section className="card-section">
           <h3 className="section-title">{zh ? "证据与建议" : "Evidence & Recommendation"}</h3>
@@ -60,15 +123,42 @@ export function LocalReviewView({ locale }: { locale: Locale }) {
       </div>
 
       <section className="card-section">
+        <h3 className="section-title">{zh ? "Drift Timeline" : "Drift Timeline"}</h3>
+        {timeline.length === 0 ? (
+          <p className="empty-hint">{zh ? "当前目标还没有 projection timeline。" : "No projection timeline for this target yet."}</p>
+        ) : (
+          <div className="item-list">
+            {timeline.map((item) => (
+              <div key={item.id} className="list-row">
+                <div className="row-primary">
+                  <strong>{item.targetPath}</strong>
+                  <span className="row-meta">
+                    {item.status} · {item.relatedEvent ?? (zh ? "暂无关联审计" : "no related audit")}
+                    {item.firstDetectedAt ? ` · first ${new Date(item.firstDetectedAt).toLocaleString(zh ? "zh-CN" : "en-US")}` : ""}
+                    {item.lastCheckedAt ? ` · last ${new Date(item.lastCheckedAt).toLocaleString(zh ? "zh-CN" : "en-US")}` : ""}
+                  </span>
+                </div>
+                <span className={`badge ${item.status === "active" ? "badge-good" : item.status === "drifted" || item.status === "broken" ? "badge-warn" : ""}`}>{item.targetKind}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="card-section">
         <h3 className="section-title">{zh ? "审计轨迹" : "Audit Trail"}</h3>
-        <div className="item-list">
-          {audits.map((event) => (
-            <div key={event.id} className="list-row">
-              <div className="row-primary"><strong>{event.eventType}</strong><span className="row-meta">{event.detail}</span></div>
-              <span className={`badge ${event.outcome === "success" ? "badge-good" : "badge-warn"}`}>{event.outcome}</span>
-            </div>
-          ))}
-        </div>
+        {audits.length === 0 ? (
+          <p className="empty-hint">{zh ? "暂无审计记录。" : "No audit events yet."}</p>
+        ) : (
+          <div className="item-list">
+            {audits.map((event) => (
+              <div key={event.id} className="list-row">
+                <div className="row-primary"><strong>{event.eventType}</strong><span className="row-meta">{event.detail}</span></div>
+                <span className={`badge ${event.outcome === "success" ? "badge-good" : "badge-warn"}`}>{event.outcome}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

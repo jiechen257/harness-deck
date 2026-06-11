@@ -41,6 +41,66 @@ pub struct ProjectionPlan {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ProjectionExecutionResult {
+    pub target_kind: String,
+    pub executed_projection_ids: Vec<String>,
+    pub skipped: usize,
+    pub conflicts: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectionTarget {
+    pub target_kind: String,
+    pub label: String,
+    pub target_path: String,
+    pub exists: bool,
+    pub recommended: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DiffPayload {
+    pub source_path: String,
+    pub target_path: String,
+    pub source_exists: bool,
+    pub target_exists: bool,
+    pub source_text: Option<String>,
+    pub target_text: Option<String>,
+    pub diff_hunks: Vec<String>,
+    pub read_error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DriftTimelineItem {
+    pub id: String,
+    pub asset_id: String,
+    pub target_kind: String,
+    pub target_path: String,
+    pub status: String,
+    pub first_detected_at: Option<String>,
+    pub last_checked_at: Option<String>,
+    pub related_event: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AdapterCapability {
+    pub target_kind: String,
+    pub label: String,
+    pub detect: bool,
+    pub read_config: bool,
+    pub preview_projection: bool,
+    pub write_projection: bool,
+    pub rollback: bool,
+    pub health_check: bool,
+    pub supported: bool,
+    pub note: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HealthFinding {
     pub finding_type: String,
     pub severity: String,

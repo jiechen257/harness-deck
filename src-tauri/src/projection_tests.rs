@@ -108,6 +108,32 @@ mod tests {
     }
 
     #[test]
+    fn rollback_refuses_regular_target_file() {
+        let db = test_db();
+        let dir = tempfile::tempdir().expect("tempdir");
+        let target = dir.path().join("target");
+        std::fs::create_dir_all(&target).unwrap();
+
+        let asset_id = setup_asset(&db, "skills/unsafe");
+        let target_file = target.join("unsafe");
+        std::fs::write(&target_file, "do not delete").unwrap();
+        let projection = db.insert_projection(&crate::domain::projection::NewProjection {
+            asset_id,
+            target_kind: "codex".into(),
+            target_path: target_file.to_string_lossy().to_string(),
+            mode: "symlink".into(),
+        }).expect("insert projection");
+        db.update_projection_status(&projection.id, "active").expect("status");
+
+        let error = projection_service::rollback_projection(&db, &projection.id)
+            .expect_err("regular file rollback should be refused");
+
+        assert_eq!(error.code, "ValidationError");
+        assert!(target_file.exists());
+        assert_eq!(db.get_projection(&projection.id).expect("projection").status, "active");
+    }
+
+    #[test]
     fn adopt_creates_registry_entry_and_symlink() {
         let db = test_db();
         let dir = tempfile::tempdir().expect("tempdir");
@@ -163,5 +189,24 @@ mod tests {
 
         let findings = projection_service::check_health(&db, "claude_code").expect("health");
         assert!(findings.iter().any(|f| f.finding_type == "broken_symlink"));
+    }
+
+    #[test]
+    fn preview_diff_reports_missing_target() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let registry = dir.path().join("registry");
+        std::fs::create_dir_all(registry.join("skills/diff-skill")).unwrap();
+        std::fs::write(registry.join("skills/diff-skill/SKILL.md"), "# diff skill\n").unwrap();
+
+        let payload = projection_service::preview_diff(
+            &registry,
+            "skills/diff-skill",
+            &dir.path().join("target/diff-skill"),
+        );
+
+        assert!(payload.source_exists);
+        assert!(!payload.target_exists);
+        assert!(payload.source_text.unwrap().contains("diff skill"));
+        assert!(payload.diff_hunks.iter().any(|hunk| hunk.contains("target missing")));
     }
 }

@@ -5,6 +5,7 @@ pub mod byoa;
 pub mod errors;
 pub mod insights;
 pub mod local_asset;
+pub mod loop_summary;
 pub mod ops_script;
 pub mod practice;
 pub mod projection;

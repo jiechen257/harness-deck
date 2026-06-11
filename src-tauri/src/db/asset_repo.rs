@@ -71,4 +71,13 @@ impl Database {
         rows.collect::<Result<Vec<_>, _>>()
             .map_err(|e| CommandError::storage(e.to_string()))
     }
+
+    pub fn update_asset_status(&self, id: &str, status: &str) -> Result<(), CommandError> {
+        let now = chrono::Utc::now().to_rfc3339();
+        self.conn().execute(
+            "UPDATE local_assets SET status = ?1, updated_at = ?2 WHERE id = ?3",
+            params![status, now, id],
+        ).map_err(|e| CommandError::storage(e.to_string()))?;
+        Ok(())
+    }
 }

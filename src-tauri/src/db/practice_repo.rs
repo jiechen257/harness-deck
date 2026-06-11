@@ -65,4 +65,13 @@ impl Database {
         ).map_err(|e| CommandError::storage(e.to_string()))?;
         Ok(())
     }
+
+    pub fn update_practice_status(&self, id: &str, status: &str) -> Result<(), CommandError> {
+        let now = chrono::Utc::now().to_rfc3339();
+        self.conn().execute(
+            "UPDATE practice_cards SET status = ?1, updated_at = ?2 WHERE id = ?3",
+            params![status, now, id],
+        ).map_err(|e| CommandError::storage(e.to_string()))?;
+        Ok(())
+    }
 }

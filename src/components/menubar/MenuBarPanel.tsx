@@ -1,7 +1,10 @@
 import { Menu, Settings } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
-import type { Locale } from "../../lib/types";
+import type { ViewId } from "../../constants/types";
+import { getLoopSummary, refreshSignals } from "../../lib/api";
+import type { Locale, LoopSection, LoopSummary } from "../../lib/types";
 import { MacChrome } from "../shared/MacChrome";
 import { HarnessLogo } from "../shared/HarnessLogo";
 
@@ -10,19 +13,67 @@ interface MenuBarPanelProps {
   locale: Locale;
   onRefresh: () => void;
   onOpenWorkbench: () => void;
+  onOpenView: (view: ViewId) => void;
   refreshing: boolean;
   standalone?: boolean;
 }
 
 type HealthRingStyle = CSSProperties & { "--score": string };
 
+function section(summary: LoopSummary | null, id: string): LoopSection | null {
+  return summary?.sections.find((item) => item.id === id) ?? null;
+}
+
+function metricValue(sectionValue: LoopSection | null, labelEn: string) {
+  return sectionValue?.metrics.find((metric) => metric.labelEn === labelEn)?.value ?? "0";
+}
+
 export function MenuBarPanel({
-  healthScore,
+  healthScore: fallbackHealthScore,
   locale,
+  onRefresh,
   onOpenWorkbench,
+  onOpenView,
+  refreshing,
   standalone,
 }: MenuBarPanelProps) {
   const zh = locale === "zh-CN";
+  const [summary, setSummary] = useState<LoopSummary | null>(null);
+  const [panelRefreshing, setPanelRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const healthScore = summary?.healthScore ?? fallbackHealthScore;
+  const signalSection = section(summary, "signals");
+  const practiceSection = section(summary, "practices");
+  const assetSection = section(summary, "assets");
+  const reviewSection = section(summary, "review");
+  const operationsSection = section(summary, "operations");
+
+  const loadSummary = useCallback(async () => {
+    try {
+      setSummary(await getLoopSummary());
+      setError(null);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : String(loadError));
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSummary();
+  }, [loadSummary]);
+
+  const handleRefreshSignals = async () => {
+    setPanelRefreshing(true);
+    setError(null);
+    try {
+      await refreshSignals();
+      await loadSummary();
+      onRefresh();
+    } catch (refreshError) {
+      setError(refreshError instanceof Error ? refreshError.message : String(refreshError));
+    } finally {
+      setPanelRefreshing(false);
+    }
+  };
 
   return (
     <div className={standalone ? "menubar-panel standalone" : "menubar-panel"}>
@@ -30,7 +81,7 @@ export function MenuBarPanel({
       <div className="panel-content">
         <div className="menu-top">
           <div className="menu-product">
-            <HarnessLogo size={standalone ? 34 : 40} />
+            <HarnessLogo size={standalone ? 30 : 40} />
             <div>
               <h2 className="menu-product-name">Hone</h2>
               <span className="local-dot">{zh ? "本地优先" : "Local-first"}</span>
@@ -45,18 +96,26 @@ export function MenuBarPanel({
         </div>
 
         <div className="panel-today">
-          <strong>{zh ? "今日" : "Today"}</strong>
-          <span>{zh ? "6月10日 周三" : "Jun 10 Wed"}</span>
+          <strong>{summary?.fixtureMode ? (zh ? "Fixture" : "Fixture") : (zh ? "本机状态" : "Local status")}</strong>
+          <span>{summary ? new Date(summary.updatedAt).toLocaleString(zh ? "zh-CN" : "en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : (zh ? "读取中" : "Loading")}</span>
         </div>
+        {error ? (
+          <div className="panel-error">
+            <strong>{zh ? "需要处理" : "Needs attention"}</strong>
+            <span>{error}</span>
+            <button type="button" onClick={() => onOpenView("settings")}>{zh ? "打开设置" : "Open Settings"}</button>
+          </div>
+        ) : null}
 
         <div className="menu-body">
           <div className="menu-stack">
-            <section className="status-card">
+            <section className="status-card health-status-card">
               <div className="status-head">
                 <div>
                   <strong>{zh ? "闭环健康度" : "Loop Health"}</strong>
                   <span>{zh ? "闭环状态" : "Loop status"}</span>
                 </div>
+                <span className="menu-pill good">{healthScore}%</span>
               </div>
               <div className="panel-health-card">
                 <div className="health-ring" style={{ "--score": `${healthScore}%` } as HealthRingStyle}>
@@ -64,11 +123,11 @@ export function MenuBarPanel({
                   <span>{zh ? "良好" : "Good"}</span>
                 </div>
                 <div className="health-legend">
-                  <span><i className="dot teal" />{zh ? "信号" : "Signals"} <b>76%</b></span>
-                  <span><i className="dot teal" />{zh ? "实践" : "Practices"} <b>85%</b></span>
-                  <span><i className="dot teal" />{zh ? "资产" : "Assets"} <b>90%</b></span>
-                  <span><i className="dot gold" />{zh ? "评审" : "Review"} <b>62%</b></span>
-                  <span><i className="dot muted" />{zh ? "运维" : "Ops"} <b>88%</b></span>
+                  <span><i className="dot teal" />{zh ? "信号" : "Signals"} <b>{signalSection?.count ?? 0}</b></span>
+                  <span><i className="dot teal" />{zh ? "实践" : "Practices"} <b>{practiceSection?.count ?? 0}</b></span>
+                  <span><i className="dot teal" />{zh ? "资产" : "Assets"} <b>{assetSection?.count ?? 0}</b></span>
+                  <span><i className="dot gold" />{zh ? "评审" : "Review"} <b>{reviewSection?.count ?? 0}</b></span>
+                  <span><i className="dot muted" />{zh ? "运维" : "Ops"} <b>{operationsSection?.count ?? 0}</b></span>
                 </div>
               </div>
             </section>
@@ -80,19 +139,19 @@ export function MenuBarPanel({
               <div className="menu-timeline">
                 <div className="menu-timeline-row">
                   <div><strong>{zh ? "可采纳" : "Adoptable"}</strong><span>{zh ? "待转本地资产" : "To local assets"}</span></div>
-                  <span className="menu-pill good">23</span>
+                  <span className="menu-pill good">{metricValue(practiceSection, "Adoptable")}</span>
                 </div>
                 <div className="menu-timeline-row">
                   <div><strong>{zh ? "资产待就绪" : "Assets pending"}</strong><span>{zh ? "等待确认" : "Awaiting confirm"}</span></div>
-                  <span className="menu-pill warn">7</span>
+                  <span className="menu-pill warn">{metricValue(practiceSection, "Assets pending")}</span>
                 </div>
                 <div className="menu-timeline-row">
-                  <div><strong>{zh ? "偏移" : "Drift"}</strong><span>{zh ? "需要评审" : "Needs review"}</span></div>
-                  <span className="menu-pill risk">2</span>
+                  <div><strong>{zh ? "缺失投射" : "Missing"}</strong><span>{zh ? "需要评审" : "Needs review"}</span></div>
+                  <span className="menu-pill risk">{metricValue(reviewSection, "Missing")}</span>
                 </div>
                 <div className="menu-timeline-row">
                   <div><strong>{zh ? "孤立" : "Orphan"}</strong><span>{zh ? "缺少实践关系" : "No practice link"}</span></div>
-                  <span className="menu-pill">1</span>
+                  <span className="menu-pill">{metricValue(reviewSection, "Orphan")}</span>
                 </div>
               </div>
             </section>
@@ -104,15 +163,15 @@ export function MenuBarPanel({
               <div className="menu-timeline">
                 <div className="menu-timeline-row">
                   <div><strong>{zh ? "Codex 代理" : "Codex proxy"}</strong></div>
-                  <span className="menu-pill good">{zh ? "运行中" : "Running"}</span>
+                  <span className="menu-pill">{metricValue(operationsSection, "Codex proxy")}</span>
                 </div>
                 <div className="menu-timeline-row">
                   <div><strong>{zh ? "防睡守护" : "Sleep guard"}</strong></div>
-                  <span className="menu-pill good">{zh ? "活跃" : "Active"}</span>
+                  <span className="menu-pill">{metricValue(operationsSection, "Sleep guard")}</span>
                 </div>
                 <div className="menu-timeline-row">
-                  <div><strong>{zh ? "最近脚本" : "Recent script"}</strong></div>
-                  <span className="menu-pill">{zh ? "18 分钟前" : "18 min ago"}</span>
+                  <div><strong>{zh ? "今日脚本" : "Scripts today"}</strong></div>
+                  <span className="menu-pill">{metricValue(operationsSection, "Scripts today")}</span>
                 </div>
               </div>
             </section>
@@ -122,10 +181,10 @@ export function MenuBarPanel({
                 <div><strong>{zh ? "快捷入口" : "Quick Actions"}</strong></div>
               </div>
               <div className="menu-quick-grid">
-                <button className="quick-tile" type="button"><b>{zh ? "规范化信号" : "Normalize"}</b><span>{zh ? "生成实践预览" : "Preview practices"}</span></button>
-                <button className="quick-tile" type="button"><b>{zh ? "评审偏移" : "Review Drift"}</b><span>{zh ? "查看证据" : "View evidence"}</span></button>
-                <button className="quick-tile" type="button"><b>{zh ? "投射到 Claude" : "Project Claude"}</b><span>{zh ? "先预览差异" : "Preview diff"}</span></button>
-                <button className="quick-tile" type="button"><b>{zh ? "投射到 Codex" : "Project Codex"}</b><span>{zh ? "先预览差异" : "Preview diff"}</span></button>
+                <button className="quick-tile" type="button" disabled={refreshing || panelRefreshing} onClick={handleRefreshSignals}><b>{zh ? "刷新信号" : "Refresh"}</b><span>{zh ? "低风险读取" : "Low-risk read"}</span></button>
+                <button className="quick-tile" type="button" onClick={() => onOpenView("library")}><b>{zh ? "规范化信号" : "Normalize"}</b><span>{zh ? "主窗口确认" : "Confirm in workbench"}</span></button>
+                <button className="quick-tile" type="button" onClick={() => onOpenView("review")}><b>{zh ? "打开本地评审" : "Open Local Review"}</b><span>{zh ? "查看证据" : "View evidence"}</span></button>
+                <button className="quick-tile" type="button" onClick={() => onOpenView("apply")}><b>{zh ? "打开应用与同步" : "Open Apply & Sync"}</b><span>{zh ? "先预览计划" : "Preview plan first"}</span></button>
               </div>
               <button className="quick-action" type="button" onClick={onOpenWorkbench}>
                 <div>

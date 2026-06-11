@@ -11,7 +11,7 @@ import { OperationsView } from "./components/views/OperationsView";
 import { PracticeLibraryView } from "./components/views/PracticeLibraryView";
 import { SettingsView } from "./components/views/SettingsView";
 import { copy } from "./constants/copy";
-import { isNavSelected, navItems, navLabel, viewLabel } from "./constants/navigation";
+import { isNavSelected, navItems, navLabel } from "./constants/navigation";
 import type { ViewId } from "./constants/types";
 import { useLocale } from "./hooks/useLocale";
 import { useTheme } from "./hooks/useTheme";
@@ -20,6 +20,8 @@ import {
   openWorkbench as openWorkbenchWindow,
 } from "./lib/api";
 import type { AppStatus } from "./lib/types";
+
+const OPEN_VIEW_KEY = "hone:open-view";
 
 function isEditableTarget(target: EventTarget | null) {
   return target instanceof HTMLElement && Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
@@ -69,19 +71,16 @@ export function App() {
   }, []);
 
   const healthScore = appStatus?.healthScore ?? 0;
-  const pageSubtitle = {
-    home: locale === "zh-CN" ? "闭环状态总览" : "Loop status overview",
-    library: locale === "zh-CN" ? "信号 -> 实践 -> 资产 -> 归档" : "Signals -> Practices -> Assets -> Archived",
-    apply: locale === "zh-CN" ? "注册表仓库到 Claude Code / Codex 的安全投射" : "Safe projection from registry to Claude Code / Codex",
-    review: locale === "zh-CN" ? "本地 harness 资产结构诊断" : "Local harness asset diagnostics",
-    operations: locale === "zh-CN" ? "本机代理使用脚本的受控运行" : "Controlled local agent scripts",
-    settings: locale === "zh-CN" ? "registry、读取、网络、写入和脚本授权" : "Registry, read, network, write, and script permissions",
-  }[activeView];
-
   const openWorkbench = () => {
     setActiveView("home");
     void openWorkbenchWindow();
   };
+
+  const openWorkbenchView = useCallback((view: ViewId) => {
+    window.localStorage.setItem(OPEN_VIEW_KEY, view);
+    setActiveView(view);
+    void openWorkbenchWindow();
+  }, [setActiveView]);
 
   const refreshData = useCallback(() => {
     setRefreshing(true);
@@ -89,6 +88,26 @@ export function App() {
       .then(setAppStatus)
       .finally(() => setRefreshing(false));
   }, []);
+
+  useEffect(() => {
+    const applyPendingView = () => {
+      const pending = window.localStorage.getItem(OPEN_VIEW_KEY) as ViewId | null;
+      if (pending && navItems.some((item) => item.id === pending)) {
+        window.localStorage.removeItem(OPEN_VIEW_KEY);
+        setActiveView(pending);
+      }
+    };
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === OPEN_VIEW_KEY) applyPendingView();
+    };
+    applyPendingView();
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("focus", applyPendingView);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", applyPendingView);
+    };
+  }, [setActiveView]);
 
   useEffect(() => {
     const handleNativeShortcut = (event: KeyboardEvent) => {
@@ -123,14 +142,24 @@ export function App() {
 
   const isMenuPanelWindow = new URLSearchParams(window.location.search).get("panel") === "1";
 
+  useEffect(() => {
+    document.documentElement.classList.toggle("panel-window-root", isMenuPanelWindow);
+    document.body.classList.toggle("panel-window-body", isMenuPanelWindow);
+    return () => {
+      document.documentElement.classList.remove("panel-window-root");
+      document.body.classList.remove("panel-window-body");
+    };
+  }, [isMenuPanelWindow]);
+
   if (isMenuPanelWindow) {
     return (
-      <div className="panel-shell" data-theme={theme}>
+      <div className="panel-shell panel-shell-standalone" data-theme={theme}>
         <MenuBarPanel
           healthScore={healthScore}
           locale={locale}
           onRefresh={refreshData}
           onOpenWorkbench={openWorkbench}
+          onOpenView={openWorkbenchView}
           refreshing={refreshing}
           standalone
         />
@@ -158,7 +187,8 @@ export function App() {
                 aria-expanded={brandMenuOpen}
                 onClick={(e) => { e.stopPropagation(); setBrandMenuOpen(!brandMenuOpen); }}
               >
-                <HarnessLogo size={32} />
+                <HarnessLogo size={28} />
+                <span className="brand-name">Hone</span>
               </button>
               {brandMenuOpen ? (
                 <div className="brand-dropdown" role="menu" onClick={(e) => e.stopPropagation()}>
@@ -205,7 +235,6 @@ export function App() {
               <Search size={14} aria-hidden="true" />
               <input aria-label={locale === "zh-CN" ? "搜索" : "Search"} placeholder={locale === "zh-CN" ? "搜索 ⌘K" : "Search ⌘K"} />
             </label>
-            <button className="topbar-tool-button" type="button">{locale === "zh-CN" ? "标志实验室" : "Logo Lab"}</button>
             <button className="topbar-tool-button" type="button" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
               {theme === "light" ? (locale === "zh-CN" ? "深色" : "Dark") : (locale === "zh-CN" ? "浅色" : "Light")}
             </button>
@@ -215,20 +244,6 @@ export function App() {
         </header>
 
         <main className="native-content" ref={contentRef}>
-          <section className="workbench-page-head">
-            <div>
-              <h2>{viewLabel(locale, activeView)}</h2>
-              <p>{pageSubtitle}</p>
-            </div>
-            <div className="page-head-actions">
-              <button className="action-button" type="button" onClick={() => setActiveView("settings")}>
-                {locale === "zh-CN" ? "首次设置" : "First Run"}
-              </button>
-              <button className="action-button primary" type="button" onClick={refreshData} disabled={refreshing}>
-                {refreshing ? (locale === "zh-CN" ? "刷新中..." : "Refreshing...") : (locale === "zh-CN" ? "刷新信号" : "Refresh Signals")}
-              </button>
-            </div>
-          </section>
           {activeView === "home" ? (
             <HomeView
               healthScore={healthScore}

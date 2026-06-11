@@ -17,3 +17,15 @@ pub struct NewRegistryConnection {
     pub path: String,
     pub registry_type: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RegistryCandidate {
+    pub path: String,
+    pub registry_type: String,
+    pub exists: bool,
+    pub writable: bool,
+    pub read_only: bool,
+    pub active: bool,
+    pub reason: String,
+}

@@ -53,6 +53,25 @@ impl Database {
             .map_err(|e| CommandError::storage(e.to_string()))
     }
 
+    pub fn list_projections(&self) -> Result<Vec<Projection>, CommandError> {
+        let mut stmt = self.conn().prepare(
+            "SELECT id, asset_id, target_kind, target_path, mode, status, last_checked, created_at, updated_at FROM projections ORDER BY created_at DESC"
+        ).map_err(|e| CommandError::storage(e.to_string()))?;
+        let rows = stmt.query_map([], |row| Ok(Projection {
+            id: row.get(0)?,
+            asset_id: row.get(1)?,
+            target_kind: row.get(2)?,
+            target_path: row.get(3)?,
+            mode: row.get(4)?,
+            status: row.get(5)?,
+            last_checked: row.get(6)?,
+            created_at: row.get(7)?,
+            updated_at: row.get(8)?,
+        })).map_err(|e| CommandError::storage(e.to_string()))?;
+        rows.collect::<Result<Vec<_>, _>>()
+            .map_err(|e| CommandError::storage(e.to_string()))
+    }
+
     pub fn update_projection_status(&self, id: &str, status: &str) -> Result<(), CommandError> {
         let now = chrono::Utc::now().to_rfc3339();
         self.conn().execute(
