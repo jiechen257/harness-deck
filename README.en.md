@@ -79,6 +79,10 @@ Mock / fixture capabilities:
 - Wake Control does not change system power policy.
 - SQLite persistence is reserved; manifests are currently recorded as local JSON files.
 
+## License
+
+HarnessDeck is released under the GNU General Public License v3.0 only (GPL-3.0-only). See [`LICENSE`](LICENSE) for the full text.
+
 Common commands:
 
 ```bash

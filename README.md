@@ -28,7 +28,7 @@ Discover → Apply → Observe → Optimize
 
 ## 信息发现管道
 
-Discover 不是模板市场，而是 **harness engineering 信息聚合器**，分为两个区域：
+Discover 是 **harness engineering 信息聚合器**，分为两个区域：
 
 ### 工具雷达
 追踪 GitHub trending 中 harness engineering 相关的仓库，按 star 增速、活跃度、范式类型分类。手工策展的高质量仓库置顶。策展内容维护在独立的 [hone-registry](https://github.com/) 仓库，以 YAML 格式管理，支持社区 PR 贡献。
@@ -109,6 +109,10 @@ Phase 4 — 扩展
 - **平台**：macOS only
 - **界面语言**：简体中文（默认）/ English
 - **界面主题**：浅色（默认）/ 深色
+
+## 许可证
+
+HarnessDeck 使用 GNU General Public License v3.0 only（GPL-3.0-only）发布，完整文本见 [`LICENSE`](LICENSE)。
 
 ## 开发状态
 
