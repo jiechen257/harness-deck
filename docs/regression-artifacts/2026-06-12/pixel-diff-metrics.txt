@@ -1,0 +1,2 @@
+workbench: size=1512x900, changed_pixels=323510/1360800 (23.77%), mean_abs_delta=10.78, rms_delta=21.70, channel_extrema=((0, 242), (0, 231), (0, 244)), diff=docs/regression-artifacts/2026-06-12/diff-workbench-home.png
+statusbar: size=422x768, changed_pixels=140399/324096 (43.32%), mean_abs_delta=10.95, rms_delta=20.99, channel_extrema=((0, 239), (0, 231), (0, 244)), diff=docs/regression-artifacts/2026-06-12/diff-statusbar-panel.png
