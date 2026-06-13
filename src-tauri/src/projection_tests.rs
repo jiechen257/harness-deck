@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use crate::commands::projection_commands;
     use crate::db::Database;
     use crate::domain::local_asset::NewLocalAsset;
     use crate::services::projection_service;
@@ -84,6 +85,22 @@ mod tests {
 
         let audits = db.list_recent_audits(10).expect("audits");
         assert!(audits.iter().any(|a| a.event_type == "projection_executed"));
+    }
+
+    #[test]
+    fn projection_write_command_boundary_requires_authorization() {
+        let db = test_db();
+        db.seed_authorization().expect("seed auth");
+
+        let error = projection_commands::require_write_projection(&db)
+            .expect_err("write projection should require explicit authorization");
+
+        assert_eq!(error.code, "AuthorizationRequired");
+
+        db.grant_authorization("write_projection")
+            .expect("grant write projection");
+        projection_commands::require_write_projection(&db)
+            .expect("granted write projection should pass");
     }
 
     #[test]

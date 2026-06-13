@@ -1,4 +1,4 @@
-use rusqlite::params;
+use rusqlite::{params, OptionalExtension};
 
 use super::Database;
 use crate::domain::auth_state::AuthorizationEntry;
@@ -41,6 +41,29 @@ impl Database {
             .map_err(|e| CommandError::storage(e.to_string()))?;
         rows.collect::<Result<Vec<_>, _>>()
             .map_err(|e| CommandError::storage(e.to_string()))
+    }
+
+    pub fn has_authorization(&self, scope: &str) -> Result<bool, CommandError> {
+        Ok(self
+            .conn()
+            .query_row(
+                "SELECT granted FROM authorization_state WHERE scope = ?1",
+                params![scope],
+                |row| Ok(row.get::<_, i32>(0)? != 0),
+            )
+            .optional()
+            .map_err(|e| CommandError::storage(e.to_string()))?
+            .unwrap_or(false))
+    }
+
+    pub fn require_authorization(&self, scope: &str) -> Result<(), CommandError> {
+        if self.has_authorization(scope)? {
+            Ok(())
+        } else {
+            Err(CommandError::authorization_required(format!(
+                "{scope} authorization required"
+            )))
+        }
     }
 
     pub fn grant_authorization(&self, scope: &str) -> Result<(), CommandError> {

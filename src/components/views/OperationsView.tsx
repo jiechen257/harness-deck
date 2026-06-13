@@ -1,17 +1,77 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import type { Locale } from "../../lib/types";
+import { confirmOpsScript, listAuditEvents, listOpsScripts, previewOpsScript } from "../../lib/api";
+import type { AuditEvent, Locale, OpsScript, OpsScriptExecutionResult, OpsScriptPreview } from "../../lib/types";
 
-const scripts = [
-  ["~/start-codex.sh", "Codex proxy", "launchctl 环境和 Codex 重启控制", "运行中", "badge-good", "high"],
-  ["~/dsleep", "Sleep guard", "caffeinate 防睡，需要停止入口", "活跃", "badge-warn", "medium"],
-  ["~/dwake", "Wake display", "pmset displaysleepnow 快捷动作", "空闲", "badge-info", "medium"],
-] as const;
+function statusTone(name: string) {
+  if (name === "Codex proxy") return "badge-good";
+  if (name === "Sleep guard") return "badge-warn";
+  return "badge-info";
+}
+
+function statusLabel(name: string, zh: boolean) {
+  if (name === "Codex proxy") return zh ? "运行中" : "running";
+  if (name === "Sleep guard") return zh ? "活跃" : "active";
+  return zh ? "空闲" : "idle";
+}
+
+function riskLabel(riskLevel: string, zh: boolean) {
+  return `${zh ? "风险" : "Risk"}: ${riskLevel}`;
+}
 
 export function OperationsView({ locale }: { locale: Locale }) {
   const zh = locale === "zh-CN";
-  const [previewedScript, setPreviewedScript] = useState<string | null>(null);
-  const [blockedScript, setBlockedScript] = useState<string | null>(null);
+  const [scripts, setScripts] = useState<OpsScript[]>([]);
+  const [audits, setAudits] = useState<AuditEvent[]>([]);
+  const [preview, setPreview] = useState<OpsScriptPreview | null>(null);
+  const [result, setResult] = useState<OpsScriptExecutionResult | null>(null);
+  const [busyScriptId, setBusyScriptId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    const [nextScripts, nextAudits] = await Promise.all([
+      listOpsScripts(),
+      listAuditEvents(8),
+    ]);
+    setScripts(nextScripts);
+    setAudits(nextAudits);
+  }, []);
+
+  useEffect(() => {
+    void loadData().catch((error: unknown) => {
+      setActionError(error instanceof Error ? error.message : String(error));
+    });
+  }, [loadData]);
+
+  const handlePreview = async (script: OpsScript) => {
+    setBusyScriptId(script.id);
+    setActionError(null);
+    setResult(null);
+    try {
+      setPreview(await previewOpsScript(script.id));
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusyScriptId(null);
+    }
+  };
+
+  const handleConfirm = async (script: OpsScript) => {
+    setBusyScriptId(script.id);
+    setActionError(null);
+    try {
+      const nextResult = await confirmOpsScript(script.id);
+      setResult(nextResult);
+      await loadData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setActionError(message.includes("script_execution")
+        ? (zh ? "需要先在设置中授予脚本执行权限。菜单栏不会直接运行高风险脚本。" : "Grant script execution in Settings first. The menu bar never runs high-risk scripts directly.")
+        : message);
+    } finally {
+      setBusyScriptId(null);
+    }
+  };
 
   return (
     <div className="view-content">
@@ -24,25 +84,45 @@ export function OperationsView({ locale }: { locale: Locale }) {
         <span className="badge badge-good">{zh ? "默认只读" : "Read-only by default"}</span>
       </div>
 
+      {actionError ? (
+        <div className="info-block warning-block">
+          <strong>{zh ? "操作未完成" : "Action did not complete"}</strong>
+          <p>{actionError}</p>
+        </div>
+      ) : null}
+
       <div className="compact-card-grid">
-        {scripts.map(([path, name, detail, status, tone, risk]) => (
-          <article key={path} className="info-block">
-            <div className="surface-head"><h3>{name}</h3><span className={`badge ${tone}`}>{status}</span></div>
-            <code className="row-path">{path}</code>
-            <p>{detail}</p>
-            <span className={`badge ${risk === "high" ? "badge-warn" : "badge-info"}`}>{zh ? "风险" : "Risk"}: {risk}</span>
-            {previewedScript === path ? (
+        {scripts.map((script) => (
+          <article key={script.id} className="info-block">
+            <div className="surface-head"><h3>{script.name}</h3><span className={`badge ${statusTone(script.name)}`}>{statusLabel(script.name, zh)}</span></div>
+            <code className="row-path">{script.path}</code>
+            <p>{script.description ?? (zh ? "没有脚本说明。" : "No script description.")}</p>
+            <span className={`badge ${script.riskLevel === "high" ? "badge-warn" : "badge-info"}`}>{riskLabel(script.riskLevel, zh)}</span>
+            {preview?.scriptId === script.id ? (
               <div className="ops-preview-block">
-                <strong>{zh ? "预览计划" : "Preview plan"}</strong>
-                <p>{zh ? "将生成命令差异、检查授权和记录审计；当前未执行系统写入。" : "Generates command diff, checks authorization, and records audit; no system write has run."}</p>
+                <div className="surface-head">
+                  <strong>{zh ? "预览计划" : "Preview plan"}</strong>
+                  <span className="badge">{preview.willExecute ? (zh ? "将执行" : "will execute") : (zh ? "安全确认" : "safe confirm")}</span>
+                </div>
+                <div className="item-list">
+                  {preview.steps.map((step) => (
+                    <div key={step} className="list-row">
+                      <div className="row-primary">
+                        <strong>{step}</strong>
+                        <span className="row-meta">{zh ? "确认前检查" : "Pre-confirm check"}</span>
+                      </div>
+                      <span className="badge">{preview.requiresAuthorization}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
-            {blockedScript === path ? (
-              <p className="empty-hint">{zh ? "需要先在设置中授予脚本执行权限。菜单栏不会直接运行高风险脚本。" : "Grant script execution in Settings first. The menu bar never runs high-risk scripts directly."}</p>
+            {result?.scriptId === script.id ? (
+              <p className="empty-hint">{zh ? "已确认并写入审计；当前安全 MVP 不直接执行 shell。" : result.message}</p>
             ) : null}
             <div className="inline-actions">
-              <button className="action-button" type="button" onClick={() => { setPreviewedScript(path); setBlockedScript(null); }}>{zh ? "预览计划" : "Preview Plan"}</button>
-              <button className="action-button primary" type="button" disabled={previewedScript !== path} onClick={() => setBlockedScript(path)}>{zh ? "确认运行" : "Confirm Run"}</button>
+              <button className="action-button" type="button" disabled={busyScriptId === script.id} onClick={() => handlePreview(script)}>{zh ? "预览计划" : "Preview Plan"}</button>
+              <button className="action-button primary" type="button" disabled={preview?.scriptId !== script.id || busyScriptId === script.id} onClick={() => handleConfirm(script)}>{zh ? "确认运行" : "Confirm Run"}</button>
             </div>
           </article>
         ))}
@@ -51,8 +131,18 @@ export function OperationsView({ locale }: { locale: Locale }) {
       <section className="card-section">
         <h3 className="section-title">{zh ? "运行审计" : "Run Audit"}</h3>
         <div className="item-list">
-          <div className="list-row"><div className="row-primary"><strong>start-codex.sh {zh ? "预览" : "preview"}</strong><span className="row-meta">{zh ? "已生成 launchctl 环境差异，未重启" : "launchctl diff generated, no restart yet"}</span></div><span className="badge">preview</span></div>
-          <div className="list-row"><div className="row-primary"><strong>dsleep {zh ? "已停止" : "stopped"}</strong><span className="row-meta">{zh ? "没有运行中的 caffeinate 进程" : "No running caffeinate process"}</span></div><span className="badge badge-good">idle</span></div>
+          {audits.filter((audit) => audit.eventType.startsWith("ops_") || audit.eventType.includes("script")).map((audit) => (
+            <div className="list-row" key={audit.id}>
+              <div className="row-primary">
+                <strong>{audit.eventType}</strong>
+                <span className="row-meta">{audit.detail ?? audit.entityId ?? ""}</span>
+              </div>
+              <span className={`badge ${audit.outcome === "success" ? "badge-good" : "badge-warn"}`}>{audit.outcome}</span>
+            </div>
+          ))}
+          {audits.filter((audit) => audit.eventType.startsWith("ops_") || audit.eventType.includes("script")).length === 0 ? (
+            <p className="empty-hint">{zh ? "暂无运维审计记录。预览不会写入审计，确认后才会记录。" : "No operations audit events yet. Preview does not audit; confirmation records one."}</p>
+          ) : null}
         </div>
       </section>
     </div>

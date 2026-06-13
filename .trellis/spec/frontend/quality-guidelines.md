@@ -38,7 +38,7 @@ src/
 - 首屏是可用的工作台（带状态控制台），不是落地页。
 - 主窗口有 6 个当前主视图：Home、Practice Library、Apply & Sync、Local Review、Operations、Settings。
 - 菜单栏面板展示闭环健康度、实践健康度、本机运维状态和快捷操作。
-- 卡片圆角不超过 8px。
+- 当前 Practice Shard 工作台按原型 token 使用 `10px / 16px / 24px / pill` 半径层级；如果某个旧视图仍在用非原型样式，优先对齐 `docs/product-design/screens/workbench-home.html`，不要再回退到旧的 8px 上限。
 - 原生体感：系统字体、非交互元素默认光标、屏蔽 WebKit 右键菜单。
 
 ## 无障碍

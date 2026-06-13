@@ -14,6 +14,9 @@ import type {
   LoopDecision,
   LoopSummary,
   NormalizeResult,
+  OpsScript,
+  OpsScriptExecutionResult,
+  OpsScriptPreview,
   PracticeCard,
   PracticeDraft,
   Projection,
@@ -152,9 +155,60 @@ const fallbackAudits: AuditEvent[] = [
   { id: "audit-3", eventType: "review.detected", entityType: "asset", entityId: "asset-local-harness-review", detail: "fixture drift detected", outcome: "warning", createdAt: nowIso() },
 ];
 
+const fallbackAuthorizations: AuthorizationEntry[] = [
+  { scope: "registry", granted: false, grantedAt: null, revokedAt: null },
+  { scope: "local_read", granted: false, grantedAt: null, revokedAt: null },
+  { scope: "external_signals", granted: false, grantedAt: null, revokedAt: null },
+  { scope: "write_projection", granted: false, grantedAt: null, revokedAt: null },
+  { scope: "script_execution", granted: false, grantedAt: null, revokedAt: null },
+];
+
+const fallbackOpsScripts: OpsScript[] = [
+  {
+    id: "ops-codex-proxy",
+    name: "Codex proxy",
+    path: "~/start-codex.sh",
+    description: "launchctl environment and Codex restart control",
+    riskLevel: "high",
+    status: "registered",
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  },
+  {
+    id: "ops-sleep-guard",
+    name: "Sleep guard",
+    path: "~/dsleep",
+    description: "caffeinate guard with stop boundary",
+    riskLevel: "medium",
+    status: "registered",
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  },
+  {
+    id: "ops-wake-display",
+    name: "Wake display",
+    path: "~/dwake",
+    description: "pmset displaysleepnow quick action",
+    riskLevel: "medium",
+    status: "registered",
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  },
+];
+
 function recordFallbackAudit(event: Omit<AuditEvent, "id" | "createdAt">): void {
   fallbackAuditIndex += 1;
   fallbackAudits.unshift({ ...event, id: `audit-${fallbackAuditIndex}`, createdAt: nowIso() });
+}
+
+function fallbackAuthorization(scope: AuthScope): AuthorizationEntry | undefined {
+  return fallbackAuthorizations.find((entry) => entry.scope === scope);
+}
+
+function requireFallbackAuthorization(scope: AuthScope): void {
+  if (!fallbackAuthorization(scope)?.granted) {
+    throw new Error(`${scope} authorization required`);
+  }
 }
 
 function copySignal(signal: SignalCard): SignalCard {
@@ -345,21 +399,28 @@ export async function listRealInsights(): Promise<RealInsight[]> {
 // Authorization
 
 export async function getAuthorizationState(): Promise<AuthorizationEntry[]> {
-  return call("get_authorization_state", {}, () => [
-    { scope: "registry" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
-    { scope: "local_read" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
-    { scope: "external_signals" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
-    { scope: "write_projection" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
-    { scope: "script_execution" as AuthScope, granted: false, grantedAt: null, revokedAt: null },
-  ]);
+  return call("get_authorization_state", {}, () => fallbackAuthorizations.map((entry) => ({ ...entry })));
 }
 
 export async function grantAuthorization(scope: AuthScope): Promise<void> {
-  return call("grant_authorization", { scope }, () => undefined);
+  return call("grant_authorization", { scope }, () => {
+    const entry = fallbackAuthorization(scope);
+    if (entry) {
+      entry.granted = true;
+      entry.grantedAt = nowIso();
+      entry.revokedAt = null;
+    }
+  });
 }
 
 export async function revokeAuthorization(scope: AuthScope): Promise<void> {
-  return call("revoke_authorization", { scope }, () => undefined);
+  return call("revoke_authorization", { scope }, () => {
+    const entry = fallbackAuthorization(scope);
+    if (entry) {
+      entry.granted = false;
+      entry.revokedAt = nowIso();
+    }
+  });
 }
 
 // Registry
@@ -420,6 +481,54 @@ export async function useStarterRegistryReadonly(): Promise<RegistryConnection> 
 
 export async function listAuditEvents(limit?: number): Promise<AuditEvent[]> {
   return call("list_audit_events", { limit: limit ?? null }, () => fallbackAudits.slice(0, limit ?? 20).map((audit) => ({ ...audit })));
+}
+
+// Operations
+
+export async function listOpsScripts(): Promise<OpsScript[]> {
+  return call("list_ops_scripts", {}, () => fallbackOpsScripts.map((script) => ({ ...script })));
+}
+
+export async function previewOpsScript(scriptId: string): Promise<OpsScriptPreview> {
+  return call("preview_ops_script", { scriptId }, () => {
+    const script = fallbackOpsScripts.find((item) => item.id === scriptId);
+    if (!script) throw new Error(`ops script not found: ${scriptId}`);
+    return {
+      scriptId: script.id,
+      name: script.name,
+      path: script.path,
+      riskLevel: script.riskLevel,
+      steps: [
+        "Resolve script path and show the intended command boundary",
+        "Check script_execution authorization before confirmation",
+        "Record an audit event for the confirmed operation",
+        "Keep shell execution disabled in the current safe MVP",
+      ],
+      requiresAuthorization: "script_execution",
+      willExecute: false,
+    };
+  });
+}
+
+export async function confirmOpsScript(scriptId: string): Promise<OpsScriptExecutionResult> {
+  return call("confirm_ops_script", { scriptId }, () => {
+    requireFallbackAuthorization("script_execution");
+    const script = fallbackOpsScripts.find((item) => item.id === scriptId);
+    if (!script) throw new Error(`ops script not found: ${scriptId}`);
+    recordFallbackAudit({
+      eventType: "ops_script_confirmed",
+      entityType: "ops_script",
+      entityId: script.id,
+      detail: `${script.name} safe MVP confirmation`,
+      outcome: "success",
+    });
+    return {
+      scriptId: script.id,
+      status: "confirmed_safe_mvp",
+      auditEventType: "ops_script_confirmed",
+      message: "Authorization accepted and audit recorded; shell execution is disabled in the current safe MVP.",
+    };
+  });
 }
 
 // Signals
@@ -712,6 +821,7 @@ export async function previewProjection(registryPath: string, targetPath: string
 
 export async function confirmProjection(registryPath: string, targetPath: string, targetKind: string): Promise<ProjectionExecutionResult> {
   return call("confirm_projection", { registryPath, targetPath, targetKind }, () => {
+    requireFallbackAuthorization("write_projection");
     const plan = {
       actions: fallbackAssets.filter((asset) => !fallbackProjections.some((projection) => projection.assetId === asset.id && projection.targetKind === targetKind && projection.status === "active")),
     };
@@ -746,6 +856,7 @@ export async function adoptAsset(
   assetType: string, backupPath: string, targetKind: string,
 ): Promise<AdoptResult> {
   return call("adopt_asset", { targetPath, registryPath, registryDest, assetType, backupPath, targetKind }, () => {
+    requireFallbackAuthorization("write_projection");
     const assetId = `asset-${slugify(registryDest)}-${Date.now()}`;
     fallbackAssets.unshift({
       id: assetId,
@@ -783,6 +894,7 @@ export async function adoptAsset(
 
 export async function rollbackProjection(projectionId: string): Promise<void> {
   return call("rollback_projection", { projectionId }, () => {
+    requireFallbackAuthorization("write_projection");
     const projection = fallbackProjections.find((item) => item.id === projectionId);
     if (projection) {
       projection.status = "removed";

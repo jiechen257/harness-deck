@@ -238,6 +238,10 @@ describe("Hone app foundation", () => {
     render(<App />);
 
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "设置" }));
+    await user.click(await screen.findByRole("button", { name: "授权" }));
+    await user.click(screen.getByText("写入投射").closest(".list-row")!.querySelector("input")!);
+
     await user.click(within(navigation).getByRole("button", { name: "应用与同步" }));
 
     const confirmButton = await screen.findByRole("button", { name: /确认投射/ });
@@ -288,11 +292,27 @@ describe("Hone app foundation", () => {
     const navigation = screen.getByRole("navigation", { name: "Workbench views" });
     await user.click(within(navigation).getByRole("button", { name: "运维" }));
 
-    const previewButtons = screen.getAllByRole("button", { name: "预览计划" });
+    const previewButtons = await screen.findAllByRole("button", { name: "预览计划" });
     await user.click(previewButtons[0]);
-    await user.click(screen.getAllByRole("button", { name: "确认运行" })[0]);
+    await user.click((await screen.findAllByRole("button", { name: "确认运行" }))[0]);
 
     expect(screen.getByText("需要先在设置中授予脚本执行权限。菜单栏不会直接运行高风险脚本。")).toBeInTheDocument();
+  });
+
+  it("records an Operations audit after script execution authorization", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "设置" }));
+    await user.click(await screen.findByRole("button", { name: "授权" }));
+    await user.click(screen.getByText("脚本执行").closest(".list-row")!.querySelector("input")!);
+
+    await user.click(within(navigation).getByRole("button", { name: "运维" }));
+    await user.click((await screen.findAllByRole("button", { name: "预览计划" }))[0]);
+    await user.click((await screen.findAllByRole("button", { name: "确认运行" }))[0]);
+
+    expect(await screen.findByText("ops_script_confirmed")).toBeInTheDocument();
   });
 
   it("renders Settings with authorization and audit tabs", async () => {

@@ -30,6 +30,10 @@ fn default_target_path(target_kind: &str) -> PathBuf {
     }
 }
 
+pub(crate) fn require_write_projection(db: &Database) -> Result<(), CommandError> {
+    db.require_authorization("write_projection")
+}
+
 #[tauri::command]
 pub fn list_projection_targets() -> Result<Vec<ProjectionTarget>, CommandError> {
     let targets = [
@@ -130,6 +134,7 @@ pub fn confirm_projection(
     let db = db
         .lock()
         .map_err(|e| CommandError::storage(e.to_string()))?;
+    require_write_projection(&db)?;
     let registry_path = expand_user_path(&registry_path);
     let target_path = expand_user_path(&target_path);
     let plan = projection_service::plan_projection(
@@ -163,6 +168,7 @@ pub fn adopt_asset(
     let db = db
         .lock()
         .map_err(|e| CommandError::storage(e.to_string()))?;
+    require_write_projection(&db)?;
     let target_path = expand_user_path(&target_path);
     let registry_path = expand_user_path(&registry_path);
     let backup_path = expand_user_path(&backup_path);
@@ -185,6 +191,7 @@ pub fn rollback_projection(
     let db = db
         .lock()
         .map_err(|e| CommandError::storage(e.to_string()))?;
+    require_write_projection(&db)?;
     projection_service::rollback_projection(&db, &projection_id)
 }
 

@@ -212,6 +212,36 @@ export interface AuthorizationEntry {
   revokedAt: string | null;
 }
 
+// Operations
+
+export interface OpsScript {
+  id: string;
+  name: string;
+  path: string;
+  description: string | null;
+  riskLevel: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpsScriptPreview {
+  scriptId: string;
+  name: string;
+  path: string;
+  riskLevel: string;
+  steps: string[];
+  requiresAuthorization: string;
+  willExecute: boolean;
+}
+
+export interface OpsScriptExecutionResult {
+  scriptId: string;
+  status: string;
+  auditEventType: string;
+  message: string;
+}
+
 // Registry
 
 export interface RegistryConnection {

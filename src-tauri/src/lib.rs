@@ -11,6 +11,8 @@ mod intake_tests;
 #[cfg(test)]
 mod loop_tests;
 #[cfg(test)]
+mod operations_tests;
+#[cfg(test)]
 mod projection_tests;
 #[cfg(test)]
 mod skill_tests;
@@ -165,6 +167,9 @@ pub fn run() {
             commands::loop_commands::normalize_signal,
             commands::loop_commands::create_practice_from_signal,
             commands::loop_commands::create_local_asset_from_practice,
+            commands::operations_commands::list_ops_scripts,
+            commands::operations_commands::preview_ops_script,
+            commands::operations_commands::confirm_ops_script,
             commands::skill_commands::list_system_skills,
             commands::skill_commands::execute_system_skill,
             commands::skill_commands::toggle_system_skill,
