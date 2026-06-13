@@ -45,7 +45,8 @@ pub fn read_claude_config() -> Option<ClaudeConfigSnapshot> {
     snapshot.project_count = count_dirs(&claude_dir.join("projects"));
 
     // Read installed plugins
-    snapshot.plugin_names = read_plugin_names(&claude_dir.join("plugins").join("installed_plugins.json"));
+    snapshot.plugin_names =
+        read_plugin_names(&claude_dir.join("plugins").join("installed_plugins.json"));
 
     Some(snapshot)
 }
@@ -60,7 +61,10 @@ fn read_settings_json(path: &PathBuf, snapshot: &mut ClaudeConfigSnapshot) {
         Err(_) => return,
     };
 
-    snapshot.editor_mode = val.get("editorMode").and_then(|v| v.as_str()).map(String::from);
+    snapshot.editor_mode = val
+        .get("editorMode")
+        .and_then(|v| v.as_str())
+        .map(String::from);
     snapshot.theme = val.get("theme").and_then(|v| v.as_str()).map(String::from);
 
     // Permissions
@@ -130,11 +134,7 @@ fn read_plugin_names(path: &PathBuf) -> Vec<String> {
     match val.as_array() {
         Some(arr) => arr
             .iter()
-            .filter_map(|item| {
-                item.get("name")
-                    .and_then(|n| n.as_str())
-                    .map(String::from)
-            })
+            .filter_map(|item| item.get("name").and_then(|n| n.as_str()).map(String::from))
             .collect(),
         None => Vec::new(),
     }

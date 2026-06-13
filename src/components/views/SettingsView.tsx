@@ -32,7 +32,11 @@ export function SettingsView({ locale, theme }: SettingsViewProps) {
   return (
     <div className="view-content">
       <div className="view-header">
-        <h2 className="view-title">{zh ? "设置" : "Settings"}</h2>
+        <div>
+          <span className="view-kicker">SETTINGS</span>
+          <h1 className="view-title">{zh ? "每个本地边界单独授权，默认关闭，按需开启。" : "Every local boundary is authorized separately, off by default."}</h1>
+          <p className="view-subtitle">{zh ? "管理注册表路径、候选仓库、只读 starter、授权开关、外观语言、本地数据和审计历史。" : "Manage registry paths, candidates, read-only starter, authorization, appearance, local data, and audit history."}</p>
+        </div>
       </div>
       <div className="tabs-bar">
         {tabs.map((t) => (

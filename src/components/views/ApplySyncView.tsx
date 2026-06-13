@@ -209,8 +209,9 @@ export function ApplySyncView({ locale }: { locale: Locale }) {
     <div className="view-content">
       <div className="view-header">
         <div>
-          <h2 className="view-title">{zh ? "应用与同步" : "Apply & Sync"}</h2>
-          <p className="view-subtitle">{zh ? "默认软链接，复制只作为兼容兜底。所有写入都需要确认。" : "Symlink by default, copy only as compatibility fallback. Every write requires confirmation."}</p>
+          <span className="view-kicker">APPLY & SYNC</span>
+          <h1 className="view-title">{zh ? "任何写入前，先让 registry 和目标目录对账。" : "Before any write, reconcile the registry and target directory."}</h1>
+          <p className="view-subtitle">{zh ? "选择目标和路径，生成投射计划，确认写入；冲突默认跳过，必要时可采纳、回滚并记录审计。" : "Select a target and path, generate a projection plan, confirm writes; conflicts skip by default and can be adopted or rolled back with audit."}</p>
         </div>
         <button className="action-button" type="button" onClick={handlePreview} disabled={loadingPlan}>
           <Shuffle size={14} aria-hidden="true" />

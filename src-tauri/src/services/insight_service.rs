@@ -24,8 +24,7 @@ pub fn local_insights() -> Vec<Insight> {
         Insight {
             id: "insight-profile-drift".to_string(),
             title: "Profile drift".to_string(),
-            summary: "Target state differs from the last manifest in rules and skills."
-                .to_string(),
+            summary: "Target state differs from the last manifest in rules and skills.".to_string(),
             severity: "high".to_string(),
             related_profile_id: "macos-dev".to_string(),
             source: "local-rule".to_string(),
@@ -33,9 +32,8 @@ pub fn local_insights() -> Vec<Insight> {
         Insight {
             id: "insight-update-impact".to_string(),
             title: "Update impact".to_string(),
-            summary:
-                "Registry update can improve sync guard wording without touching secrets."
-                    .to_string(),
+            summary: "Registry update can improve sync guard wording without touching secrets."
+                .to_string(),
             severity: "low".to_string(),
             related_profile_id: "macos-dev".to_string(),
             source: "local-rule".to_string(),
@@ -48,8 +46,7 @@ pub fn local_feed() -> Vec<FeedItem> {
         FeedItem {
             id: "feed-profile-impact".to_string(),
             title: "Harness Profile impact alert".to_string(),
-            summary: "A curated guardrail update affects the active macOS Dev profile."
-                .to_string(),
+            summary: "A curated guardrail update affects the active macOS Dev profile.".to_string(),
             priority: "High".to_string(),
             source: "registry-cache".to_string(),
             profile_impact: true,
@@ -91,10 +88,7 @@ pub fn real_insights() -> Vec<RealInsight> {
     insights
 }
 
-fn detect_token_anomalies(
-    stats: &claude_reader::ClaudeStats,
-    insights: &mut Vec<RealInsight>,
-) {
+fn detect_token_anomalies(stats: &claude_reader::ClaudeStats, insights: &mut Vec<RealInsight>) {
     if stats.daily_activity.len() < 3 {
         return;
     }
@@ -149,10 +143,7 @@ fn detect_token_anomalies(
     }
 }
 
-fn detect_session_activity(
-    stats: &claude_reader::ClaudeStats,
-    insights: &mut Vec<RealInsight>,
-) {
+fn detect_session_activity(stats: &claude_reader::ClaudeStats, insights: &mut Vec<RealInsight>) {
     if stats.total_sessions == 0 {
         return;
     }
@@ -190,10 +181,7 @@ fn detect_session_activity(
     });
 }
 
-fn detect_model_concentration(
-    stats: &claude_reader::ClaudeStats,
-    insights: &mut Vec<RealInsight>,
-) {
+fn detect_model_concentration(stats: &claude_reader::ClaudeStats, insights: &mut Vec<RealInsight>) {
     if stats.model_usage.len() < 2 {
         return;
     }
@@ -203,11 +191,7 @@ fn detect_model_concentration(
         return;
     }
 
-    if let Some(top_model) = stats
-        .model_usage
-        .iter()
-        .max_by_key(|m| m.output_tokens)
-    {
+    if let Some(top_model) = stats.model_usage.iter().max_by_key(|m| m.output_tokens) {
         let concentration = top_model.output_tokens as f64 / total_output as f64;
         if concentration > 0.8 {
             insights.push(RealInsight {

@@ -4073,6 +4073,7 @@ button.decision-row {
   --text-2xl: 36px;
   --leading-body: 1.52;
   --leading-tight: 1.06;
+  --tracking-display: -0.025em;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -4086,6 +4087,8 @@ button.decision-row {
   --elev-ring: 0 0 0 1px var(--border);
   --elev-raised: 0 20px 52px rgba(16, 24, 40, 0.11);
   --focus-ring: 0 0 0 4px rgba(37, 99, 235, 0.22);
+  --motion-fast: 150ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   color: var(--fg);
   background:
     radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--accent), transparent 88%), transparent 28%),
@@ -4133,10 +4136,11 @@ button.decision-row {
 }
 
 .workbench-command-deck {
-  width: min(100vw, 1512px);
+  width: min(100vw, 1680px);
+  max-width: 1680px;
   height: 100vh;
   margin: 0 auto;
-  padding: var(--space-5);
+  padding: 0;
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr) 326px;
   gap: var(--space-4);
@@ -4445,7 +4449,7 @@ button.decision-row {
 .command-deck-app .canvas {
   min-height: 0;
   overflow: auto;
-  padding: var(--space-5);
+  padding: var(--space-4);
   background: transparent;
 }
 
@@ -4470,7 +4474,8 @@ button.decision-row {
   color: var(--fg);
   font-size: var(--text-2xl);
   line-height: var(--leading-tight);
-  letter-spacing: 0;
+  letter-spacing: var(--tracking-display);
+  text-wrap: balance;
 }
 
 .command-deck-app .view-kicker {
@@ -4485,6 +4490,7 @@ button.decision-row {
 .command-deck-app p {
   margin: 0;
   color: var(--muted);
+  text-wrap: pretty;
 }
 
 .command-deck-app .hero-grid {
@@ -4495,10 +4501,10 @@ button.decision-row {
 }
 
 .command-deck-app .command-card {
-  min-height: 260px;
-  padding: var(--space-5);
+  min-height: 218px;
+  padding: var(--space-4);
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-3);
   background:
     radial-gradient(circle at 84% 16%, color-mix(in oklab, var(--accent), transparent 82%), transparent 32%),
     var(--surface);
@@ -4506,14 +4512,14 @@ button.decision-row {
 
 .command-deck-app .score-row {
   display: grid;
-  grid-template-columns: 132px minmax(0, 1fr);
-  gap: var(--space-5);
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: var(--space-4);
   align-items: center;
 }
 
 .command-deck-app .score-ring {
-  width: 124px;
-  height: 124px;
+  width: 106px;
+  height: 106px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-pill);
@@ -4521,8 +4527,8 @@ button.decision-row {
 }
 
 .command-deck-app .score-ring span {
-  width: 88px;
-  height: 88px;
+  width: 76px;
+  height: 76px;
   display: grid;
   place-items: center;
   border: 1px solid var(--border);
@@ -4564,9 +4570,9 @@ button.decision-row {
 
 .command-deck-app .flow-card,
 .command-deck-app .module {
-  padding: var(--space-4);
+  padding: var(--space-3);
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .command-deck-app .surface-head,
@@ -4590,6 +4596,14 @@ button.decision-row {
   border-radius: var(--radius-sm);
   background: var(--surface);
   min-height: 0;
+}
+
+.command-deck-app .list-row:has(> .row-primary:first-child) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.command-deck-app .list-row:has(> .row-primary:first-child) .badge {
+  justify-self: end;
 }
 
 .command-deck-app button.flow-row {
@@ -4616,6 +4630,105 @@ button.decision-row {
   grid-template-columns: 1fr;
 }
 
+.command-deck-app .loop-home {
+  gap: var(--space-2);
+}
+
+.command-deck-app .loop-home .view-kicker {
+  margin-bottom: var(--space-1);
+}
+
+.command-deck-app .loop-home .view-title-row {
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.command-deck-app .loop-home .view-title {
+  max-width: 760px;
+}
+
+.command-deck-app .loop-home .view-title-row p {
+  max-width: 900px;
+}
+
+.command-deck-app .loop-home .hero-grid {
+  gap: var(--space-2);
+}
+
+.command-deck-app .loop-home .command-card {
+  min-height: 184px;
+  padding: var(--space-3);
+}
+
+.command-deck-app .loop-home .score-row {
+  grid-template-columns: 94px minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.command-deck-app .loop-home .score-ring {
+  width: 88px;
+  height: 88px;
+}
+
+.command-deck-app .loop-home .score-ring span {
+  width: 64px;
+  height: 64px;
+  font-size: var(--text-lg);
+}
+
+.command-deck-app .loop-home .metric-grid {
+  gap: var(--space-2);
+}
+
+.command-deck-app .loop-home .metric {
+  padding: var(--space-2);
+}
+
+.command-deck-app .loop-home .flow-row {
+  padding: var(--space-2);
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+}
+
+.command-deck-app .loop-home .icon {
+  width: 34px;
+  height: 34px;
+}
+
+.command-deck-app .loop-home .module {
+  padding: var(--space-2);
+}
+
+.command-deck-app .loop-home .module-head {
+  align-items: center;
+}
+
+.command-deck-app .loop-home .module-grid {
+  gap: var(--space-2);
+}
+
+.command-deck-app .loop-home .loop-segment-card {
+  min-height: 0;
+  padding: var(--space-2);
+  gap: var(--space-1);
+  align-content: start;
+}
+
+.command-deck-app .loop-home .loop-segment-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.command-deck-app .loop-home .loop-segment-card .action {
+  min-height: 30px;
+  padding-block: var(--space-1);
+}
+
+.command-deck-app .loop-home .home-status-strip {
+  display: none;
+}
+
 .command-deck-app .inspector {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -4633,6 +4746,22 @@ button.decision-row {
   display: grid;
   align-content: start;
   gap: var(--space-3);
+}
+
+.command-deck-app .inspector .audit-row {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.command-deck-app .inspector .audit-row .caption {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.command-deck-app .inspector .drawer-card p {
+  overflow-wrap: anywhere;
 }
 
 .command-deck-app .drawer-card {
@@ -4669,10 +4798,11 @@ button.decision-row {
 .statusbar-stage {
   min-height: 100vh;
   display: grid;
-  place-items: center;
-  align-content: center;
-  gap: var(--space-3);
-  padding: var(--space-6);
+  grid-template-rows: auto minmax(0, 1fr);
+  place-items: stretch;
+  align-content: stretch;
+  gap: 0;
+  padding: 0;
   color: var(--fg);
   background:
     radial-gradient(circle at 50% 0, color-mix(in oklab, var(--accent), transparent 86%), transparent 34%),
@@ -4687,23 +4817,24 @@ button.decision-row {
   gap: var(--space-2);
   color: var(--muted);
   font-size: var(--text-xs);
+  background: color-mix(in oklab, var(--surface), var(--surface-warm) 22%);
+  border-bottom: 1px solid var(--border);
 }
 
-.statusbar-stage .dot {
-  width: 14px;
-  height: 14px;
-  display: inline-block;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-on), transparent 28%), 0 0 0 3px color-mix(in oklab, var(--accent), transparent 82%);
+.statusbar-stage .menubar-logo {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
 }
 
 .statusbar-stage .panel {
-  width: min(100%, 374px);
-  max-height: none;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 0;
+  border-radius: 0;
   background: var(--surface);
   box-shadow: var(--elev-raised);
 }
@@ -4760,7 +4891,7 @@ button.decision-row {
 }
 
 .statusbar-stage .content {
-  max-height: 642px;
+  max-height: none;
   overflow: auto;
   padding: var(--space-3);
   display: grid;
@@ -4899,7 +5030,7 @@ button.decision-row {
   .workbench-command-deck {
     height: auto;
     min-height: 100vh;
-    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-columns: 248px minmax(0, 1fr);
   }
 
   .command-deck-app .inspector {
@@ -4914,7 +5045,7 @@ button.decision-row {
 
 @media (max-width: 780px) {
   .workbench-command-deck {
-    padding: 16px;
+    padding: 0;
     grid-template-columns: 1fr;
   }
 
@@ -4926,6 +5057,469 @@ button.decision-row {
 
   .command-deck-app .metric-grid,
   .command-deck-app .module-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Detail page prototype alignment follow-up */
+.command-deck-app .hone-mark,
+.statusbar-stage .hone-mark {
+  width: 100%;
+  height: 100%;
+  color: var(--accent);
+}
+
+.command-deck-app .hone-mark .rim,
+.statusbar-stage .hone-mark .rim {
+  filter: drop-shadow(0 9px 13px color-mix(in oklab, var(--accent), transparent 76%));
+}
+
+.command-deck-app .hone-mark .cut,
+.statusbar-stage .hone-mark .cut {
+  stroke: color-mix(in oklab, var(--accent-on), var(--accent) 16%);
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.74;
+}
+
+.command-deck-app .view-panel {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.command-deck-app .detail-workspace {
+  width: 100%;
+  margin: 0;
+  display: block;
+}
+
+.command-deck-app .view-content {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.command-deck-app .view-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  align-items: flex-start;
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.command-deck-app .view-header > div {
+  min-width: 0;
+  max-width: 820px;
+}
+
+.command-deck-app .view-subtitle {
+  max-width: 780px;
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.command-deck-app .action-button,
+.command-deck-app .primary-action,
+.command-deck-app .secondary-action,
+.command-deck-app .cleanup-card button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 720;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.command-deck-app .action-button.primary,
+.command-deck-app .primary-action {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+.command-deck-app .action-button:active,
+.command-deck-app .primary-action:active,
+.command-deck-app .secondary-action:active,
+.command-deck-app .cleanup-card button:active,
+.command-deck-app .tab-button:active,
+.command-deck-app .row-button:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.command-deck-app .action-button:focus-visible,
+.command-deck-app .primary-action:focus-visible,
+.command-deck-app .secondary-action:focus-visible,
+.command-deck-app .cleanup-card button:focus-visible,
+.command-deck-app .tab-button:focus-visible,
+.command-deck-app .row-button:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+.command-deck-app .tabs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.command-deck-app .tab-button {
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg-2);
+  font-size: var(--text-sm);
+  font-weight: 720;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.command-deck-app .tab-button.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-on);
+}
+
+.command-deck-app .card-section,
+.command-deck-app .info-block,
+.command-deck-app .settings-group,
+.command-deck-app .ops-preview-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  box-shadow: var(--elev-ring);
+}
+
+.command-deck-app .card-section > .info-block,
+.command-deck-app .settings-group .list-row,
+.command-deck-app .card-section .list-row,
+.command-deck-app .projection-node {
+  background: color-mix(in oklab, var(--surface), var(--surface-warm) 28%);
+}
+
+.command-deck-app .settings-section {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.command-deck-app .section-title,
+.command-deck-app .settings-group .section-title {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: center;
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--text-lg);
+  font-weight: 760;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+.command-deck-app .field-hint,
+.command-deck-app .empty-hint,
+.command-deck-app .row-meta,
+.command-deck-app .row-path {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+.command-deck-app .pipeline-grid {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.command-deck-app .review-grid,
+.command-deck-app .sync-layout,
+.command-deck-app .workflow-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.85fr);
+  gap: var(--space-4);
+  align-items: start;
+  max-width: none;
+}
+
+.command-deck-app .item-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.command-deck-app .row-button.list-row {
+  min-height: 58px;
+  padding: var(--space-3);
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.command-deck-app .row-button.active,
+.command-deck-app .row-button.active:hover {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent), var(--surface) 92%);
+  box-shadow: none;
+}
+
+.command-deck-app .row-primary {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.command-deck-app .row-primary strong {
+  max-width: 58ch;
+  line-height: 1.32;
+  text-wrap: pretty;
+}
+
+.command-deck-app .field-stack {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 760;
+}
+
+.command-deck-app input,
+.command-deck-app select,
+.command-deck-app .text-input {
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  padding: 0 var(--space-3);
+  font: inherit;
+}
+
+.command-deck-app .input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
+
+.command-deck-app code,
+.command-deck-app .path,
+.command-deck-app .row-path {
+  font-family: var(--font-mono);
+  color: var(--fg-2);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.command-deck-app .projection-card {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) 230px minmax(0, 0.9fr);
+  gap: var(--space-3);
+  align-items: stretch;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.command-deck-app .projection-title-block {
+  grid-column: 1 / -1;
+  width: min(100%, 720px);
+  justify-self: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: var(--space-4);
+  box-shadow: var(--elev-ring);
+}
+
+.command-deck-app .projection-node,
+.command-deck-app .projection-line {
+  min-height: 150px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--surface), var(--surface-warm) 48%);
+  padding: var(--space-4);
+  display: grid;
+  align-content: space-between;
+  gap: var(--space-3);
+}
+
+.command-deck-app .projection-line {
+  background: var(--surface);
+}
+
+.command-deck-app .projection-summary,
+.command-deck-app .inline-actions,
+.command-deck-app .settings-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.command-deck-app .review-summary-strip,
+.command-deck-app .settings-appearance-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.command-deck-app .review-grid > .card-section {
+  align-self: start;
+  height: fit-content;
+  align-content: start;
+}
+
+.command-deck-app .settings-appearance-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.command-deck-app .review-stat,
+.command-deck-app .settings-appearance-item {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--surface), var(--surface-warm) 34%);
+  padding: var(--space-3);
+}
+
+.command-deck-app .review-stat strong {
+  display: block;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+.command-deck-app .review-stat span,
+.command-deck-app .settings-appearance-item span {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.command-deck-app .compact-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.command-deck-app .compact-card-grid .info-block {
+  min-height: 210px;
+  align-content: start;
+}
+
+.command-deck-app .surface-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.command-deck-app .surface-head h3 {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--text-lg);
+  letter-spacing: -0.012em;
+  line-height: var(--leading-tight);
+}
+
+.command-deck-app .toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  min-width: 88px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 720;
+}
+
+.command-deck-app .toggle-label input[type="checkbox"] {
+  width: 38px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  background: color-mix(in oklab, var(--muted), transparent 78%);
+  border-color: var(--border);
+}
+
+.command-deck-app .toggle-label input[type="checkbox"]::after {
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: var(--surface);
+}
+
+.command-deck-app .toggle-label input[type="checkbox"]:checked {
+  background: var(--success);
+  border-color: color-mix(in oklab, var(--success), black 18%);
+}
+
+.command-deck-app .toggle-label input[type="checkbox"]:checked::after {
+  transform: translateX(14px);
+}
+
+.command-deck-app .toggle-label input[type="checkbox"]:checked + span {
+  color: var(--success);
+}
+
+@media (max-width: 1260px) {
+  .command-deck-app .pipeline-grid,
+  .command-deck-app .review-grid,
+  .command-deck-app .projection-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .command-deck-app .view-header {
+    display: grid;
+  }
+
+  .command-deck-app .review-summary-strip,
+  .command-deck-app .settings-appearance-grid,
+  .command-deck-app .compact-card-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -51,6 +51,10 @@ mod tests {
         assert_eq!(status.locale_default, "zh-CN");
         assert_eq!(status.theme_default, "light");
         assert!(!status.real_writes_enabled);
-        assert!(!status.health_factors.is_empty() || status.health_score > 0 || status.health_factors.is_empty());
+        assert!(
+            !status.health_factors.is_empty()
+                || status.health_score > 0
+                || status.health_factors.is_empty()
+        );
     }
 }

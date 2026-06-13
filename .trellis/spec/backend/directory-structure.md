@@ -82,6 +82,14 @@ src-tauri/
 - **`tray.rs`** — tray 图标构建、菜单项定义、tray 事件处理。
 - **`window.rs`** — `show_menu_panel`、workbench 窗口显示等窗口管理函数。
 
+### macOS 菜单栏图标约定
+
+Dock / app bundle icon 和菜单栏 tray icon 使用不同资源：
+
+- Dock / app bundle icon 由 `src-tauri/icons/icon-master.svg` 生成，并通过 `src-tauri/tauri.conf.json` 的 `bundle.icon` 引用 `32x32.png`、`128x128.png`、`128x128@2x.png`、`icon.icns` 和 `icon.ico`。
+- 菜单栏 tray icon 使用透明单色模板图 `src-tauri/icons/tray-template.png`，Rust 侧通过 `tauri::include_image!("icons/tray-template.png")` 嵌入，并在 `TrayIconBuilder` 上同时设置 `.icon(...)` 和 `.icon_as_template(true)`。
+- 不要用 `app.default_window_icon()` 作为菜单栏图标。Dock 图标通常带底板、阴影和多色细节，在 macOS 菜单栏小尺寸和深浅模式下可读性不稳定。
+
 ### 测试按领域组织（新增）
 
 将 `phase{N}_tests.rs` 重组为按领域域拆分的测试文件，放在 `tests/` 目录下：

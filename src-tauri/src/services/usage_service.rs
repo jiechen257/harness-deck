@@ -26,7 +26,13 @@ pub fn local_usage_summary() -> UsageSummary {
         metrics: vec![
             metric("tokens", "tokens", "182.4k", "", DataConfidence::LocalLog),
             metric("cost", "cost", "$4.82", "USD", DataConfidence::Estimated),
-            metric("duration", "duration", "146", "min", DataConfidence::LocalLog),
+            metric(
+                "duration",
+                "duration",
+                "146",
+                "min",
+                DataConfidence::LocalLog,
+            ),
             metric("drift", "drift", "2", "events", DataConfidence::Estimated),
             metric(
                 "official-bill",
@@ -59,14 +65,8 @@ pub fn real_usage_summary() -> RealUsageSummary {
     let codex_stats = codex_reader::read_codex_thread_stats();
     let codex_available = codex_stats.is_some();
 
-    let total_sessions = claude_stats
-        .as_ref()
-        .map(|s| s.total_sessions)
-        .unwrap_or(0);
-    let total_messages = claude_stats
-        .as_ref()
-        .map(|s| s.total_messages)
-        .unwrap_or(0);
+    let total_sessions = claude_stats.as_ref().map(|s| s.total_sessions).unwrap_or(0);
+    let total_messages = claude_stats.as_ref().map(|s| s.total_messages).unwrap_or(0);
 
     let daily_activity: Vec<DailyActivityEntry> = claude_stats
         .as_ref()
@@ -120,10 +120,7 @@ pub fn real_usage_summary() -> RealUsageSummary {
         .as_ref()
         .and_then(|s| s.longest_session_minutes);
 
-    let codex_thread_count = codex_stats
-        .as_ref()
-        .map(|s| s.total_threads)
-        .unwrap_or(0);
+    let codex_thread_count = codex_stats.as_ref().map(|s| s.total_threads).unwrap_or(0);
 
     let codex_recent_threads: Vec<CodexThreadItem> = codex_stats
         .as_ref()
@@ -156,10 +153,7 @@ pub fn real_usage_summary() -> RealUsageSummary {
         DataSourceInfo {
             name: "Codex threads".to_string(),
             path: sanitizer::shorten_path(
-                &home
-                    .join(".codex")
-                    .join("state_5.sqlite")
-                    .to_string_lossy(),
+                &home.join(".codex").join("state_5.sqlite").to_string_lossy(),
             ),
             available: codex_available,
         },
@@ -208,10 +202,7 @@ fn compute_window_hours(daily_activity: &[DailyActivityEntry]) -> f64 {
     ) {
         let days = (last_date - first_date).num_days().max(1) as f64;
         // Approximate active hours: total sessions * 0.5h average
-        let session_hours: f64 = daily_activity
-            .iter()
-            .map(|d| d.sessions as f64 * 0.5)
-            .sum();
+        let session_hours: f64 = daily_activity.iter().map(|d| d.sessions as f64 * 0.5).sum();
         // Return max of day-based estimate and session-based estimate
         session_hours.max(days * 2.0)
     } else {

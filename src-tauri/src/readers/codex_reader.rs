@@ -57,7 +57,10 @@ fn read_config_toml(path: &PathBuf, snapshot: &mut CodexConfigSnapshot) {
     };
 
     snapshot.model = val.get("model").and_then(|v| v.as_str()).map(String::from);
-    snapshot.sandbox_mode = val.get("sandbox_mode").and_then(|v| v.as_str()).map(String::from);
+    snapshot.sandbox_mode = val
+        .get("sandbox_mode")
+        .and_then(|v| v.as_str())
+        .map(String::from);
     snapshot.approval_policy = val
         .get("approval_policy")
         .and_then(|v| v.as_str())
@@ -72,11 +75,7 @@ fn read_config_toml(path: &PathBuf, snapshot: &mut CodexConfigSnapshot) {
     if let Some(plugins) = val.get("plugins").and_then(|v| v.as_array()) {
         snapshot.plugin_names = plugins
             .iter()
-            .filter_map(|item| {
-                item.get("name")
-                    .and_then(|n| n.as_str())
-                    .map(String::from)
-            })
+            .filter_map(|item| item.get("name").and_then(|n| n.as_str()).map(String::from))
             .collect();
     }
 
@@ -106,7 +105,10 @@ fn count_dirs(dir: &PathBuf) -> usize {
 
 fn count_lines(path: &PathBuf) -> usize {
     match std::fs::read_to_string(path) {
-        Ok(content) => content.lines().filter(|line| !line.trim().is_empty()).count(),
+        Ok(content) => content
+            .lines()
+            .filter(|line| !line.trim().is_empty())
+            .count(),
         Err(_) => 0,
     }
 }
@@ -173,11 +175,7 @@ pub fn read_codex_thread_stats() -> Option<CodexThreadStats> {
 
             Ok(CodexThreadSummary {
                 id: row.get(0)?,
-                title: if title.is_empty() {
-                    None
-                } else {
-                    Some(title)
-                },
+                title: if title.is_empty() { None } else { Some(title) },
                 created_at,
                 model,
                 tokens_used: tokens_used.map(|t| t as u64),

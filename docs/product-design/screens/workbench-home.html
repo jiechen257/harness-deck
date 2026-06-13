@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hone 实践运营指挥台</title>
+  <style>
+    /* design-systems/bento/tokens.css
+     * Structured token bindings for Bento.
+     * modular bento interface with friendly tiles, soft borders, and balanced product density.
+     */
+
+    :root {
+      --bg: #f5f8ff;
+      --surface: #ffffff;
+      --surface-warm: #eaf1ff;
+      --fg: #101828;
+      --fg-2: #344054;
+      --muted: #667085;
+      --meta: #2563eb;
+      --border: #d7e0ef;
+      --border-soft: #edf2f8;
+      --accent: #2563eb;
+      --accent-on: #ffffff;
+      --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+      --accent-active: color-mix(in oklab, var(--accent), black 14%);
+      --success: #16a34a;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --font-display: Inter, system-ui, sans-serif;
+      --font-body: Inter, system-ui, sans-serif;
+      --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+      --text-xs: 12px;
+      --text-sm: 14px;
+      --text-base: 16px;
+      --text-lg: 18px;
+      --text-xl: 24px;
+      --text-2xl: 36px;
+      --text-3xl: 54px;
+      --text-4xl: 76px;
+      --leading-body: 1.52;
+      --leading-tight: 1.06;
+      --tracking-display: -0.025em;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-12: 48px;
+      --section-y-desktop: 96px;
+      --section-y-tablet: 68px;
+      --section-y-phone: 48px;
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-pill: 9999px;
+      --elev-flat: none;
+      --elev-ring: 0 0 0 1px var(--border);
+      --elev-raised: 0 20px 52px rgba(16, 24, 40, 0.11);
+      --focus-ring: 0 0 0 4px rgba(37, 99, 235, 0.22);
+      --motion-fast: 150ms;
+      --motion-base: 240ms;
+      --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+      --container-max: 1180px;
+      --container-gutter-desktop: 36px;
+      --container-gutter-tablet: 24px;
+      --container-gutter-phone: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--accent), transparent 88%), transparent 28%),
+        linear-gradient(135deg, var(--bg), color-mix(in oklab, var(--surface-warm), var(--surface) 45%));
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      line-height: var(--leading-body);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow: hidden;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3 { font-family: var(--font-display); line-height: var(--leading-tight); letter-spacing: var(--tracking-display); }
+    p { color: var(--muted); text-wrap: pretty; }
+    svg { display: block; }
+
+    .desktop {
+      width: min(100vw, 1512px);
+      height: 100vh;
+      margin: 0 auto;
+      padding: var(--space-5);
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr) 326px;
+      gap: var(--space-4);
+    }
+    .rail, .stage, .inspector {
+      min-height: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: color-mix(in oklab, var(--surface), transparent 2%);
+      box-shadow: var(--elev-raised);
+      overflow: hidden;
+    }
+    .rail { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+    .rail-head, .inspector-head, .stage-head {
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in oklab, var(--surface), var(--surface-warm) 32%);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      color: var(--fg);
+      font-weight: 820;
+    }
+    .brand-mark, .icon, .node {
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-weight: 780;
+    }
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      padding: 5px;
+      background: color-mix(in oklab, var(--surface), var(--surface-warm) 44%);
+      color: var(--accent);
+      border-color: var(--border);
+      box-shadow: inset 0 0 0 1px var(--border-soft), 0 14px 28px color-mix(in oklab, var(--accent), transparent 82%);
+    }
+    .hone-mark { width: 100%; height: 100%; }
+    .hone-mark .rim { filter: drop-shadow(0 9px 13px color-mix(in oklab, var(--accent), transparent 76%)); }
+    .hone-mark .cut {
+      stroke: color-mix(in oklab, var(--accent-on), var(--accent) 16%);
+      stroke-width: 3.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.74;
+    }
+    .brand span:first-child { font-size: var(--text-lg); }
+    .rail-subtitle, .caption, .meta {
+      color: var(--muted);
+      font-size: var(--text-xs);
+      line-height: 1.45;
+    }
+    .rail-body {
+      min-height: 0;
+      overflow: auto;
+      padding: var(--space-4);
+      display: grid;
+      align-content: start;
+      gap: var(--space-4);
+    }
+    .loop-map {
+      display: grid;
+      gap: var(--space-2);
+      position: relative;
+    }
+    .loop-map::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      top: 26px;
+      bottom: 26px;
+      width: 1px;
+      background: var(--border);
+    }
+    .nav-item {
+      position: relative;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr) auto;
+      gap: var(--space-3);
+      align-items: center;
+      padding: var(--space-2);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--fg);
+      text-align: left;
+      transition: background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+    }
+    .nav-item:hover, .nav-item.active {
+      background: var(--surface);
+      border-color: var(--border);
+      transform: translateX(1px);
+    }
+    .nav-item.active .node {
+      background: var(--accent);
+      color: var(--accent-on);
+      border-color: var(--accent);
+    }
+    .nav-item strong { display: block; color: var(--fg); }
+    .badge, .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-1);
+      min-height: 24px;
+      padding: 0 var(--space-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      background: var(--surface-warm);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      white-space: nowrap;
+    }
+    .good { color: var(--success); border-color: color-mix(in oklab, var(--success), transparent 58%); background: color-mix(in oklab, var(--success), transparent 91%); }
+    .warn { color: var(--warn); border-color: color-mix(in oklab, var(--warn), transparent 52%); background: color-mix(in oklab, var(--warn), transparent 90%); }
+    .risk { color: var(--danger); border-color: color-mix(in oklab, var(--danger), transparent 58%); background: color-mix(in oklab, var(--danger), transparent 92%); }
+    .rail-card, .module, .command-card, .flow-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      box-shadow: var(--elev-ring);
+    }
+    .rail-card { padding: var(--space-3); display: grid; gap: var(--space-2); }
+    .brand-stone-card {
+      display: grid;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+    .stone-line {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: var(--space-2);
+      align-items: center;
+      color: var(--fg-2);
+      font-size: var(--text-xs);
+    }
+    .stone-line .hone-mark { width: 28px; height: 28px; }
+    .quick-button, .action, .tab, .ghost-button {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--fg);
+      padding: 0 var(--space-3);
+      font-weight: 720;
+      transition: background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+    }
+    .action.primary, .tab.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--accent-on);
+    }
+    .quick-button {
+      width: 100%;
+      justify-content: space-between;
+      text-align: left;
+      min-height: 42px;
+    }
+    .quick-button:active, .action:active, .tab:active { transform: translateY(1px); }
+    .nav-item:focus-visible, .quick-button:focus-visible, .action:focus-visible, .tab:focus-visible, .ghost-button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 0;
+      box-shadow: var(--focus-ring);
+    }
+
+    .stage { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+    .stage-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--space-4);
+      align-items: center;
+    }
+    .search {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 0 var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      color: var(--muted);
+    }
+    .search input {
+      min-width: 0;
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--fg);
+    }
+    .head-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+    .canvas {
+      min-height: 0;
+      overflow: auto;
+      padding: var(--space-5);
+    }
+    .view { display: none; }
+    .view.active { display: grid; gap: var(--space-4); }
+    .view-title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-4);
+      align-items: flex-start;
+    }
+    .view-title { font-size: var(--text-2xl); }
+    .view-kicker {
+      display: inline-flex;
+      margin-bottom: var(--space-2);
+      color: var(--meta);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 760;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: var(--space-4);
+      align-items: stretch;
+    }
+    .command-card {
+      min-height: 260px;
+      padding: var(--space-5);
+      display: grid;
+      gap: var(--space-4);
+      background:
+        radial-gradient(circle at 84% 16%, color-mix(in oklab, var(--accent), transparent 82%), transparent 32%),
+        var(--surface);
+    }
+    .score-row {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: var(--space-5);
+      align-items: center;
+    }
+    .score-ring {
+      width: 124px;
+      height: 124px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-pill);
+      background: conic-gradient(var(--accent) 0 82%, var(--border-soft) 82% 100%);
+    }
+    .score-ring span {
+      width: 88px;
+      height: 88px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: var(--text-xl);
+      font-weight: 820;
+    }
+    .metric-grid, .module-grid, .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-3);
+    }
+    .metric, .mini-metric {
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-sm);
+      background: color-mix(in oklab, var(--surface), var(--surface-warm) 34%);
+      padding: var(--space-3);
+    }
+    .metric strong, .mini-metric strong {
+      display: block;
+      color: var(--fg);
+      font-family: var(--font-mono);
+      font-size: var(--text-lg);
+      line-height: 1;
+    }
+    .metric span, .mini-metric span { color: var(--muted); font-size: var(--text-xs); }
+    .flow-card { padding: var(--space-4); display: grid; gap: var(--space-3); }
+    .flow-row, .list-row, .source-row, .audit-row {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) auto;
+      gap: var(--space-3);
+      align-items: center;
+      padding: var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+    }
+    .flow-row strong, .list-row strong, .source-row strong, .audit-row strong { display: block; color: var(--fg); }
+    .flow-row.active { border-color: var(--accent); background: color-mix(in oklab, var(--accent), var(--surface) 92%); }
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 0.85fr);
+      gap: var(--space-4);
+      align-items: start;
+    }
+    .module { padding: var(--space-4); display: grid; gap: var(--space-3); }
+    .module-head, .surface-head {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-3);
+      align-items: flex-start;
+    }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+    .subview { display: none; }
+    .subview.active { display: grid; gap: var(--space-3); }
+    .pipeline {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: var(--space-4);
+    }
+    .signal-list { display: grid; gap: var(--space-2); }
+    .signal-list .list-row { cursor: pointer; }
+    .signal-list .list-row.active { border-color: var(--accent); }
+    .draft-card {
+      border: 1px dashed var(--accent);
+      border-radius: var(--radius-md);
+      background: color-mix(in oklab, var(--accent), var(--surface) 94%);
+      padding: var(--space-4);
+      display: grid;
+      gap: var(--space-3);
+    }
+    .field {
+      display: grid;
+      gap: var(--space-2);
+      color: var(--muted);
+      font-size: var(--text-xs);
+      font-weight: 760;
+    }
+    input, select {
+      min-height: 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--fg);
+      padding: 0 var(--space-3);
+    }
+    code, .path {
+      font-family: var(--font-mono);
+      color: var(--fg-2);
+      font-size: var(--text-xs);
+      overflow-wrap: anywhere;
+    }
+    .projection-board {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) 230px minmax(0, 0.9fr);
+      gap: var(--space-3);
+      align-items: stretch;
+    }
+    .projection-node {
+      min-height: 170px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: color-mix(in oklab, var(--surface), var(--surface-warm) 48%);
+      padding: var(--space-4);
+      display: grid;
+      align-content: space-between;
+      gap: var(--space-3);
+    }
+    .projection-control {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      padding: var(--space-4);
+      display: grid;
+      gap: var(--space-3);
+    }
+    .diff {
+      max-height: 160px;
+      overflow: auto;
+      margin: 0;
+      padding: var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--fg);
+      color: var(--surface);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+    }
+    .review-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--space-3);
+    }
+    .ops-card {
+      display: grid;
+      gap: var(--space-3);
+      min-height: 210px;
+    }
+    .ops-preview {
+      display: none;
+      padding: var(--space-3);
+      border: 1px dashed var(--accent);
+      border-radius: var(--radius-sm);
+      background: color-mix(in oklab, var(--accent), var(--surface) 94%);
+    }
+    .ops-card.previewed .ops-preview { display: block; }
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--muted);
+      font-size: var(--text-xs);
+      font-weight: 720;
+    }
+    .inspector {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    .inspector-body {
+      min-height: 0;
+      overflow: auto;
+      padding: var(--space-4);
+      display: grid;
+      align-content: start;
+      gap: var(--space-3);
+    }
+    .drawer-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      padding: var(--space-3);
+      display: grid;
+      gap: var(--space-2);
+    }
+    .drawer-title { display: flex; justify-content: space-between; gap: var(--space-2); align-items: flex-start; }
+    .toast {
+      position: fixed;
+      right: var(--space-6);
+      bottom: var(--space-6);
+      min-width: 280px;
+      padding: var(--space-4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      box-shadow: var(--elev-raised);
+      transform: translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--motion-base) var(--ease-standard), transform var(--motion-base) var(--ease-standard);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1260px) {
+      body { overflow: auto; }
+      .desktop { height: auto; min-height: 100vh; grid-template-columns: 220px minmax(0, 1fr); }
+      .inspector { grid-column: 1 / -1; min-height: 420px; }
+      .hero-grid, .two-col, .pipeline, .projection-board { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 780px) {
+      .desktop { padding: var(--container-gutter-phone); grid-template-columns: 1fr; }
+      .stage-head, .view-title-row, .score-row { grid-template-columns: 1fr; }
+      .metric-grid, .module-grid, .settings-grid, .review-strip { grid-template-columns: 1fr; }
+      .flow-row, .list-row, .source-row, .audit-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="desktop" data-od-id="workbench-shell">
+    <aside class="rail" data-od-id="path-0-0">
+      <header class="rail-head">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">
+          <svg class="hone-mark" viewBox="0 0 160 160">
+            <defs>
+              <linearGradient id="workbenchShardA" x1="28" y1="18" x2="126" y2="144" gradientUnits="userSpaceOnUse">
+                <stop offset="0" style="stop-color: color-mix(in oklab, var(--accent-on), var(--accent) 16%)" />
+                <stop offset="0.55" style="stop-color: var(--accent)" />
+                <stop offset="1" style="stop-color: color-mix(in oklab, var(--fg), var(--accent) 54%)" />
+              </linearGradient>
+              <linearGradient id="workbenchShardB" x1="42" y1="30" x2="94" y2="138" gradientUnits="userSpaceOnUse">
+                <stop offset="0" style="stop-color: color-mix(in oklab, var(--accent-on), var(--accent) 26%)" />
+                <stop offset="1" style="stop-color: color-mix(in oklab, var(--accent), var(--fg) 30%)" />
+              </linearGradient>
+            </defs>
+            <path class="rim" fill="url(#workbenchShardA)" d="M75 14 119 41 143 85 120 137 65 146 24 116 16 66 38 31Z" />
+            <path fill="url(#workbenchShardB)" d="M75 14c8 25 0 45-16 61-14 15-22 32-20 58l26 13 55-9c-7-30-22-50-46-62 18-18 25-37 1-61Z" opacity=".92" />
+            <path fill="color-mix(in oklab, var(--accent-on), transparent 20%)" d="M38 31 75 14c13 30-8 51-28 69L16 66Z" opacity=".7" />
+            <path fill="color-mix(in oklab, var(--fg), var(--accent) 55%)" d="M39 133c1-32-7-51-23-67l8 50 41 30Z" opacity=".42" />
+            <path class="cut" d="M75 15c11 31-3 48-24 68m-12 50c1-31 10-48 35-58 25 10 41 30 47 62" fill="none" />
+          </svg>
+        </span><div><span>Hone</span><div class="rail-subtitle">Practice Shard · 本地实践运营台</div></div></div>
+      </header>
+      <div class="rail-body">
+        <nav class="loop-map" aria-label="Hone 工作台视图">
+          <button class="nav-item active" type="button" data-view="home"><span class="node">01</span><div><strong>首页</strong><span class="caption">闭环状态</span></div><span class="badge good">82%</span></button>
+          <button class="nav-item" type="button" data-view="library"><span class="node">02</span><div><strong>实践库</strong><span class="caption">信号 · 实践 · 资产</span></div><span class="badge">3</span></button>
+          <button class="nav-item" type="button" data-view="apply"><span class="node">03</span><div><strong>应用与同步</strong><span class="caption">投射 · 采纳 · 回滚</span></div><span class="badge warn">1</span></button>
+          <button class="nav-item" type="button" data-view="review"><span class="node">04</span><div><strong>本地评审</strong><span class="caption">偏移 · 证据 · 建议</span></div><span class="badge warn">1</span></button>
+          <button class="nav-item" type="button" data-view="operations"><span class="node">05</span><div><strong>运维</strong><span class="caption">脚本预览与确认</span></div><span class="badge">3</span></button>
+          <button class="nav-item" type="button" data-view="settings"><span class="node">06</span><div><strong>设置</strong><span class="caption">注册表与授权</span></div><span class="badge">5</span></button>
+        </nav>
+        <section class="rail-card" data-od-id="rail-quick-actions">
+          <div class="brand-stone-card">
+            <strong>工具石工作流</strong>
+            <div class="stone-line"><svg class="hone-mark" viewBox="0 0 160 160" aria-hidden="true"><path class="rim" fill="url(#workbenchShardA)" d="M75 14 119 41 143 85 120 137 65 146 24 116 16 66 38 31Z" /><path fill="url(#workbenchShardB)" d="M75 14c8 25 0 45-16 61-14 15-22 32-20 58l26 13 55-9c-7-30-22-50-46-62 18-18 25-37 1-61Z" opacity=".92" /><path class="cut" d="M75 15c11 31-3 48-24 68m-12 50c1-31 10-48 35-58 25 10 41 30 47 62" fill="none" /></svg><span>信号被切面化、验证、投射，最后沉淀成本地资产。</span></div>
+          </div>
+          <strong>快捷动作</strong>
+          <button class="quick-button" type="button" data-view="library"><span>规范化信号</span><span>→</span></button>
+          <button class="quick-button" type="button" data-view="apply"><span>预览投射计划</span><span>→</span></button>
+          <button class="quick-button" type="button" data-view="review"><span>查看证据链</span><span>→</span></button>
+        </section>
+      </div>
+      <footer class="rail-head">
+        <span class="pill good">SQLite 实时聚合</span>
+        <div class="caption" style="margin-top: var(--space-2);">hone.db · 审计已启用 · 所有写入需确认</div>
+      </footer>
+    </aside>
+
+    <section class="stage" data-od-id="workbench-stage">
+      <header class="stage-head">
+        <label class="search"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="search" aria-label="搜索实践运营台" placeholder="搜索信号、实践、资产或审计记录 ⌘K" /></label>
+        <div class="head-actions">
+          <button class="action" type="button" data-action="refresh-signals">刷新信号</button>
+          <button class="action primary" type="button" data-action="open-command">打开命令面板</button>
+        </div>
+      </header>
+      <div class="canvas">
+        <section class="view active" data-panel="home" data-od-id="home-view">
+          <div class="view-title-row">
+            <div><span class="view-kicker">LOOP STATUS</span><h1 class="view-title">把信号到本地资产的闭环变成今天的决策队列。</h1><p>闭环健康度、分段状态、待决策队列、目标健康度和最近审计汇总在这里，让每一步都有明确的下一步动作。</p></div>
+            <span class="pill good">本地优先就绪</span>
+          </div>
+          <div class="hero-grid">
+            <section class="command-card">
+              <div class="score-row">
+                <div class="score-ring"><span>82%</span></div>
+                <div><h2>闭环健康度</h2><p>信号、实践、资产、投射、评审和运维一起计算，所有数据与配置都保存在本机。</p></div>
+              </div>
+              <div class="metric-grid">
+                <div class="metric"><strong>3</strong><span>待整理信号</span></div>
+                <div class="metric"><strong>2</strong><span>实践卡片</span></div>
+                <div class="metric"><strong>1</strong><span>本地资产</span></div>
+              </div>
+            </section>
+            <section class="flow-card">
+              <div class="surface-head"><h2>今日顺序</h2><span class="badge warn">3 个决策</span></div>
+              <button class="flow-row active" type="button" data-view="library"><span class="icon">IN</span><div><strong>规范化 3 条信号</strong><span class="caption">生成 Practice Card 预览</span></div><span class="badge">下一步</span></button>
+              <button class="flow-row" type="button" data-view="apply"><span class="icon">PR</span><div><strong>预览 1 个投射项</strong><span class="caption">Codex / Claude 目标先看 diff</span></div><span class="badge warn">需确认</span></button>
+              <button class="flow-row" type="button" data-view="review"><span class="icon">RV</span><div><strong>评审缺失投射</strong><span class="caption">把证据链转成可处理建议</span></div><span class="badge warn">1</span></button>
+            </section>
+          </div>
+          <section class="module">
+            <div class="module-head"><h2>闭环分段</h2><span class="caption">信号、实践、资产、评审、运维</span></div>
+            <div class="module-grid">
+              <article class="flow-card"><span class="badge">信号</span><h3>待整理 3</h3><p>高影响 1 · 官方来源 2 · 已规范化 0</p><button class="action" type="button" data-view="library">继续规范化</button></article>
+              <article class="flow-card"><span class="badge good">实践</span><h3>可采纳 2</h3><p>待生成资产 1 · 已应用 0</p><button class="action" type="button" data-view="library">创建本地资产</button></article>
+              <article class="flow-card"><span class="badge">资产</span><h3>注册表就绪 1</h3><p>Claude 已投射 0 · Codex 已投射 0</p><button class="action" type="button" data-view="apply">生成投射计划</button></article>
+              <article class="flow-card"><span class="badge warn">评审</span><h3>缺失投射 1</h3><p>偏移/断链 0 · 孤立资产 0</p><button class="action" type="button" data-view="review">查看证据</button></article>
+              <article class="flow-card"><span class="badge">运维</span><h3>脚本 3</h3><p>Codex proxy · Sleep guard · Wake display</p><button class="action" type="button" data-view="operations">预览运行计划</button></article>
+              <article class="flow-card"><span class="badge">授权</span><h3>5 个边界</h3><p>registry · local read · external signals · write projection · script execution</p><button class="action" type="button" data-view="settings">检查授权</button></article>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" data-panel="library" data-od-id="library-view">
+          <div class="view-title-row"><div><span class="view-kicker">PRACTICE LIBRARY</span><h1 class="view-title">信号不是内容库，信号是可落地实践的入口。</h1><p>从可信来源收集信号，生成实践草稿，保存为 Practice Card，再沉淀成本地可投射资产。</p></div><button class="action primary" type="button" data-action="refresh-signals">刷新信号</button></div>
+          <div class="tabs" data-tabs="library"><button class="tab active" type="button" data-tab="signals">信号</button><button class="tab" type="button" data-tab="practices">实践</button><button class="tab" type="button" data-tab="assets">资产</button><button class="tab" type="button" data-tab="archived">归档</button></div>
+          <div class="subview active" data-group="library" data-subpanel="signals">
+            <div class="pipeline">
+              <section class="module">
+                <div class="module-head"><h2>Inbox Signals</h2><span class="badge">3</span></div>
+                <div class="signal-list">
+                  <button class="list-row active" type="button" data-select-signal="codex"><span class="icon">01</span><div><strong>OpenAI Codex CLI 工作流更新</strong><span class="caption">Official 官方 · workflow · high · 待整理</span></div><span class="badge warn">high</span></button>
+                  <button class="list-row" type="button" data-select-signal="hooks"><span class="icon">02</span><div><strong>Claude Code hooks 使用实践</strong><span class="caption">Maintainer/Repository · automation · medium</span></div><span class="badge">medium</span></button>
+                  <button class="list-row" type="button" data-select-signal="mcp"><span class="icon">03</span><div><strong>MCP 服务器配置片段</strong><span class="caption">Community 社区 · mcp_config · medium</span></div><span class="badge">medium</span></button>
+                </div>
+              </section>
+              <section class="module">
+                <div class="module-head"><h2>规范化预览</h2><span class="badge good">Codex</span></div>
+                <div class="draft-card">
+                  <strong id="signal-title">OpenAI Codex CLI 工作流更新</strong>
+                  <p>选择信号后生成 Practice Card 草稿；成功后保存为实践，再创建本地资产。</p>
+                  <div class="mini-metric"><strong>workflow</strong><span>practiceType · confidence high · fetched 6月11日</span></div>
+                </div>
+                <div class="draft-card">
+                  <div class="surface-head"><h3>Practice Card 草稿</h3><span class="badge">Codex</span></div>
+                  <p>把稳定命令、证据收集和输出模板转为可复用实践卡片；建议资产类型：skill / rule / hook。</p>
+                  <span class="caption">场景 3 个 · 同类实践 4 个 · 可生成本地资产</span>
+                </div>
+                <div class="head-actions"><button class="action primary" type="button" data-action="generate-preview">生成实践预览</button><button class="action" type="button" data-action="save-practice">保存为实践</button></div>
+              </section>
+            </div>
+            <section class="module">
+              <div class="module-head"><h2>来源开关</h2><span class="caption">按来源控制抓取范围</span></div>
+              <div class="source-row"><span class="icon">GH</span><div><strong>GitHub releases</strong><span class="caption">Official 官方 · release · autoRefresh on</span></div><label class="toggle"><input type="checkbox" checked />启用</label></div>
+              <div class="source-row"><span class="icon">BL</span><div><strong>Builder notes</strong><span class="caption">Maintainer/Repository · notes · autoRefresh on</span></div><label class="toggle"><input type="checkbox" checked />启用</label></div>
+              <div class="source-row"><span class="icon">CM</span><div><strong>Community feed</strong><span class="caption">Community 社区 · 默认低信任</span></div><label class="toggle"><input type="checkbox" />关闭</label></div>
+            </section>
+          </div>
+          <div class="subview" data-group="library" data-subpanel="practices">
+            <div class="module-grid">
+              <article class="module"><div class="surface-head"><h2>Codex 非交互评审实践</h2><span class="badge good">adoptable</span></div><p>把稳定命令、证据收集和输出模板转为可复用实践卡片。</p><div class="head-actions"><button class="action" type="button">查看详情</button><button class="action primary" type="button">创建本地资产</button></div></article>
+              <article class="module"><div class="surface-head"><h2>MCP 配置片段沉淀</h2><span class="badge">draft</span></div><p>将外部信号转为 registry 管理的 MCP 片段。</p><button class="action" type="button">查看详情</button></article>
+            </div>
+          </div>
+          <div class="subview" data-group="library" data-subpanel="assets">
+            <section class="module"><div class="surface-head"><h2>Local Assets</h2><span class="badge">1</span></div><div class="list-row"><span class="icon">SK</span><div><strong>skill</strong><code class="path">system-skills/codex-review</code></div><span class="badge good">ready · system</span></div><button class="action" type="button" data-view="apply">打开应用与同步</button></section>
+          </div>
+          <div class="subview" data-group="library" data-subpanel="archived">
+            <section class="module"><h2>已归档对象</h2><p>归档信号、实践卡片和本地资产保留来源、决策和审计记录，但不进入当前闭环队列。</p></section>
+          </div>
+        </section>
+
+        <section class="view" data-panel="apply" data-od-id="apply-view">
+          <div class="view-title-row"><div><span class="view-kicker">APPLY & SYNC</span><h1 class="view-title">任何写入前，先让 registry 和目标目录对账。</h1><p>选择目标和路径，生成投射计划，确认写入；冲突默认跳过，必要时可采纳、回滚并记录审计。</p></div><button class="action" type="button" data-action="refresh-plan">重新生成计划</button></div>
+          <section class="projection-board" aria-label="注册表投射">
+            <div class="projection-node"><span class="badge good">事实源</span><h2>~/HoneRegistry</h2><p>system-skills、rules、hooks、MCP 片段由 registry 管理。</p></div>
+            <div class="projection-control">
+              <h2>注册表投射</h2>
+              <label class="field"><span>目标</span><select><option>Codex</option><option>Claude Code</option></select></label>
+              <label class="field"><span>目标路径</span><input value="~/.codex/skills" /></label>
+              <div class="metric-grid"><span class="badge good">新建 1</span><span class="badge">更新 0</span><span class="badge warn">冲突 0</span></div>
+            </div>
+            <div class="projection-node"><span class="badge warn">目标目录</span><h2>~/.codex/skills</h2><p>确认只会处理 create / update；普通文件或目录冲突保持不动。</p></div>
+          </section>
+          <section class="module">
+            <div class="module-head"><h2>Adapter Status</h2><span class="caption">listAdapterCapabilities()</span></div>
+            <div class="two-col">
+              <div class="list-row"><span class="icon">CX</span><div><strong>Codex</strong><span class="caption">可检测 · 可读取 · 可预览 · 可写入 · 可回滚</span></div><span class="badge good">MVP 支持</span></div>
+              <div class="list-row"><span class="icon">CC</span><div><strong>Claude Code</strong><span class="caption">可检测 · 可读取 · 可预览 · 可写入 · 可回滚</span></div><span class="badge good">MVP 支持</span></div>
+            </div>
+          </section>
+          <div class="tabs" data-tabs="apply"><button class="tab active" type="button" data-tab="plan">计划</button><button class="tab" type="button" data-tab="conflict">冲突与采纳</button><button class="tab" type="button" data-tab="rollback">回滚</button><button class="tab" type="button" data-tab="audit">审计</button></div>
+          <section class="subview active module" data-group="apply" data-subpanel="plan">
+            <div class="module-head"><h2>投射计划</h2><button class="action primary" type="button" data-action="confirm-projection">确认投射 1 项</button></div>
+            <div class="list-row"><span class="icon">SK</span><div><strong>codex-review</strong><code class="path">system-skills/codex-review -> ~/.codex/skills/codex-review</code></div><span class="badge good">symlink · create</span></div>
+            <pre class="diff">+ create symlink ~/.codex/skills/codex-review
++ source system-skills/codex-review
++ audit 投射预览</pre>
+          </section>
+          <section class="subview module" data-group="apply" data-subpanel="conflict">
+            <div class="two-col"><div><h2>冲突项</h2><p>当前计划没有冲突；有冲突时默认 skip，并进入采纳流程。</p></div><div class="draft-card"><h3>采纳确认</h3><label class="field"><span>目标路径</span><input value="~/.codex/skills/grill-me" /></label><label class="field"><span>Registry destination</span><input value="system-skills/grill-me" /></label><button class="action primary" type="button">确认采纳</button></div></div>
+          </section>
+          <section class="subview module" data-group="apply" data-subpanel="rollback"><div class="list-row"><span class="icon">RB</span><div><strong>~/.codex/skills/codex-review</strong><span class="caption">active · symlink · rollback removes target symlink only</span></div><button class="action" type="button">回滚链接</button></div></section>
+          <section class="subview module" data-group="apply" data-subpanel="audit"><div class="audit-row"><span class="badge good">OK</span><div><strong>投射预览</strong><span class="caption">计划已生成，尚未写入目标目录</span></div><span class="caption">14:44</span></div></section>
+        </section>
+
+        <section class="view" data-panel="review" data-od-id="review-view">
+          <div class="view-title-row"><div><span class="view-kicker">LOCAL REVIEW</span><h1 class="view-title">本地评审不是报告页，是把偏移变成可执行修复。</h1><p>选择目标后检查投射健康度、真实建议、发现列表、偏移时间线和审计轨迹。</p></div><label class="field"><span>检查目标</span><select><option>Codex</option><option>Claude Code</option></select></label></div>
+          <div class="review-strip"><div class="metric"><strong>1</strong><span>发现</span></div><div class="metric"><strong>1</strong><span>警告</span></div><div class="metric"><strong>2</strong><span>建议</span></div><div class="metric"><strong>20</strong><span>审计记录</span></div></div>
+          <div class="two-col">
+            <section class="module"><div class="module-head"><h2>评审发现</h2><span class="badge warn">warn</span></div><div class="list-row"><span class="icon">!</span><div><strong>缺失投射</strong><span class="caption">registry asset 尚未投射到目标目录</span><code class="path">~/.codex/skills/codex-review</code></div><span class="badge warn">warn</span></div></section>
+            <section class="module"><div class="module-head"><h2>证据与建议</h2></div><div class="draft-card"><strong>registry/skills/workflow/grill-me/SKILL.md</strong><p>建议创建 Practice Card 关系，或通过采纳流程把目标资产纳入 registry 管理。</p></div></section>
+          </div>
+          <section class="module"><div class="module-head"><h2>Drift Timeline</h2></div><div class="list-row"><span class="icon">CX</span><div><strong>~/.codex/skills/codex-review</strong><span class="caption">missing · no related audit · first 14:31 · last 14:44</span></div><span class="badge warn">codex</span></div></section>
+        </section>
+
+        <section class="view" data-panel="operations" data-od-id="operations-view">
+          <div class="view-title-row"><div><span class="view-kicker">OPERATIONS</span><h1 class="view-title">本机脚本默认只读展示，运行必须先预览再确认。</h1><p>集中管理 Codex proxy、Sleep guard 和 Wake display；高风险操作会先展示计划、检查授权并写入审计。</p></div><span class="badge good">默认只读</span></div>
+          <div class="module-grid">
+            <article class="module ops-card"><div class="module-head"><h2>Codex proxy</h2><span class="badge good">运行中</span></div><code>~/start-codex.sh</code><p>launchctl 环境和 Codex 重启控制。</p><div class="ops-preview"><strong>预览计划</strong><p>生成 launchctl 环境差异、检查授权和记录审计；当前未执行系统写入。</p></div><div class="head-actions"><button class="action" type="button" data-preview-ops>预览计划</button><button class="action primary" type="button" data-action="confirm-script">确认运行</button></div></article>
+            <article class="module ops-card"><div class="module-head"><h2>Sleep guard</h2><span class="badge warn">活跃</span></div><code>~/dsleep</code><p>caffeinate 防睡，需要停止入口。</p><div class="ops-preview"><strong>预览计划</strong><p>确认是否存在运行中的 caffeinate 进程；高风险动作需要 script_execution 授权。</p></div><div class="head-actions"><button class="action" type="button" data-preview-ops>预览计划</button><button class="action primary" type="button" data-action="confirm-script">确认运行</button></div></article>
+            <article class="module ops-card"><div class="module-head"><h2>Wake display</h2><span class="badge">空闲</span></div><code>~/dwake</code><p>pmset displaysleepnow 快捷动作。</p><div class="ops-preview"><strong>预览计划</strong><p>展示将执行的命令和审计记录，不直接从菜单栏触发高风险脚本。</p></div><div class="head-actions"><button class="action" type="button" data-preview-ops>预览计划</button><button class="action primary" type="button" data-action="confirm-script">确认运行</button></div></article>
+          </div>
+          <section class="module"><div class="module-head"><h2>运行审计</h2></div><div class="audit-row"><span class="badge">预览</span><div><strong>start-codex.sh 预览</strong><span class="caption">已生成 launchctl 环境差异，未重启</span></div><span class="caption">18 分钟前</span></div><div class="audit-row"><span class="badge good">空闲</span><div><strong>dsleep 已停止</strong><span class="caption">没有运行中的 caffeinate 进程</span></div><span class="caption">今天</span></div></section>
+        </section>
+
+        <section class="view" data-panel="settings" data-od-id="settings-view">
+          <div class="view-title-row"><div><span class="view-kicker">SETTINGS</span><h1 class="view-title">每个本地边界单独授权，默认关闭，按需开启。</h1><p>管理注册表路径、候选仓库、只读 starter、授权开关、外观语言、本地数据和审计历史。</p></div></div>
+          <div class="tabs" data-tabs="settings"><button class="tab active" type="button" data-tab="general">通用</button><button class="tab" type="button" data-tab="authorization">授权</button><button class="tab" type="button" data-tab="history">审计</button></div>
+          <div class="subview active" data-group="settings" data-subpanel="general">
+            <section class="module"><div class="module-head"><h2>注册表路径</h2><span class="badge good">已连接</span></div><p>Git 管理的 registry 仓库路径，存放 skills、rules、hooks 和 MCP 片段。</p><div class="head-actions"><input value="~/HoneRegistry" /><button class="action primary" type="button">保存</button></div></section>
+            <section class="module"><div class="module-head"><h2>Registry Bootstrap</h2></div><div class="list-row"><span class="icon">RG</span><div><strong>~/HoneRegistry</strong><span class="caption">initialized · user · active</span></div><button class="action" type="button">选择</button></div><div class="list-row"><span class="icon">ST</span><div><strong>starter registry</strong><span class="caption">read-only · fallback</span></div><button class="action" type="button">使用只读 starter</button></div></section>
+            <div class="settings-grid"><div class="module"><h2>外观</h2><p>浅色 / 深色由 app theme 管理。</p><span class="badge">Bento</span></div><div class="module"><h2>语言</h2><p>默认 zh-CN，可从品牌菜单切换 English。</p><span class="badge">中文</span></div><div class="module"><h2>数据</h2><p>hone.db (SQLite)，所有变更和操作被记录。</p><span class="badge good">正常</span></div></div>
+          </div>
+          <div class="subview" data-group="settings" data-subpanel="authorization">
+            <section class="module"><div class="module-head"><h2>权限边界</h2><span class="caption">独立授权，随时撤销</span></div>
+              <div class="source-row"><span class="icon">RG</span><div><strong>注册表</strong><span class="caption">连接本地 registry repo</span></div><label class="toggle"><input type="checkbox" checked />已授权</label></div>
+              <div class="source-row"><span class="icon">RD</span><div><strong>本地读取</strong><span class="caption">读取 ~/.claude 和 ~/.codex</span></div><label class="toggle"><input type="checkbox" checked />已授权</label></div>
+              <div class="source-row"><span class="icon">NW</span><div><strong>外部信号</strong><span class="caption">访问外部信息源</span></div><label class="toggle"><input type="checkbox" />未授权</label></div>
+              <div class="source-row"><span class="icon">WR</span><div><strong>写入投射</strong><span class="caption">Symlink/copy 到 target 目录</span></div><label class="toggle"><input type="checkbox" />未授权</label></div>
+              <div class="source-row"><span class="icon">SH</span><div><strong>脚本执行</strong><span class="caption">运行本机 agent 脚本</span></div><label class="toggle"><input type="checkbox" />未授权</label></div>
+            </section>
+          </div>
+          <div class="subview" data-group="settings" data-subpanel="history">
+            <section class="module"><div class="audit-row"><span class="badge good">success</span><div><strong>registry.selected</strong><span class="caption">registry · ~/HoneRegistry</span></div><span class="caption">14:40</span></div><div class="audit-row"><span class="badge warn">pending</span><div><strong>authorization.requested</strong><span class="caption">write_projection</span></div><span class="caption">14:42</span></div></section>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <aside class="inspector" data-od-id="workbench-inspector">
+      <header class="inspector-head">
+        <h2>证据抽屉</h2>
+        <p>当前视图的风险、目标、审计和可执行动作。</p>
+      </header>
+      <div class="inspector-body">
+        <section class="drawer-card"><div class="drawer-title"><strong>目标健康度</strong><span class="badge warn">2</span></div><div class="list-row"><span class="icon">CC</span><div><strong>Claude Code</strong><span class="caption">0 个本地投射</span></div><span class="badge warn">82%</span></div><div class="list-row"><span class="icon">CX</span><div><strong>Codex</strong><span class="caption">0 个本地投射</span></div><span class="badge warn">78%</span></div></section>
+        <section class="drawer-card"><div class="drawer-title"><strong>最近审计</strong><button class="ghost-button" type="button" data-view="review">查看全部</button></div><div class="audit-row"><span class="badge good">OK</span><div><strong>投射预览</strong><span class="caption">计划已生成，尚未写入目标目录</span></div></div><div class="audit-row"><span class="badge good">OK</span><div><strong>实践已创建</strong><span class="caption">来自本地样例数据</span></div></div><div class="audit-row"><span class="badge warn">!</span><div><strong>评审发现</strong><span class="caption">检测到缺失投射</span></div></div></section>
+        <section class="drawer-card"><div class="drawer-title"><strong>安全边界</strong><span class="badge">5</span></div><p>外部信号、写入投射和脚本执行默认关闭；投射和运维动作必须先预览、再确认、再写审计。</p></section>
+      </div>
+    </aside>
+  </main>
+  <div class="toast" role="status" aria-live="polite" id="toast">已记录</div>
+  <script>
+    const toast = document.getElementById("toast");
+    const viewTitles = {
+      home: "首页",
+      library: "实践库",
+      apply: "应用与同步",
+      review: "本地评审",
+      operations: "运维",
+      settings: "设置"
+    };
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+
+    function activateView(viewId) {
+      document.querySelectorAll("[data-view]").forEach((button) => {
+        if (button.classList.contains("nav-item")) button.classList.toggle("active", button.dataset.view === viewId);
+      });
+      document.querySelectorAll("[data-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === viewId));
+      showToast(`已打开${viewTitles[viewId] || viewId}`);
+    }
+
+    document.addEventListener("click", (event) => {
+      const viewButton = event.target.closest("[data-view]");
+      if (viewButton) activateView(viewButton.dataset.view);
+
+      const tabButton = event.target.closest("[data-tabs] .tab");
+      if (tabButton) {
+        const group = tabButton.closest("[data-tabs]").dataset.tabs;
+        tabButton.closest("[data-tabs]").querySelectorAll(".tab").forEach((button) => button.classList.toggle("active", button === tabButton));
+        document.querySelectorAll(`[data-group="${group}"]`).forEach((panel) => panel.classList.toggle("active", panel.dataset.subpanel === tabButton.dataset.tab));
+        showToast(`已切换到${tabButton.textContent.trim()}`);
+      }
+
+      const signal = event.target.closest("[data-select-signal]");
+      if (signal) {
+        document.querySelectorAll("[data-select-signal]").forEach((item) => item.classList.toggle("active", item === signal));
+        document.getElementById("signal-title").textContent = signal.querySelector("strong").textContent;
+      }
+
+      const preview = event.target.closest("[data-preview-ops]");
+      if (preview) {
+        preview.closest(".ops-card").classList.add("previewed");
+        showToast("已生成预览计划，尚未执行系统写入");
+      }
+
+      const action = event.target.closest("[data-action]");
+      if (action && !viewButton) showToast(action.textContent.trim() || "操作已记录");
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.target.matches("input, select, textarea")) return;
+      if (event.key === "Escape") activateView("home");
+      if (event.metaKey && event.key >= "1" && event.key <= "6") {
+        event.preventDefault();
+        const item = document.querySelectorAll(".nav-item")[Number(event.key) - 1];
+        if (item) activateView(item.dataset.view);
+      }
+    });
+  </script>
+</body>
+</html>

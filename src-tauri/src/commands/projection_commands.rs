@@ -1,5 +1,5 @@
-use std::sync::Mutex;
 use std::path::PathBuf;
+use std::sync::Mutex;
 
 use tauri::State;
 
@@ -61,7 +61,9 @@ pub fn list_projections(
     target_kind: Option<String>,
     db: State<'_, Mutex<Database>>,
 ) -> Result<Vec<Projection>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     let projections = db.list_projections()?;
     Ok(match target_kind {
         Some(kind) => projections
@@ -77,7 +79,9 @@ pub fn list_drift_timeline(
     target_kind: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<Vec<DriftTimelineItem>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     projection_service::drift_timeline(&db, &target_kind)
 }
 
@@ -103,7 +107,9 @@ pub fn preview_projection(
     target_kind: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<ProjectionPlan, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     let registry_path = expand_user_path(&registry_path);
     let target_path = expand_user_path(&target_path);
     projection_service::plan_projection(
@@ -121,7 +127,9 @@ pub fn confirm_projection(
     target_kind: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<ProjectionExecutionResult, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     let registry_path = expand_user_path(&registry_path);
     let target_path = expand_user_path(&target_path);
     let plan = projection_service::plan_projection(
@@ -132,7 +140,8 @@ pub fn confirm_projection(
     )?;
     let skipped = plan.skips;
     let conflicts = plan.conflicts;
-    let executed_projection_ids = projection_service::execute_projection(&db, registry_path.as_path(), &plan)?;
+    let executed_projection_ids =
+        projection_service::execute_projection(&db, registry_path.as_path(), &plan)?;
     Ok(ProjectionExecutionResult {
         target_kind,
         executed_projection_ids,
@@ -151,7 +160,9 @@ pub fn adopt_asset(
     target_kind: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<AdoptResult, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     let target_path = expand_user_path(&target_path);
     let registry_path = expand_user_path(&registry_path);
     let backup_path = expand_user_path(&backup_path);
@@ -171,7 +182,9 @@ pub fn rollback_projection(
     projection_id: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<(), CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     projection_service::rollback_projection(&db, &projection_id)
 }
 
@@ -180,6 +193,8 @@ pub fn check_projection_health(
     target_kind: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<Vec<HealthFinding>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     projection_service::check_health(&db, &target_kind)
 }

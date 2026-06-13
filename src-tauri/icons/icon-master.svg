@@ -1,62 +1,43 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="512" y1="102" x2="512" y2="922" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1e3a5f"/>
-      <stop offset="100%" stop-color="#0d1a2e"/>
+    <linearGradient id="appBg" x1="162" y1="118" x2="862" y2="906" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbfdff"/>
+      <stop offset="0.52" stop-color="#edf4ff"/>
+      <stop offset="1" stop-color="#d8e6fb"/>
     </linearGradient>
-    <linearGradient id="teal" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#5eead4"/>
-      <stop offset="100%" stop-color="#2dd4bf"/>
+    <linearGradient id="shardRim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7fbff"/>
+      <stop offset="0.42" stop-color="#4b82ff"/>
+      <stop offset="1" stop-color="#173456"/>
     </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <linearGradient id="shardFace" x1="0" y1="0" x2="0.82" y2="1">
+      <stop offset="0" stop-color="#dbeafe"/>
+      <stop offset="0.44" stop-color="#4f8bff"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(650 330) rotate(117) scale(620 560)">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.92"/>
+      <stop offset="0.42" stop-color="#dce9ff" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#aac5f7" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="38" y="44" width="948" height="972" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="26" stdDeviation="34" flood-color="#0f2742" flood-opacity="0.22"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#1d4ed8" flood-opacity="0.10"/>
     </filter>
   </defs>
 
-  <!-- Background rounded square with macOS-standard padding (~10% each side) -->
-  <rect x="102" y="102" width="820" height="820" rx="184" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <rect x="102" y="102" width="820" height="820" rx="184" fill="url(#appBg)"/>
+    <rect x="102" y="102" width="820" height="820" rx="184" fill="url(#glow)"/>
+    <rect x="103.5" y="103.5" width="817" height="817" rx="182.5" stroke="#ffffff" stroke-opacity="0.72" stroke-width="3"/>
+    <rect x="106" y="106" width="812" height="812" rx="180" stroke="#173456" stroke-opacity="0.08" stroke-width="8"/>
+  </g>
 
-  <!-- Subtle inner border -->
-  <rect x="102" y="102" width="820" height="820" rx="184" fill="none" stroke="white" stroke-opacity="0.06" stroke-width="1.5"/>
-
-  <!-- Three vertical fader tracks -->
-  <!-- Track backgrounds -->
-  <rect x="306" y="320" width="28" height="384" rx="14" fill="white" fill-opacity="0.06"/>
-  <rect x="498" y="320" width="28" height="384" rx="14" fill="white" fill-opacity="0.06"/>
-  <rect x="690" y="320" width="28" height="384" rx="14" fill="white" fill-opacity="0.06"/>
-
-  <!-- Active level fills (below knobs) -->
-  <!-- Left track: knob at y=490 → fill from 490 to 704 -->
-  <rect x="306" y="490" width="28" height="214" rx="14" fill="url(#teal)" fill-opacity="0.5"/>
-  <!-- Center track: knob at y=410 → fill from 410 to 704 -->
-  <rect x="498" y="410" width="28" height="294" rx="14" fill="url(#teal)" fill-opacity="0.5"/>
-  <!-- Right track: knob at y=570 → fill from 570 to 704 -->
-  <rect x="690" y="570" width="28" height="134" rx="14" fill="url(#teal)" fill-opacity="0.5"/>
-
-  <!-- Fader knobs with glow -->
-  <!-- Left knob at y=490 -->
-  <circle cx="320" cy="490" r="28" fill="white" filter="url(#glow)" fill-opacity="0.95"/>
-  <circle cx="320" cy="490" r="12" fill="#5eead4"/>
-
-  <!-- Center knob at y=410 -->
-  <circle cx="512" cy="410" r="28" fill="white" filter="url(#glow)" fill-opacity="0.95"/>
-  <circle cx="512" cy="410" r="12" fill="#5eead4"/>
-
-  <!-- Right knob at y=570 -->
-  <circle cx="704" cy="570" r="28" fill="white" filter="url(#glow)" fill-opacity="0.95"/>
-  <circle cx="704" cy="570" r="12" fill="#5eead4"/>
-
-  <!-- Track endpoint dots (top) -->
-  <circle cx="320" cy="334" r="5" fill="white" fill-opacity="0.2"/>
-  <circle cx="512" cy="334" r="5" fill="white" fill-opacity="0.2"/>
-  <circle cx="704" cy="334" r="5" fill="white" fill-opacity="0.2"/>
-
-  <!-- Track endpoint dots (bottom) -->
-  <circle cx="320" cy="690" r="5" fill="white" fill-opacity="0.2"/>
-  <circle cx="512" cy="690" r="5" fill="white" fill-opacity="0.2"/>
-  <circle cx="704" cy="690" r="5" fill="white" fill-opacity="0.2"/>
+  <g transform="translate(178 118) scale(4.28)">
+    <path fill="url(#shardRim)" d="M75 14 119 41 143 85 120 137 65 146 24 116 16 66 38 31Z"/>
+    <path fill="url(#shardFace)" d="M75 14c8 25 0 45-16 61-14 15-22 32-20 58l26 13 55-9c-7-30-22-50-46-62 18-18 25-37 1-61Z" opacity=".96"/>
+    <path fill="#f7fbff" d="M38 31 75 14c13 30-8 51-28 69L16 66Z" opacity=".72"/>
+    <path fill="#173456" d="M39 133c1-32-7-51-23-67l8 50 41 30Z" opacity=".46"/>
+    <path d="M75 15c11 31-3 48-24 68m-12 50c1-31 10-48 35-58 25 10 41 30 47 62" fill="none" stroke="#f8fbff" stroke-opacity=".58" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
 </svg>

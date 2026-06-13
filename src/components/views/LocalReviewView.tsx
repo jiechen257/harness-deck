@@ -48,8 +48,9 @@ export function LocalReviewView({ locale }: { locale: Locale }) {
     <div className="view-content">
       <div className="view-header">
         <div>
-          <h2 className="view-title">{zh ? "本地评审" : "Local Review"}</h2>
-          <p className="view-subtitle">{zh ? "聚焦 registry、Claude/Codex target、projection state 和实践关系。" : "Focused on registry, Claude/Codex targets, projection state, and practice relations."}</p>
+          <span className="view-kicker">LOCAL REVIEW</span>
+          <h1 className="view-title">{zh ? "本地评审不是报告页，是把偏移变成可执行修复。" : "Local review turns drift into executable repair, not a report page."}</h1>
+          <p className="view-subtitle">{zh ? "选择目标后检查投射健康度、真实建议、发现列表、偏移时间线和审计轨迹。" : "Select a target, then inspect projection health, findings, suggestions, drift timeline, and audit trail."}</p>
         </div>
         <label className="field-stack review-target-select">
           <span>{zh ? "检查目标" : "Review target"}</span>

@@ -1,8 +1,8 @@
 use rusqlite::params;
 
-use crate::domain::errors::CommandError;
-use crate::domain::ops_script::{OpsScript, NewOpsScript};
 use super::Database;
+use crate::domain::errors::CommandError;
+use crate::domain::ops_script::{NewOpsScript, OpsScript};
 
 impl Database {
     pub fn insert_ops_script(&self, s: &NewOpsScript) -> Result<OpsScript, CommandError> {
@@ -37,16 +37,20 @@ impl Database {
         let mut stmt = self.conn().prepare(
             "SELECT id, name, path, description, risk_level, status, created_at, updated_at FROM operations_scripts ORDER BY name"
         ).map_err(|e| CommandError::storage(e.to_string()))?;
-        let rows = stmt.query_map([], |row| Ok(OpsScript {
-            id: row.get(0)?,
-            name: row.get(1)?,
-            path: row.get(2)?,
-            description: row.get(3)?,
-            risk_level: row.get(4)?,
-            status: row.get(5)?,
-            created_at: row.get(6)?,
-            updated_at: row.get(7)?,
-        })).map_err(|e| CommandError::storage(e.to_string()))?;
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(OpsScript {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    path: row.get(2)?,
+                    description: row.get(3)?,
+                    risk_level: row.get(4)?,
+                    status: row.get(5)?,
+                    created_at: row.get(6)?,
+                    updated_at: row.get(7)?,
+                })
+            })
+            .map_err(|e| CommandError::storage(e.to_string()))?;
         rows.collect::<Result<Vec<_>, _>>()
             .map_err(|e| CommandError::storage(e.to_string()))
     }

@@ -1,14 +1,16 @@
-use std::sync::Mutex;
 use std::path::PathBuf;
+use std::sync::Mutex;
 
 use tauri::State;
 
 use crate::db::Database;
-use crate::domain::auth_state::AuthorizationEntry;
 use crate::domain::audit::AuditEvent;
-use crate::domain::registry_connection::{RegistryCandidate, RegistryConnection, NewRegistryConnection};
-use crate::domain::signal::SignalCard;
+use crate::domain::auth_state::AuthorizationEntry;
 use crate::domain::errors::CommandError;
+use crate::domain::registry_connection::{
+    NewRegistryConnection, RegistryCandidate, RegistryConnection,
+};
+use crate::domain::signal::SignalCard;
 
 fn expand_user_path(path: &str) -> PathBuf {
     if path == "~" {
@@ -22,11 +24,18 @@ fn expand_user_path(path: &str) -> PathBuf {
     PathBuf::from(path)
 }
 
-fn registry_candidate(path: PathBuf, registry_type: &str, active: bool, read_only: bool, reason: &str) -> RegistryCandidate {
+fn registry_candidate(
+    path: PathBuf,
+    registry_type: &str,
+    active: bool,
+    read_only: bool,
+    reason: &str,
+) -> RegistryCandidate {
     let exists = path.exists();
-    let writable = exists && std::fs::metadata(&path)
-        .map(|metadata| !metadata.permissions().readonly())
-        .unwrap_or(false);
+    let writable = exists
+        && std::fs::metadata(&path)
+            .map(|metadata| !metadata.permissions().readonly())
+            .unwrap_or(false);
     RegistryCandidate {
         path: path.to_string_lossy().to_string(),
         registry_type: registry_type.into(),
@@ -42,7 +51,9 @@ fn registry_candidate(path: PathBuf, registry_type: &str, active: bool, read_onl
 pub fn get_authorization_state(
     db: State<'_, Mutex<Database>>,
 ) -> Result<Vec<AuthorizationEntry>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.get_all_authorizations()
 }
 
@@ -51,7 +62,9 @@ pub fn grant_authorization(
     scope: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<(), CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.grant_authorization(&scope)
 }
 
@@ -60,7 +73,9 @@ pub fn revoke_authorization(
     scope: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<(), CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.revoke_authorization(&scope)
 }
 
@@ -68,7 +83,9 @@ pub fn revoke_authorization(
 pub fn get_active_registry(
     db: State<'_, Mutex<Database>>,
 ) -> Result<Option<RegistryConnection>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.get_active_registry()
 }
 
@@ -78,15 +95,22 @@ pub fn set_registry_connection(
     registry_type: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<RegistryConnection, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
-    db.insert_registry(&NewRegistryConnection { path, registry_type })
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
+    db.insert_registry(&NewRegistryConnection {
+        path,
+        registry_type,
+    })
 }
 
 #[tauri::command]
 pub fn detect_registry_candidates(
     db: State<'_, Mutex<Database>>,
 ) -> Result<Vec<RegistryCandidate>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     let active = db.get_active_registry()?;
     let mut candidates = Vec::new();
 
@@ -127,7 +151,10 @@ pub fn detect_registry_candidates(
         exists: true,
         writable: false,
         read_only: true,
-        active: active.as_ref().map(|r| r.path == "starter://bundled").unwrap_or(false),
+        active: active
+            .as_ref()
+            .map(|r| r.path == "starter://bundled")
+            .unwrap_or(false),
         reason: "bundled starter registry read-only fallback".into(),
     });
 
@@ -139,14 +166,19 @@ pub fn initialize_registry(
     path: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<RegistryConnection, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     let registry_path = expand_user_path(&path);
     for child in ["system-skills", "rules", "hooks", "mcp", "profiles"] {
         std::fs::create_dir_all(registry_path.join(child))?;
     }
     let readme = registry_path.join("README.md");
     if !readme.exists() {
-        std::fs::write(&readme, "# Hone Registry\n\nLocal harness assets managed by Hone.\n")?;
+        std::fs::write(
+            &readme,
+            "# Hone Registry\n\nLocal harness assets managed by Hone.\n",
+        )?;
     }
     db.insert_registry(&NewRegistryConnection {
         path: registry_path.to_string_lossy().to_string(),
@@ -158,7 +190,9 @@ pub fn initialize_registry(
 pub fn use_starter_registry_readonly(
     db: State<'_, Mutex<Database>>,
 ) -> Result<RegistryConnection, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.insert_registry(&NewRegistryConnection {
         path: "starter://bundled".into(),
         registry_type: "starter".into(),
@@ -166,10 +200,10 @@ pub fn use_starter_registry_readonly(
 }
 
 #[tauri::command]
-pub fn list_signals(
-    db: State<'_, Mutex<Database>>,
-) -> Result<Vec<SignalCard>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+pub fn list_signals(db: State<'_, Mutex<Database>>) -> Result<Vec<SignalCard>, CommandError> {
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.list_signals()
 }
 
@@ -178,6 +212,8 @@ pub fn list_audit_events(
     limit: Option<u32>,
     db: State<'_, Mutex<Database>>,
 ) -> Result<Vec<AuditEvent>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.list_recent_audits(limit.unwrap_or(50))
 }

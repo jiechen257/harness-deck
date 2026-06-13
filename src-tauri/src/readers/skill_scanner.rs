@@ -192,7 +192,11 @@ mod tests {
         let _ = fs::remove_dir_all(&tmp);
         fs::create_dir_all(&tmp).unwrap();
 
-        fs::write(tmp.join("skill.md"), "# lowercase title\n\nsome description").unwrap();
+        fs::write(
+            tmp.join("skill.md"),
+            "# lowercase title\n\nsome description",
+        )
+        .unwrap();
 
         let found = find_skill_md(&tmp);
         assert!(found.is_some());

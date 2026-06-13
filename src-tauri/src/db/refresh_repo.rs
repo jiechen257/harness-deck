@@ -1,8 +1,8 @@
 use rusqlite::params;
 
-use crate::domain::errors::CommandError;
-use crate::domain::refresh::{RefreshRecord, NewRefreshRecord};
 use super::Database;
+use crate::domain::errors::CommandError;
+use crate::domain::refresh::{NewRefreshRecord, RefreshRecord};
 
 impl Database {
     pub fn insert_refresh(&self, r: &NewRefreshRecord) -> Result<RefreshRecord, CommandError> {
@@ -37,17 +37,21 @@ impl Database {
         let mut stmt = self.conn().prepare(
             "SELECT id, source_name, source_url, triggered_by, result_count, error_message, outcome, started_at, finished_at FROM refresh_records ORDER BY started_at DESC LIMIT ?1"
         ).map_err(|e| CommandError::storage(e.to_string()))?;
-        let rows = stmt.query_map(params![limit], |row| Ok(RefreshRecord {
-            id: row.get(0)?,
-            source_name: row.get(1)?,
-            source_url: row.get(2)?,
-            triggered_by: row.get(3)?,
-            result_count: row.get(4)?,
-            error_message: row.get(5)?,
-            outcome: row.get(6)?,
-            started_at: row.get(7)?,
-            finished_at: row.get(8)?,
-        })).map_err(|e| CommandError::storage(e.to_string()))?;
+        let rows = stmt
+            .query_map(params![limit], |row| {
+                Ok(RefreshRecord {
+                    id: row.get(0)?,
+                    source_name: row.get(1)?,
+                    source_url: row.get(2)?,
+                    triggered_by: row.get(3)?,
+                    result_count: row.get(4)?,
+                    error_message: row.get(5)?,
+                    outcome: row.get(6)?,
+                    started_at: row.get(7)?,
+                    finished_at: row.get(8)?,
+                })
+            })
+            .map_err(|e| CommandError::storage(e.to_string()))?;
         rows.collect::<Result<Vec<_>, _>>()
             .map_err(|e| CommandError::storage(e.to_string()))
     }

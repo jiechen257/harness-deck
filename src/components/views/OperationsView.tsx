@@ -17,8 +17,9 @@ export function OperationsView({ locale }: { locale: Locale }) {
     <div className="view-content">
       <div className="view-header">
         <div>
-          <h2 className="view-title">{zh ? "运维" : "Operations"}</h2>
-          <p className="view-subtitle">{zh ? "本机 agent 操作环境的集中控制，和实践卡片分离。" : "Controlled local agent operations, separate from Practice Cards."}</p>
+          <span className="view-kicker">OPERATIONS</span>
+          <h1 className="view-title">{zh ? "本机脚本默认只读展示，运行必须先预览再确认。" : "Local scripts are read-only by default; every run starts with preview and confirmation."}</h1>
+          <p className="view-subtitle">{zh ? "集中管理 Codex proxy、Sleep guard 和 Wake display；高风险操作会先展示计划、检查授权并写入审计。" : "Manage Codex proxy, Sleep guard, and Wake display; risky actions preview the plan, check authorization, and write audit."}</p>
         </div>
         <span className="badge badge-good">{zh ? "默认只读" : "Read-only by default"}</span>
       </div>

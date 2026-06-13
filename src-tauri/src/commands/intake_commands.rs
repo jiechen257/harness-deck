@@ -12,7 +12,9 @@ pub fn refresh_signals(
     source_id: Option<String>,
     db: State<'_, Mutex<Database>>,
 ) -> Result<Vec<String>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     match source_id {
         Some(id) => intake_service::refresh_source(&db, &id),
         None => intake_service::refresh_all_enabled(&db),
@@ -23,7 +25,9 @@ pub fn refresh_signals(
 pub fn list_signal_sources(
     db: State<'_, Mutex<Database>>,
 ) -> Result<Vec<SourceConfig>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.list_source_configs()
 }
 
@@ -33,7 +37,9 @@ pub fn toggle_signal_source(
     enabled: bool,
     db: State<'_, Mutex<Database>>,
 ) -> Result<(), CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.set_source_enabled(&source_id, enabled)
 }
 
@@ -43,6 +49,8 @@ pub fn toggle_auto_refresh(
     auto_refresh: bool,
     db: State<'_, Mutex<Database>>,
 ) -> Result<(), CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.set_source_auto_refresh(&source_id, auto_refresh)
 }

@@ -364,19 +364,23 @@ export function App() {
                 </div>
               ))}
             </section>
-            <section className="drawer-card">
-              <div className="drawer-title"><strong>{zh ? "最近审计" : "Recent Audit"}</strong><button className="ghost-button" type="button" onClick={() => setActiveView("review")}>{zh ? "查看全部" : "View all"}</button></div>
-              {(loopSummary?.recentAudits ?? []).slice(0, 3).map((audit) => (
-                <div className="audit-row" key={audit.id}>
-                  <span className={`badge ${audit.outcome === "success" ? "good" : "warn"}`}>{audit.outcome === "success" ? "OK" : "!"}</span>
-                  <div><strong>{audit.eventType}</strong><span className="caption">{audit.detail ?? audit.entityType ?? ""}</span></div>
-                </div>
-              ))}
-            </section>
-            <section className="drawer-card">
-              <div className="drawer-title"><strong>{zh ? "安全边界" : "Safety Boundary"}</strong><span className="badge">5</span></div>
-              <p>{zh ? "外部信号、写入投射和脚本执行默认关闭；投射和运维动作必须先预览、再确认、再写审计。" : "External signals, projection writes, and script execution stay off by default; projection and ops actions preview, confirm, then audit."}</p>
-            </section>
+            {activeView !== "review" && activeView !== "settings" ? (
+              <section className="drawer-card">
+                <div className="drawer-title"><strong>{zh ? "最近审计" : "Recent Audit"}</strong><button className="ghost-button" type="button" onClick={() => setActiveView("review")}>{zh ? "查看全部" : "View all"}</button></div>
+                {(loopSummary?.recentAudits ?? []).slice(0, 3).map((audit) => (
+                  <div className="audit-row" key={audit.id}>
+                    <span className={`badge ${audit.outcome === "success" ? "good" : "warn"}`}>{audit.outcome === "success" ? "OK" : "!"}</span>
+                    <div><strong>{audit.eventType}</strong><span className="caption">{audit.detail ?? audit.entityType ?? ""}</span></div>
+                  </div>
+                ))}
+              </section>
+            ) : null}
+            {activeView !== "home" && activeView !== "settings" ? (
+              <section className="drawer-card">
+                <div className="drawer-title"><strong>{zh ? "安全边界" : "Safety Boundary"}</strong><span className="badge">5</span></div>
+                <p>{zh ? "外部信号、写入投射和脚本执行默认关闭；投射和运维动作必须先预览、再确认、再写审计。" : "External signals, projection writes, and script execution stay off by default; projection and ops actions preview, confirm, then audit."}</p>
+              </section>
+            ) : null}
           </div>
         </aside>
       </main>

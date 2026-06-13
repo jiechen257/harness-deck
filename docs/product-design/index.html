@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hone 实践运营台 · 视图入口</title>
+  <style>
+    /* design-systems/bento/tokens.css
+     * Structured token bindings for Bento.
+     * modular bento interface with friendly tiles, soft borders, and balanced product density.
+     */
+
+    :root {
+      --bg: #f5f8ff;
+      --surface: #ffffff;
+      --surface-warm: #eaf1ff;
+      --fg: #101828;
+      --fg-2: #344054;
+      --muted: #667085;
+      --meta: #2563eb;
+      --border: #d7e0ef;
+      --border-soft: #edf2f8;
+      --accent: #2563eb;
+      --accent-on: #ffffff;
+      --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+      --accent-active: color-mix(in oklab, var(--accent), black 14%);
+      --success: #16a34a;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --font-display: Inter, system-ui, sans-serif;
+      --font-body: Inter, system-ui, sans-serif;
+      --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+      --text-xs: 12px;
+      --text-sm: 14px;
+      --text-base: 16px;
+      --text-lg: 18px;
+      --text-xl: 24px;
+      --text-2xl: 36px;
+      --text-3xl: 54px;
+      --text-4xl: 76px;
+      --leading-body: 1.52;
+      --leading-tight: 1.06;
+      --tracking-display: -0.025em;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-12: 48px;
+      --section-y-desktop: 96px;
+      --section-y-tablet: 68px;
+      --section-y-phone: 48px;
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-pill: 9999px;
+      --elev-flat: none;
+      --elev-ring: 0 0 0 1px var(--border);
+      --elev-raised: 0 20px 52px rgba(16, 24, 40, 0.11);
+      --focus-ring: 0 0 0 4px rgba(37, 99, 235, 0.22);
+      --motion-fast: 150ms;
+      --motion-base: 240ms;
+      --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+      --container-max: 1180px;
+      --container-gutter-desktop: 36px;
+      --container-gutter-tablet: 24px;
+      --container-gutter-phone: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--bg); color: var(--fg); }
+    body {
+      min-height: 100%;
+      margin: 0;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: var(--leading-body);
+      background: var(--bg);
+      color: var(--fg);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: inherit; text-decoration: none; }
+    a:hover { color: var(--accent); }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3 { font-family: var(--font-display); line-height: var(--leading-tight); letter-spacing: var(--tracking-display); }
+    p { color: var(--muted); text-wrap: pretty; }
+    .page {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: var(--space-8) var(--container-gutter-desktop) var(--space-12);
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-6);
+      align-items: center;
+      padding: var(--space-5) 0 var(--space-8);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: inline-flex;
+      gap: var(--space-3);
+      align-items: center;
+      font-weight: 780;
+    }
+    .mark {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+      background: color-mix(in oklab, var(--surface), var(--surface-warm) 42%);
+      box-shadow: inset 0 0 0 1px var(--border), 0 10px 24px color-mix(in oklab, var(--accent), transparent 84%);
+    }
+    .hone-mark { width: 32px; height: 32px; }
+    .hone-mark .rim { filter: drop-shadow(0 8px 14px color-mix(in oklab, var(--accent), transparent 74%)); }
+    .hone-mark .cut {
+      stroke: color-mix(in oklab, var(--accent-on), var(--accent) 16%);
+      stroke-width: 3.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.72;
+    }
+    .hero {
+      padding: var(--space-12) 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+      gap: var(--space-8);
+      align-items: end;
+    }
+    .eyebrow {
+      display: inline-flex;
+      margin-bottom: var(--space-4);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--meta);
+      font-weight: 760;
+    }
+    h1 { max-width: 13ch; font-size: var(--text-3xl); }
+    .lead { max-width: 62ch; margin-top: var(--space-4); font-size: var(--text-lg); }
+    .summary-card, .screen-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--elev-ring);
+    }
+    .summary-card { padding: var(--space-5); }
+    .identity-lockup {
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr);
+      gap: var(--space-4);
+      align-items: center;
+      margin-bottom: var(--space-5);
+      padding: var(--space-4);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, color-mix(in oklab, var(--surface-warm), var(--surface) 38%), var(--surface));
+    }
+    .identity-lockup .mark { width: 64px; height: 64px; border-radius: var(--radius-md); }
+    .identity-lockup .hone-mark { width: 50px; height: 50px; }
+    .identity-lockup strong { display: block; font-size: var(--text-lg); }
+    .identity-lockup span { color: var(--muted); font-size: var(--text-xs); }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-3);
+      margin-top: var(--space-5);
+    }
+    .metric {
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      background: var(--surface-warm);
+    }
+    .metric strong {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: var(--text-lg);
+      font-variant-numeric: tabular-nums;
+    }
+    .metric span { color: var(--muted); font-size: var(--text-xs); }
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-5);
+    }
+    .screen-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 300px;
+      padding: var(--space-5);
+      transition: border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+    }
+    .screen-card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--elev-raised);
+      transform: translateY(-1px);
+    }
+    .screen-card h2 { font-size: var(--text-xl); }
+    .screen-card p { margin-top: var(--space-3); }
+    .screen-visual {
+      flex: 1;
+      margin-top: var(--space-5);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background:
+        linear-gradient(90deg, var(--surface-warm) 0 22%, transparent 22%),
+        linear-gradient(180deg, color-mix(in oklab, var(--accent), transparent 88%) 0 18%, transparent 18%),
+        var(--surface);
+    }
+    .status-visual {
+      width: 70%;
+      max-width: 300px;
+      border-radius: var(--radius-lg);
+      background:
+        radial-gradient(circle at 22% 20%, color-mix(in oklab, var(--accent), transparent 70%), transparent 24%),
+        linear-gradient(180deg, var(--surface), var(--surface-warm));
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      margin-top: var(--space-5);
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg);
+      font-size: var(--text-sm);
+      font-weight: 700;
+    }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-on); }
+    .btn:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+    .note {
+      margin-top: var(--space-8);
+      padding-top: var(--space-5);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-5);
+      color: var(--muted);
+      font-size: var(--text-sm);
+    }
+    @media (max-width: 820px) {
+      .page { padding-inline: var(--container-gutter-tablet); }
+      .top, .hero, .screens, .note { grid-template-columns: 1fr; flex-direction: column; align-items: flex-start; }
+      .summary-grid { grid-template-columns: 1fr; }
+      h1 { font-size: var(--text-2xl); }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <a class="brand" href="screens/workbench-home.html" aria-label="打开 Hone 工作台首页">
+        <span class="mark" aria-hidden="true">
+          <svg class="hone-mark" viewBox="0 0 160 160" aria-hidden="true">
+            <defs>
+              <linearGradient id="indexShardA" x1="28" y1="18" x2="126" y2="144" gradientUnits="userSpaceOnUse">
+                <stop offset="0" style="stop-color: color-mix(in oklab, var(--accent-on), var(--accent) 16%)" />
+                <stop offset="0.55" style="stop-color: var(--accent)" />
+                <stop offset="1" style="stop-color: color-mix(in oklab, var(--fg), var(--accent) 54%)" />
+              </linearGradient>
+              <linearGradient id="indexShardB" x1="42" y1="30" x2="94" y2="138" gradientUnits="userSpaceOnUse">
+                <stop offset="0" style="stop-color: color-mix(in oklab, var(--accent-on), var(--accent) 26%)" />
+                <stop offset="1" style="stop-color: color-mix(in oklab, var(--accent), var(--fg) 30%)" />
+              </linearGradient>
+            </defs>
+            <path class="rim" fill="url(#indexShardA)" d="M75 14 119 41 143 85 120 137 65 146 24 116 16 66 38 31Z" />
+            <path fill="url(#indexShardB)" d="M75 14c8 25 0 45-16 61-14 15-22 32-20 58l26 13 55-9c-7-30-22-50-46-62 18-18 25-37 1-61Z" opacity=".92" />
+            <path fill="color-mix(in oklab, var(--accent-on), transparent 20%)" d="M38 31 75 14c13 30-8 51-28 69L16 66Z" opacity=".7" />
+            <path fill="color-mix(in oklab, var(--fg), var(--accent) 55%)" d="M39 133c1-32-7-51-23-67l8 50 41 30Z" opacity=".42" />
+            <path class="cut" d="M75 15c11 31-3 48-24 68m-12 50c1-31 10-48 35-58 25 10 41 30 47 62" fill="none" />
+          </svg>
+        </span>
+        <span>Hone</span>
+      </a>
+      <p>Practice Shard · 本地实践运营台</p>
+    </header>
+
+    <section class="hero" data-od-id="prototype-overview">
+      <div>
+        <span class="eyebrow">本地优先 · Registry · Projection</span>
+        <h1>把实践卡片运营成可落地的本地资产。</h1>
+        <p class="lead">入口保留两张真实产品屏幕：完整工作台覆盖当前产品功能，statusBar 覆盖菜单栏高频动作；视觉结构改为新的实践运营指挥台。</p>
+      </div>
+      <aside class="summary-card" aria-label="当前产品范围">
+        <div class="identity-lockup">
+          <span class="mark" aria-hidden="true">
+            <svg class="hone-mark" viewBox="0 0 160 160">
+              <defs>
+                <linearGradient id="indexShardC" x1="28" y1="18" x2="126" y2="144" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" style="stop-color: color-mix(in oklab, var(--accent-on), var(--accent) 16%)" />
+                  <stop offset="0.55" style="stop-color: var(--accent)" />
+                  <stop offset="1" style="stop-color: color-mix(in oklab, var(--fg), var(--accent) 54%)" />
+                </linearGradient>
+                <linearGradient id="indexShardD" x1="42" y1="30" x2="94" y2="138" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" style="stop-color: color-mix(in oklab, var(--accent-on), var(--accent) 26%)" />
+                  <stop offset="1" style="stop-color: color-mix(in oklab, var(--accent), var(--fg) 30%)" />
+                </linearGradient>
+              </defs>
+              <path class="rim" fill="url(#indexShardC)" d="M75 14 119 41 143 85 120 137 65 146 24 116 16 66 38 31Z" />
+              <path fill="url(#indexShardD)" d="M75 14c8 25 0 45-16 61-14 15-22 32-20 58l26 13 55-9c-7-30-22-50-46-62 18-18 25-37 1-61Z" opacity=".92" />
+              <path fill="color-mix(in oklab, var(--accent-on), transparent 20%)" d="M38 31 75 14c13 30-8 51-28 69L16 66Z" opacity=".7" />
+              <path fill="color-mix(in oklab, var(--fg), var(--accent) 55%)" d="M39 133c1-32-7-51-23-67l8 50 41 30Z" opacity=".42" />
+              <path class="cut" d="M75 15c11 31-3 48-24 68m-12 50c1-31 10-48 35-58 25 10 41 30 47 62" fill="none" />
+            </svg>
+          </span>
+          <div><strong>Practice Shard</strong><span>实践被打磨成本地资产的品牌主标</span></div>
+        </div>
+        <h2>产品范围</h2>
+        <div class="summary-grid">
+          <div class="metric"><strong>06</strong><span>主导航视图</span></div>
+          <div class="metric"><strong>05</strong><span>闭环对象</span></div>
+          <div class="metric"><strong>02</strong><span>窗口形态</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="screens" data-od-id="screen-launcher" aria-label="应用屏幕">
+      <a class="screen-card" href="screens/workbench-home.html">
+        <h2>工作台首页</h2>
+        <p>闭环地图、行动队列、实践库、应用与同步、本地评审、运维和设置授权，覆盖真实产品功能但采用新的指挥台结构。</p>
+        <div class="screen-visual" aria-hidden="true"></div>
+        <span class="btn btn-primary">打开工作台</span>
+      </a>
+      <a class="screen-card" href="screens/statusbar-panel.html">
+        <h2>statusBar 弹层</h2>
+        <p>每日一瞥、优先风险、闭环健康度、实践健康度、本机运维、快捷入口和打开完整工作台。</p>
+        <div class="screen-visual status-visual" aria-hidden="true"></div>
+        <span class="btn">打开菜单栏弹层</span>
+      </a>
+    </section>
+
+    <footer class="note" data-od-id="prototype-notes">
+      <span>主题已绑定 Bento token。</span>
+      <span>内容按当前本地产品功能、菜单栏面板和实践运营流程重新对齐。</span>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,34 @@
+[
+  {
+    "step": "open home",
+    "status": "passed"
+  },
+  {
+    "step": "global nav theme language shortcuts",
+    "status": "passed"
+  },
+  {
+    "step": "practice library signal to asset flow",
+    "status": "passed"
+  },
+  {
+    "step": "apply sync preview only with test target path",
+    "status": "passed"
+  },
+  {
+    "step": "local review codex only",
+    "status": "passed"
+  },
+  {
+    "step": "operations preview and blocked run",
+    "status": "passed"
+  },
+  {
+    "step": "settings tabs",
+    "status": "passed"
+  },
+  {
+    "step": "standalone menubar panel browser route",
+    "status": "passed"
+  }
+]

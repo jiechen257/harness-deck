@@ -209,8 +209,9 @@ export function PracticeLibraryView({ locale, onSelectView }: PracticeLibraryVie
     <div className="view-content">
       <div className="view-header">
         <div>
-          <h2 className="view-title">{zh ? "实践库" : "Practice Library"}</h2>
-          <p className="view-subtitle">{zh ? "信号只是输入，最终要沉淀为实践卡片和本地资产。" : "Signals are inputs; the endpoint is an applied practice and local asset."}</p>
+          <span className="view-kicker">PRACTICE LIBRARY</span>
+          <h1 className="view-title">{zh ? "信号不是内容库，信号是可落地实践的入口。" : "Signals are not a content library; they are the entry point to local practice."}</h1>
+          <p className="view-subtitle">{zh ? "从可信来源收集信号，生成实践草稿，保存为 Practice Card，再沉淀成本地可投射资产。" : "Collect trusted signals, generate practice drafts, save Practice Cards, then settle them as projectable local assets."}</p>
         </div>
         <button className="action-button primary" disabled={refreshing} onClick={() => handleRefresh()}>
           <RefreshCw size={14} aria-hidden="true" className={refreshing ? "spin" : ""} />

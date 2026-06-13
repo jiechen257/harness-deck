@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hone Practice Shard · 每日一瞥</title>
+  <style>
+    /* design-systems/bento/tokens.css
+     * Structured token bindings for Bento.
+     * modular bento interface with friendly tiles, soft borders, and balanced product density.
+     */
+
+    :root {
+      --bg: #f5f8ff;
+      --surface: #ffffff;
+      --surface-warm: #eaf1ff;
+      --fg: #101828;
+      --fg-2: #344054;
+      --muted: #667085;
+      --meta: #2563eb;
+      --border: #d7e0ef;
+      --border-soft: #edf2f8;
+      --accent: #2563eb;
+      --accent-on: #ffffff;
+      --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+      --accent-active: color-mix(in oklab, var(--accent), black 14%);
+      --success: #16a34a;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --font-display: Inter, system-ui, sans-serif;
+      --font-body: Inter, system-ui, sans-serif;
+      --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+      --text-xs: 12px;
+      --text-sm: 14px;
+      --text-base: 16px;
+      --text-lg: 18px;
+      --text-xl: 24px;
+      --text-2xl: 36px;
+      --text-3xl: 54px;
+      --text-4xl: 76px;
+      --leading-body: 1.52;
+      --leading-tight: 1.06;
+      --tracking-display: -0.025em;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-12: 48px;
+      --section-y-desktop: 96px;
+      --section-y-tablet: 68px;
+      --section-y-phone: 48px;
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-pill: 9999px;
+      --elev-flat: none;
+      --elev-ring: 0 0 0 1px var(--border);
+      --elev-raised: 0 20px 52px rgba(16, 24, 40, 0.11);
+      --focus-ring: 0 0 0 4px rgba(37, 99, 235, 0.22);
+      --motion-fast: 150ms;
+      --motion-base: 240ms;
+      --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+      --container-max: 1180px;
+      --container-gutter-desktop: 36px;
+      --container-gutter-tablet: 24px;
+      --container-gutter-phone: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: var(--space-6);
+      background:
+        radial-gradient(circle at 50% 0, color-mix(in oklab, var(--accent), transparent 86%), transparent 34%),
+        var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      line-height: var(--leading-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font: inherit; cursor: pointer; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3 { font-family: var(--font-display); line-height: var(--leading-tight); letter-spacing: var(--tracking-display); }
+    p { color: var(--muted); text-wrap: pretty; }
+    .stage {
+      width: min(100%, 374px);
+      display: grid;
+      gap: var(--space-3);
+    }
+    .menubar {
+      height: 28px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: var(--space-2);
+      color: var(--muted);
+      font-size: var(--text-xs);
+    }
+    .dot {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      border-radius: var(--radius-pill);
+      background: var(--accent);
+      box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-on), transparent 28%), 0 0 0 3px color-mix(in oklab, var(--accent), transparent 82%);
+    }
+    .panel {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--elev-raised);
+    }
+    .capsule-head {
+      padding: var(--space-4);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--space-3);
+      align-items: start;
+      border-bottom: 1px solid var(--border);
+      background:
+        radial-gradient(circle at 90% 10%, color-mix(in oklab, var(--accent), transparent 80%), transparent 32%),
+        color-mix(in oklab, var(--surface), var(--surface-warm) 42%);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .logo {
+      width: 42px;
+      height: 42px;
+      padding: 5px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--surface), var(--surface-warm) 44%);
+      color: var(--accent);
+      box-shadow: inset 0 0 0 1px var(--border-soft), 0 12px 24px color-mix(in oklab, var(--accent), transparent 82%);
+    }
+    .hone-mark { width: 100%; height: 100%; }
+    .hone-mark .rim { filter: drop-shadow(0 8px 12px color-mix(in oklab, var(--accent), transparent 76%)); }
+    .hone-mark .cut {
+      stroke: color-mix(in oklab, var(--accent-on), var(--accent) 16%);
+      stroke-width: 3.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.74;
+    }
+    .brand strong { display: block; font-size: var(--text-lg); }
+    .caption { color: var(--muted); font-size: var(--text-xs); line-height: 1.45; }
+    .badge, .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-1);
+      min-height: 24px;
+      padding: 0 var(--space-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      background: var(--surface-warm);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      white-space: nowrap;
+    }
+    .good { color: var(--success); border-color: color-mix(in oklab, var(--success), transparent 58%); background: color-mix(in oklab, var(--success), transparent 91%); }
+    .warn { color: var(--warn); border-color: color-mix(in oklab, var(--warn), transparent 52%); background: color-mix(in oklab, var(--warn), transparent 90%); }
+    .risk { color: var(--danger); border-color: color-mix(in oklab, var(--danger), transparent 58%); background: color-mix(in oklab, var(--danger), transparent 92%); }
+    .content {
+      max-height: 642px;
+      overflow: auto;
+      padding: var(--space-3);
+      display: grid;
+      gap: var(--space-3);
+    }
+    .status-strip {
+      display: grid;
+      grid-template-columns: 94px minmax(0, 1fr);
+      gap: var(--space-3);
+      align-items: center;
+      padding: var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background:
+        linear-gradient(135deg, transparent 0 44%, color-mix(in oklab, var(--accent), transparent 88%) 44% 54%, transparent 54%),
+        color-mix(in oklab, var(--surface), var(--surface-warm) 38%);
+    }
+    .ring {
+      width: 82px;
+      height: 82px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-pill);
+      background: conic-gradient(var(--accent) 0 82%, var(--border-soft) 82% 100%);
+    }
+    .ring span {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-weight: 820;
+    }
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-2);
+      margin-top: var(--space-2);
+    }
+    .mini {
+      padding: var(--space-2);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-2);
+      color: var(--muted);
+      font-size: var(--text-xs);
+    }
+    .mini b { color: var(--fg); font-family: var(--font-mono); }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      padding: var(--space-3);
+      display: grid;
+      gap: var(--space-3);
+      box-shadow: var(--elev-ring);
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-3);
+      align-items: flex-start;
+    }
+    .row, .action {
+      min-height: 44px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: var(--space-2);
+      align-items: center;
+      padding: var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: color-mix(in oklab, var(--surface), var(--surface-warm) 28%);
+    }
+    .row strong, .action strong { display: block; color: var(--fg); }
+    .action {
+      width: 100%;
+      color: var(--fg);
+      text-align: left;
+      transition: background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+    }
+    .action.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--accent-on);
+    }
+    .action.primary .caption { color: color-mix(in oklab, var(--accent-on), transparent 24%); }
+    .action:hover { border-color: var(--accent); }
+    .action:active { transform: translateY(1px); }
+    .action:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-2);
+      padding: var(--space-3);
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: var(--text-xs);
+      background: color-mix(in oklab, var(--surface), var(--surface-warm) 30%);
+    }
+    .toast {
+      position: fixed;
+      bottom: var(--space-5);
+      left: 50%;
+      transform: translate(-50%, 14px);
+      opacity: 0;
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      box-shadow: var(--elev-raised);
+      color: var(--fg);
+      transition: opacity var(--motion-base) var(--ease-standard), transform var(--motion-base) var(--ease-standard);
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  </style>
+</head>
+<body>
+  <main class="stage" data-od-id="statusbar-stage">
+    <div class="menubar"><span class="dot"></span><span>Hone · Practice Shard</span></div>
+    <section class="panel" data-od-id="statusbar-panel">
+      <header class="capsule-head">
+        <div class="brand"><span class="logo" aria-hidden="true">
+          <svg class="hone-mark" viewBox="0 0 160 160">
+            <defs>
+              <linearGradient id="statusShardA" x1="28" y1="18" x2="126" y2="144" gradientUnits="userSpaceOnUse">
+                <stop offset="0" style="stop-color: color-mix(in oklab, var(--accent-on), var(--accent) 16%)" />
+                <stop offset="0.55" style="stop-color: var(--accent)" />
+                <stop offset="1" style="stop-color: color-mix(in oklab, var(--fg), var(--accent) 54%)" />
+              </linearGradient>
+              <linearGradient id="statusShardB" x1="42" y1="30" x2="94" y2="138" gradientUnits="userSpaceOnUse">
+                <stop offset="0" style="stop-color: color-mix(in oklab, var(--accent-on), var(--accent) 26%)" />
+                <stop offset="1" style="stop-color: color-mix(in oklab, var(--accent), var(--fg) 30%)" />
+              </linearGradient>
+            </defs>
+            <path class="rim" fill="url(#statusShardA)" d="M75 14 119 41 143 85 120 137 65 146 24 116 16 66 38 31Z" />
+            <path fill="url(#statusShardB)" d="M75 14c8 25 0 45-16 61-14 15-22 32-20 58l26 13 55-9c-7-30-22-50-46-62 18-18 25-37 1-61Z" opacity=".92" />
+            <path fill="color-mix(in oklab, var(--accent-on), transparent 20%)" d="M38 31 75 14c13 30-8 51-28 69L16 66Z" opacity=".7" />
+            <path fill="color-mix(in oklab, var(--fg), var(--accent) 55%)" d="M39 133c1-32-7-51-23-67l8 50 41 30Z" opacity=".42" />
+            <path class="cut" d="M75 15c11 31-3 48-24 68m-12 50c1-31 10-48 35-58 25 10 41 30 47 62" fill="none" />
+          </svg>
+        </span><div><strong>Hone</strong><span class="caption">Practice Shard · 本地优先 · 6月11日 14:46</span></div></div>
+        <span class="badge good">82%</span>
+      </header>
+      <div class="content">
+        <section class="status-strip" data-od-id="panel-loop-health">
+          <div class="ring"><span>82%</span></div>
+          <div>
+            <h2>闭环健康度</h2>
+            <p>把今天的信号、实践、资产和评审状态压缩成一眼可读的菜单栏摘要。</p>
+            <div class="mini-grid">
+              <span class="mini">信号 <b>3</b></span>
+              <span class="mini">实践 <b>2</b></span>
+              <span class="mini">资产 <b>1</b></span>
+              <span class="mini">评审 <b>1</b></span>
+            </div>
+          </div>
+        </section>
+        <section class="card" data-od-id="panel-practice-health">
+          <div class="card-head"><div><strong>实践健康度</strong><div class="caption">待处理对象按下一步排序</div></div><span class="pill warn">3</span></div>
+          <div class="row"><div><strong>可采纳</strong><span class="caption">待转本地资产</span></div><span class="pill good">2</span></div>
+          <div class="row"><div><strong>资产待就绪</strong><span class="caption">等待确认</span></div><span class="pill warn">1</span></div>
+          <div class="row"><div><strong>缺失投射</strong><span class="caption">需要评审</span></div><span class="pill risk">1</span></div>
+        </section>
+        <section class="card" data-od-id="panel-local-ops">
+          <div class="card-head"><div><strong>本机运维</strong><div class="caption">只读状态，运行进入工作台确认</div></div><span class="pill">3</span></div>
+          <div class="row"><div><strong>Codex proxy</strong><span class="caption">launchctl 环境</span></div><span class="pill good">运行中</span></div>
+          <div class="row"><div><strong>Sleep guard</strong><span class="caption">caffeinate 状态</span></div><span class="pill warn">活跃</span></div>
+          <div class="row"><div><strong>Wake display</strong><span class="caption">pmset 快捷动作</span></div><span class="pill">空闲</span></div>
+        </section>
+        <section class="card" data-od-id="panel-quick-actions">
+          <div class="card-head"><div><strong>快捷入口</strong><div class="caption">低风险动作在菜单栏，写入动作进入工作台确认</div></div></div>
+          <button class="action" type="button" data-message="已请求刷新信号：低风险读取"><div><strong>刷新信号</strong><span class="caption">低风险读取</span></div><span>↻</span></button>
+          <button class="action" type="button" data-message="打开实践库：生成 Practice Card 预览"><div><strong>规范化信号</strong><span class="caption">主窗口确认</span></div><span>→</span></button>
+          <button class="action" type="button" data-message="打开本地评审：查看证据链"><div><strong>本地评审</strong><span class="caption">查看证据</span></div><span>→</span></button>
+          <button class="action" type="button" data-message="打开应用与同步：先预览计划"><div><strong>应用与同步</strong><span class="caption">先预览计划</span></div><span>→</span></button>
+          <button class="action primary" type="button" data-message="打开完整工作台"><div><strong>打开工作台</strong><span class="caption">进入完整运营台</span></div><span>↗</span></button>
+        </section>
+      </div>
+      <footer class="footer"><span class="pill">配置集：默认</span><span class="pill good">同步：正常</span></footer>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite">已记录</div>
+  <script>
+    const toast = document.getElementById("toast");
+    document.addEventListener("click", (event) => {
+      const action = event.target.closest("[data-message]");
+      if (!action) return;
+      toast.textContent = action.dataset.message;
+      toast.classList.add("show");
+      window.clearTimeout(toast.timer);
+      toast.timer = window.setTimeout(() => toast.classList.remove("show"), 1500);
+    });
+  </script>
+</body>
+</html>

@@ -11,26 +11,26 @@ use crate::domain::practice::{NormalizeResult, PracticeCard, PracticeDraft};
 use crate::services::loop_service;
 
 #[tauri::command]
-pub fn list_practices(
-    db: State<'_, Mutex<Database>>,
-) -> Result<Vec<PracticeCard>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+pub fn list_practices(db: State<'_, Mutex<Database>>) -> Result<Vec<PracticeCard>, CommandError> {
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.list_practices()
 }
 
 #[tauri::command]
-pub fn list_local_assets(
-    db: State<'_, Mutex<Database>>,
-) -> Result<Vec<LocalAsset>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+pub fn list_local_assets(db: State<'_, Mutex<Database>>) -> Result<Vec<LocalAsset>, CommandError> {
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.list_assets()
 }
 
 #[tauri::command]
-pub fn get_loop_summary(
-    db: State<'_, Mutex<Database>>,
-) -> Result<LoopSummary, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+pub fn get_loop_summary(db: State<'_, Mutex<Database>>) -> Result<LoopSummary, CommandError> {
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     loop_service::get_loop_summary(&db)
 }
 
@@ -40,7 +40,9 @@ pub fn normalize_signal(
     agent_kind: Option<String>,
     db: State<'_, Mutex<Database>>,
 ) -> Result<NormalizeResult, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     let kind = match agent_kind.as_deref() {
         Some("Codex") => AgentKind::Codex,
         _ => AgentKind::Claude,
@@ -54,7 +56,9 @@ pub fn create_practice_from_signal(
     draft: PracticeDraft,
     db: State<'_, Mutex<Database>>,
 ) -> Result<PracticeCard, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     loop_service::create_practice_from_signal(&db, &signal_id, draft)
 }
 
@@ -66,7 +70,9 @@ pub fn create_local_asset_from_practice(
     is_system: Option<bool>,
     db: State<'_, Mutex<Database>>,
 ) -> Result<LocalAsset, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     loop_service::create_local_asset_from_practice(
         &db,
         &practice_id,

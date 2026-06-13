@@ -13,9 +13,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri": "node scripts/tauri-with-rust-path.mjs",
+    "tauri:dev": "node scripts/tauri-with-rust-path.mjs dev",
+    "tauri:build": "node scripts/tauri-with-rust-path.mjs build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -47,7 +47,8 @@ mod tests {
     #[test]
     fn skill_config_crud() {
         let db = test_db();
-        db.upsert_skill_config("test-skill", "1.0.0").expect("upsert");
+        db.upsert_skill_config("test-skill", "1.0.0")
+            .expect("upsert");
 
         let config = db.get_skill_config("test-skill").expect("get");
         assert!(config.is_some());
@@ -76,9 +77,18 @@ mod tests {
         let configs_after_second = db.list_skill_configs().expect("list");
         assert_eq!(configs_after_second.len(), 3);
 
-        assert!(dir.path().join("system-skills/intake-source-research/SKILL.md").exists());
-        assert!(dir.path().join("system-skills/normalize-practice-card/SKILL.md").exists());
-        assert!(dir.path().join("system-skills/local-harness-review/SKILL.md").exists());
+        assert!(dir
+            .path()
+            .join("system-skills/intake-source-research/SKILL.md")
+            .exists());
+        assert!(dir
+            .path()
+            .join("system-skills/normalize-practice-card/SKILL.md")
+            .exists());
+        assert!(dir
+            .path()
+            .join("system-skills/local-harness-review/SKILL.md")
+            .exists());
     }
 
     #[test]
@@ -92,7 +102,8 @@ mod tests {
         vars.insert("source_tier".to_string(), "official".to_string());
         vars.insert("signal_excerpt".to_string(), "Some excerpt".to_string());
 
-        let rendered = meta.template
+        let rendered = meta
+            .template
             .replace("{{signal_title}}", &vars["signal_title"])
             .replace("{{signal_source}}", &vars["signal_source"])
             .replace("{{source_tier}}", &vars["source_tier"])

@@ -75,7 +75,10 @@ export function MenuBarPanel({
 
   return (
     <main className={standalone ? "statusbar-stage standalone" : "statusbar-stage"}>
-      <div className="menubar"><span className="dot" /><span>Hone · Practice Shard</span></div>
+      <div className="menubar">
+        <span className="menubar-logo" aria-hidden="true"><HarnessLogo size={18} /></span>
+        <span>Hone · Practice Shard</span>
+      </div>
       <section className="menubar-panel panel">
         <header className="capsule-head">
           <div className="brand">

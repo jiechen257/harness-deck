@@ -14,7 +14,9 @@ pub fn list_system_skills(
     registry_path: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<Vec<SystemSkillMeta>, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     skill_service::list_system_skills(std::path::Path::new(&registry_path), &db)
 }
 
@@ -26,7 +28,9 @@ pub fn execute_system_skill(
     agent_kind: String,
     db: State<'_, Mutex<Database>>,
 ) -> Result<SkillExecutionResult, CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     let kind = match agent_kind.as_str() {
         "Codex" => AgentKind::Codex,
         _ => AgentKind::Claude,
@@ -46,6 +50,8 @@ pub fn toggle_system_skill(
     enabled: bool,
     db: State<'_, Mutex<Database>>,
 ) -> Result<(), CommandError> {
-    let db = db.lock().map_err(|e| CommandError::storage(e.to_string()))?;
+    let db = db
+        .lock()
+        .map_err(|e| CommandError::storage(e.to_string()))?;
     db.set_skill_enabled(&skill_id, enabled)
 }

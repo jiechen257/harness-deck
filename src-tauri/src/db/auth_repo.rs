@@ -1,8 +1,8 @@
 use rusqlite::params;
 
-use crate::domain::errors::CommandError;
-use crate::domain::auth_state::AuthorizationEntry;
 use super::Database;
+use crate::domain::auth_state::AuthorizationEntry;
+use crate::domain::errors::CommandError;
 
 const SCOPES: &[&str] = &[
     "registry",
@@ -15,10 +15,12 @@ const SCOPES: &[&str] = &[
 impl Database {
     pub fn seed_authorization(&self) -> Result<(), CommandError> {
         for scope in SCOPES {
-            self.conn().execute(
-                "INSERT OR IGNORE INTO authorization_state (scope, granted) VALUES (?1, 0)",
-                params![scope],
-            ).map_err(|e| CommandError::storage(e.to_string()))?;
+            self.conn()
+                .execute(
+                    "INSERT OR IGNORE INTO authorization_state (scope, granted) VALUES (?1, 0)",
+                    params![scope],
+                )
+                .map_err(|e| CommandError::storage(e.to_string()))?;
         }
         Ok(())
     }
@@ -27,12 +29,16 @@ impl Database {
         let mut stmt = self.conn().prepare(
             "SELECT scope, granted, granted_at, revoked_at FROM authorization_state ORDER BY scope"
         ).map_err(|e| CommandError::storage(e.to_string()))?;
-        let rows = stmt.query_map([], |row| Ok(AuthorizationEntry {
-            scope: row.get(0)?,
-            granted: row.get::<_, i32>(1)? != 0,
-            granted_at: row.get(2)?,
-            revoked_at: row.get(3)?,
-        })).map_err(|e| CommandError::storage(e.to_string()))?;
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(AuthorizationEntry {
+                    scope: row.get(0)?,
+                    granted: row.get::<_, i32>(1)? != 0,
+                    granted_at: row.get(2)?,
+                    revoked_at: row.get(3)?,
+                })
+            })
+            .map_err(|e| CommandError::storage(e.to_string()))?;
         rows.collect::<Result<Vec<_>, _>>()
             .map_err(|e| CommandError::storage(e.to_string()))
     }
@@ -48,10 +54,12 @@ impl Database {
 
     pub fn revoke_authorization(&self, scope: &str) -> Result<(), CommandError> {
         let now = chrono::Utc::now().to_rfc3339();
-        self.conn().execute(
-            "UPDATE authorization_state SET granted = 0, revoked_at = ?1 WHERE scope = ?2",
-            params![now, scope],
-        ).map_err(|e| CommandError::storage(e.to_string()))?;
+        self.conn()
+            .execute(
+                "UPDATE authorization_state SET granted = 0, revoked_at = ?1 WHERE scope = ?2",
+                params![now, scope],
+            )
+            .map_err(|e| CommandError::storage(e.to_string()))?;
         Ok(())
     }
 }

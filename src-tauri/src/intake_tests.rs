@@ -13,7 +13,9 @@ mod tests {
         intake_service::seed_default_sources(&db).expect("seed");
         let sources = db.list_source_configs().expect("list");
         assert_eq!(sources.len(), 8);
-        assert!(sources.iter().any(|s| s.id == "maintainer-registry-patterns" && s.source_tier == "maintainer"));
+        assert!(sources
+            .iter()
+            .any(|s| s.id == "maintainer-registry-patterns" && s.source_tier == "maintainer"));
         assert!(sources.iter().any(|s| s.id == "github-trending"));
         assert!(sources.iter().any(|s| s.id == "codex-changelog"));
         assert!(sources.iter().any(|s| s.id == "model-news"));
@@ -34,12 +36,20 @@ mod tests {
         let db = test_db();
         intake_service::seed_default_sources(&db).expect("seed");
 
-        db.set_source_enabled("github-trending", true).expect("enable");
-        let config = db.get_source_config("github-trending").expect("get").unwrap();
+        db.set_source_enabled("github-trending", true)
+            .expect("enable");
+        let config = db
+            .get_source_config("github-trending")
+            .expect("get")
+            .unwrap();
         assert!(config.enabled);
 
-        db.set_source_auto_refresh("github-trending", true).expect("auto");
-        let config = db.get_source_config("github-trending").expect("get").unwrap();
+        db.set_source_auto_refresh("github-trending", true)
+            .expect("auto");
+        let config = db
+            .get_source_config("github-trending")
+            .expect("get")
+            .unwrap();
         assert!(config.auto_refresh);
     }
 
@@ -48,7 +58,8 @@ mod tests {
         let db = test_db();
         db.seed_authorization().expect("seed auth");
         intake_service::seed_default_sources(&db).expect("seed sources");
-        db.set_source_enabled("github-trending", true).expect("enable");
+        db.set_source_enabled("github-trending", true)
+            .expect("enable");
 
         let result = intake_service::refresh_source(&db, "github-trending");
         assert!(result.is_err());
@@ -62,7 +73,8 @@ mod tests {
         db.seed_authorization().expect("seed auth");
         db.grant_authorization("external_signals").expect("grant");
         intake_service::seed_default_sources(&db).expect("seed sources");
-        db.set_source_enabled("codex-changelog", true).expect("enable");
+        db.set_source_enabled("codex-changelog", true)
+            .expect("enable");
 
         let ids = intake_service::refresh_source(&db, "codex-changelog").expect("refresh");
         assert!(!ids.is_empty());
@@ -116,8 +128,10 @@ mod tests {
             "model_news",
             "maintainer",
             Some("https://example.com/repo-model-news"),
-        ).expect("upsert source");
-        db.set_source_enabled("repo-model-news", true).expect("enable");
+        )
+        .expect("upsert source");
+        db.set_source_enabled("repo-model-news", true)
+            .expect("enable");
 
         let ids = intake_service::refresh_source(&db, "repo-model-news").expect("refresh");
         let signal = db.get_signal(&ids[0]).expect("signal");

@@ -9,13 +9,15 @@ mod tests {
     }
 
     fn setup_asset(db: &Database, registry_path: &str) -> String {
-        let asset = db.insert_asset(&NewLocalAsset {
-            practice_id: None,
-            asset_type: "skill".into(),
-            registry_path: registry_path.into(),
-            checksum: None,
-            is_system: false,
-        }).expect("insert asset");
+        let asset = db
+            .insert_asset(&NewLocalAsset {
+                practice_id: None,
+                asset_type: "skill".into(),
+                registry_path: registry_path.into(),
+                checksum: None,
+                is_system: false,
+            })
+            .expect("insert asset");
         asset.id
     }
 
@@ -68,14 +70,17 @@ mod tests {
 
         setup_asset(&db, "skills/test-skill");
 
-        let plan = projection_service::plan_projection(&db, &registry, &target, "codex")
-            .expect("plan");
-        let ids = projection_service::execute_projection(&db, &registry, &plan)
-            .expect("execute");
+        let plan =
+            projection_service::plan_projection(&db, &registry, &target, "codex").expect("plan");
+        let ids = projection_service::execute_projection(&db, &registry, &plan).expect("execute");
 
         assert_eq!(ids.len(), 1);
         let symlink_path = target.join("test-skill");
-        assert!(symlink_path.symlink_metadata().unwrap().file_type().is_symlink());
+        assert!(symlink_path
+            .symlink_metadata()
+            .unwrap()
+            .file_type()
+            .is_symlink());
 
         let audits = db.list_recent_audits(10).expect("audits");
         assert!(audits.iter().any(|a| a.event_type == "projection_executed"));
@@ -95,8 +100,7 @@ mod tests {
 
         let plan = projection_service::plan_projection(&db, &registry, &target, "claude_code")
             .expect("plan");
-        let ids = projection_service::execute_projection(&db, &registry, &plan)
-            .expect("execute");
+        let ids = projection_service::execute_projection(&db, &registry, &plan).expect("execute");
 
         projection_service::rollback_projection(&db, &ids[0]).expect("rollback");
 
@@ -117,20 +121,28 @@ mod tests {
         let asset_id = setup_asset(&db, "skills/unsafe");
         let target_file = target.join("unsafe");
         std::fs::write(&target_file, "do not delete").unwrap();
-        let projection = db.insert_projection(&crate::domain::projection::NewProjection {
-            asset_id,
-            target_kind: "codex".into(),
-            target_path: target_file.to_string_lossy().to_string(),
-            mode: "symlink".into(),
-        }).expect("insert projection");
-        db.update_projection_status(&projection.id, "active").expect("status");
+        let projection = db
+            .insert_projection(&crate::domain::projection::NewProjection {
+                asset_id,
+                target_kind: "codex".into(),
+                target_path: target_file.to_string_lossy().to_string(),
+                mode: "symlink".into(),
+            })
+            .expect("insert projection");
+        db.update_projection_status(&projection.id, "active")
+            .expect("status");
 
         let error = projection_service::rollback_projection(&db, &projection.id)
             .expect_err("regular file rollback should be refused");
 
         assert_eq!(error.code, "ValidationError");
         assert!(target_file.exists());
-        assert_eq!(db.get_projection(&projection.id).expect("projection").status, "active");
+        assert_eq!(
+            db.get_projection(&projection.id)
+                .expect("projection")
+                .status,
+            "active"
+        );
     }
 
     #[test]
@@ -156,10 +168,17 @@ mod tests {
             "skill",
             &backups,
             "codex",
-        ).expect("adopt");
+        )
+        .expect("adopt");
 
-        assert!(registry.join("skills/adopted/orphan-skill/SKILL.md").exists());
-        assert!(unmanaged.symlink_metadata().unwrap().file_type().is_symlink());
+        assert!(registry
+            .join("skills/adopted/orphan-skill/SKILL.md")
+            .exists());
+        assert!(unmanaged
+            .symlink_metadata()
+            .unwrap()
+            .file_type()
+            .is_symlink());
         assert!(!result.backup_path.is_empty());
 
         let assets = db.list_assets().expect("list");
@@ -176,13 +195,16 @@ mod tests {
 
         let asset_id = setup_asset(&db, "skills/gone-skill");
 
-        let projection = db.insert_projection(&crate::domain::projection::NewProjection {
-            asset_id,
-            target_kind: "claude_code".into(),
-            target_path: target.join("gone-skill").to_string_lossy().to_string(),
-            mode: "symlink".into(),
-        }).expect("insert projection");
-        db.update_projection_status(&projection.id, "active").expect("status");
+        let projection = db
+            .insert_projection(&crate::domain::projection::NewProjection {
+                asset_id,
+                target_kind: "claude_code".into(),
+                target_path: target.join("gone-skill").to_string_lossy().to_string(),
+                mode: "symlink".into(),
+            })
+            .expect("insert projection");
+        db.update_projection_status(&projection.id, "active")
+            .expect("status");
 
         #[cfg(unix)]
         std::os::unix::fs::symlink("/nonexistent/path", target.join("gone-skill")).unwrap();
@@ -196,7 +218,11 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let registry = dir.path().join("registry");
         std::fs::create_dir_all(registry.join("skills/diff-skill")).unwrap();
-        std::fs::write(registry.join("skills/diff-skill/SKILL.md"), "# diff skill\n").unwrap();
+        std::fs::write(
+            registry.join("skills/diff-skill/SKILL.md"),
+            "# diff skill\n",
+        )
+        .unwrap();
 
         let payload = projection_service::preview_diff(
             &registry,
@@ -207,6 +233,9 @@ mod tests {
         assert!(payload.source_exists);
         assert!(!payload.target_exists);
         assert!(payload.source_text.unwrap().contains("diff skill"));
-        assert!(payload.diff_hunks.iter().any(|hunk| hunk.contains("target missing")));
+        assert!(payload
+            .diff_hunks
+            .iter()
+            .any(|hunk| hunk.contains("target missing")));
     }
 }
