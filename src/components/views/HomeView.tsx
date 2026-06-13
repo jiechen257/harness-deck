@@ -13,12 +13,9 @@ interface HomeViewProps {
 }
 
 function toViewId(view: string): ViewId {
-  if (view === "discover" || view === "usage" || view === "insights" || view === "settings" || view === "apply") {
-    return view as ViewId;
+  if (view === "library" || view === "apply" || view === "review" || view === "operations" || view === "settings") {
+    return view;
   }
-  if (view === "library") return "discover";
-  if (view === "review") return "insights";
-  if (view === "operations") return "settings";
   return "home";
 }
 
@@ -38,7 +35,7 @@ function metricValue(sectionValue: LoopSection | null, labelEn: string) {
   return sectionValue?.metrics.find((metric) => metric.labelEn === labelEn)?.value ?? "0";
 }
 
-function fallbackSections(): LoopSection[] {
+function fallbackSections(zh: boolean): LoopSection[] {
   return [
     {
       id: "signals",
@@ -54,7 +51,7 @@ function fallbackSections(): LoopSection[] {
       ],
       actionZh: "继续规范化",
       actionEn: "Continue normalization",
-      view: "discover",
+      view: "library",
       tone: "blue",
     },
     {
@@ -70,7 +67,7 @@ function fallbackSections(): LoopSection[] {
       ],
       actionZh: "创建本地资产",
       actionEn: "Create local asset",
-      view: "discover",
+      view: "library",
       tone: "teal",
     },
     {
@@ -102,23 +99,23 @@ function fallbackSections(): LoopSection[] {
       ],
       actionZh: "查看证据",
       actionEn: "View evidence",
-      view: "insights",
+      view: "review",
       tone: "purple",
     },
     {
-      id: "usage",
-      nameZh: "用量",
-      nameEn: "Usage",
+      id: "operations",
+      nameZh: "运维",
+      nameEn: "Operations",
       count: 3,
-      captionZh: "本地聚合",
-      captionEn: "local aggregate",
+      captionZh: "脚本",
+      captionEn: "scripts",
       metrics: [
-        { labelZh: "Codex 线程", labelEn: "Codex threads", value: "0" },
-        { labelZh: "Claude 会话", labelEn: "Claude sessions", value: "0" },
+        { labelZh: "Codex 代理", labelEn: "Codex proxy", value: zh ? "运行中" : "running" },
+        { labelZh: "防睡守护", labelEn: "Sleep guard", value: zh ? "活跃" : "active" },
       ],
-      actionZh: "查看用量",
-      actionEn: "Open usage",
-      view: "usage",
+      actionZh: "预览运行计划",
+      actionEn: "Preview run plan",
+      view: "operations",
       tone: "gold",
     },
   ];
@@ -133,7 +130,7 @@ export function HomeView({ healthScore, locale, onSelectView, t }: HomeViewProps
   const practiceSection = section(summary, "practices");
   const assetSection = section(summary, "assets");
   const reviewSection = section(summary, "review");
-  const sections = summary?.sections.length ? summary.sections : fallbackSections();
+  const sections = summary?.sections.length ? summary.sections : fallbackSections(zh);
   const decisions = summary?.decisions ?? [];
 
   useEffect(() => {
@@ -177,7 +174,7 @@ export function HomeView({ healthScore, locale, onSelectView, t }: HomeViewProps
             <div className="score-ring" aria-label={zh ? `闭环健康度 ${visibleHealthScore}%` : `Loop health ${visibleHealthScore}%`}><span>{visibleHealthScore}%</span></div>
             <div>
               <h2>{zh ? "闭环健康度" : "Loop Health"}</h2>
-              <p>{zh ? "信号、实践、资产、投射、用量和洞察一起计算，所有数据与配置都保存在本机。" : "Signals, practices, assets, projection, usage, and insights are scored together; all data and configuration stay local."}</p>
+              <p>{zh ? "信号、实践、资产、投射、评审和运维一起计算，所有数据与配置都保存在本机。" : "Signals, practices, assets, projection, review, and operations are scored together; all data and configuration stay local."}</p>
             </div>
           </div>
           <div className="metric-grid">
@@ -189,9 +186,9 @@ export function HomeView({ healthScore, locale, onSelectView, t }: HomeViewProps
         <section className="flow-card">
           <div className="surface-head"><h2>{zh ? "今日顺序" : "Today's Order"}</h2><span className="badge warn">{zh ? `${decisions.length || 3} 个决策` : `${decisions.length || 3} decisions`}</span></div>
           {(decisions.length ? decisions : [
-            { titleZh: "规范化 3 条信号", titleEn: "Normalize 3 signals", detailZh: "生成 Practice Card 预览", detailEn: "Generate Practice Card previews", count: 3, severity: "info", view: "discover" },
+            { titleZh: "规范化 3 条信号", titleEn: "Normalize 3 signals", detailZh: "生成 Practice Card 预览", detailEn: "Generate Practice Card previews", count: 3, severity: "info", view: "library" },
             { titleZh: "预览 1 个投射项", titleEn: "Preview 1 projection", detailZh: "Codex / Claude 目标先看 diff", detailEn: "Review target diff first", count: 1, severity: "warn", view: "apply" },
-            { titleZh: "评审缺失投射", titleEn: "Review missing projection", detailZh: "把证据链转成可处理建议", detailEn: "Turn evidence into action", count: 1, severity: "warn", view: "insights" },
+            { titleZh: "评审缺失投射", titleEn: "Review missing projection", detailZh: "把证据链转成可处理建议", detailEn: "Turn evidence into action", count: 1, severity: "warn", view: "review" },
           ]).slice(0, 3).map((decision, index) => (
             <button className={index === 0 ? "flow-row active" : "flow-row"} type="button" key={`${decision.view}-${decision.titleEn}`} onClick={() => onSelectView(toViewId(decision.view))}>
               <span className="icon">{index === 0 ? "IN" : index === 1 ? "PR" : "RV"}</span>
@@ -202,7 +199,7 @@ export function HomeView({ healthScore, locale, onSelectView, t }: HomeViewProps
         </section>
       </div>
       <section className="module">
-        <div className="module-head"><h2>{zh ? "闭环分段" : "Loop Segments"}</h2><span className="caption">{zh ? "发现、应用、观察、优化" : "Discover, apply, observe, optimize"}</span></div>
+        <div className="module-head"><h2>{zh ? "闭环分段" : "Loop Segments"}</h2><span className="caption">{zh ? "信号、实践、资产、评审、运维" : "Signals, practices, assets, review, operations"}</span></div>
         <div className="module-grid">
           {sections.map((row) => {
             const labels = sectionLabel(row, zh);
@@ -232,7 +229,7 @@ export function HomeView({ healthScore, locale, onSelectView, t }: HomeViewProps
         <div className="flow-row">
           <span className="icon">RV</span>
           <div><strong>{zh ? "当前风险" : "Current risk"}</strong><span className="caption">{zh ? `缺失投射 ${metricValue(reviewSection, "Missing")} · 资产待就绪 ${metricValue(practiceSection, "Assets pending")}` : `Missing ${metricValue(reviewSection, "Missing")} · assets pending ${metricValue(practiceSection, "Assets pending")}`}</span></div>
-          <button className="action" type="button" onClick={() => onSelectView("insights")}>{zh ? "查看证据" : "View evidence"}</button>
+          <button className="action" type="button" onClick={() => onSelectView("review")}>{zh ? "查看证据" : "View evidence"}</button>
         </div>
       </section>
     </section>

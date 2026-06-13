@@ -1,81 +1,96 @@
-# Hone
+# HarnessDeck
 
 Chinese documentation: [`README.md`](README.md)
 
-Hone is a macOS menu bar app and workbench for individual developers who want to discover, apply, observe, and continuously improve AI coding practices.
+HarnessDeck is a macOS menu bar app and management workbench for using harness engineering well. It brings community practice discovery, Harness Profile management, Claude/Codex sync, daily operation, usage analysis, and continuous improvement into one local-first workflow.
 
-It runs local-first. Hone reads local Claude Code and Codex state, calls the user's own local agent CLIs through BYOA, stores structured state in SQLite, keeps reusable assets in a registry repo, and projects approved assets into local target directories only after explicit authorization.
+This repository contains a locally runnable Tauri 2 + React + TypeScript + Rust macOS desktop app with an MVP fixture workflow.
+
+## Current Status
+
+- Product design document: [`docs/superpowers/specs/2026-06-07-harness-deck-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-design.md)
+- Implementation design document: [`docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`](docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md)
+- UI/UX prototype: [`docs/product-design/harnessdeck-command-deck-prototype.html`](docs/product-design/harnessdeck-command-deck-prototype.html)
+- Native-feel reference: [`yetone/native-feel-skill`](https://github.com/yetone/native-feel-skill)
+- Target platform: macOS
+- Current stack: Tauri 2, React, TypeScript, Rust
+- Reserved integrations: SQLite and macOS Keychain
+- First agent targets: Claude Code and Codex
+- Interface language: Simplified Chinese and English, with Simplified Chinese as the default
+- Interface theme: light and dark, with light as the default
+- Brand direction: engineering instrument aesthetic, with engineering-oriented feature names
 
 ## Product Loop
 
 ```text
-Discover -> Apply -> Observe -> Optimize
-   ^                              |
-   +------------------------------+
+Discover -> Profile -> Sync -> Operate -> Improve
 ```
 
-- **Discover**: collect trusted signals, normalize them into Practice Cards, and turn adoptable practices into local assets.
-- **Apply**: preview projection plans, confirm writes, adopt unmanaged assets, and roll back managed projections for Claude Code and Codex.
-- **Observe**: aggregate local usage, cost, sessions, model distribution, projection health, and audit history.
-- **Optimize**: surface local insights and use BYOA agents to generate improvement suggestions for user-approved registry assets.
+- `Discover`: find official, community, and curated harness engineering practices.
+- `Profile`: turn practices into reusable Harness Profiles.
+- `Sync`: deploy Profiles safely to Claude Code and Codex.
+- `Operate`: manage Profiles, accounts, usage, sync, and wake state through a menu bar control center.
+- `Improve`: suggest changes based on tokens, cost, drift, conflicts, failures, and updates.
 
-## Workbench Views
+## MVP Scope
 
-| View | Responsibility |
-| --- | --- |
-| **Home** | Loop dashboard and next-action queue |
-| **Discover** | Signals, Practice Cards, local assets, and the entry point into projection |
-| **Usage** | Real local usage and cost observation |
-| **Insights** | Usage insights, projection health, and audit trail |
-| **Settings** | Registry, BYOA agent detection, authorization, appearance, and audit settings |
+The MVP provides a complete local loop with pluggable remote integrations. Core capabilities include:
 
-The projection plan screen is opened from the Discover asset flow. It is not a primary navigation item.
+- Menu bar control center and management workbench
+- Harness Profiles
+- Claude Code and Codex adapters
+- Policy sync, three-way diff, backup, manifest, and rollback
+- Account Workspace and Keychain secret storage boundary
+- Claude/Codex usage and cost views with source confidence labels
+- Curated registry, GitHub discovery gate, and `find-best-skill`
+- Local rule-based insights and profile impact update feed
+- Standard awake, timed awake, display sleep control, and explicit confirmation for experimental lid-awake behavior
 
-## Current Implementation
+## Privacy Boundary
 
-The repository contains a runnable Tauri 2 + React + TypeScript + Rust macOS app.
+HarnessDeck uses a local-first design:
 
-Implemented product closure:
+- It does not upload prompts, source code, secrets, local configuration, or complete logs by default.
+- Secrets belong in macOS Keychain.
+- Profile files and SQLite store secret references only.
+- Reading logs, enabling hooks, using a local LLM, sending sanitized summaries to a remote LLM, and enabling experimental lid-awake behavior all require explicit user consent.
+- Real configuration writes require a plan, diff, backup, manifest, verification, and explicit confirmation.
 
-- Main workbench and standalone menu bar panel.
-- Five primary workbench views: Home, Discover, Usage, Insights, Settings.
-- SQLite state for signals, practices, local assets, projections, source configs, authorizations, system skills, and audit events.
-- BYOA detection and invocation boundaries for Claude Code and Codex.
-- Signal refresh, normalization, Practice Card creation, and local asset creation.
-- Registry-backed asset materialization when a writable active registry is configured.
-- Projection preview, confirmed write, unmanaged adoption, rollback, health checks, and audit trail.
-- Real local usage readers for Claude Code and Codex where data sources are available.
+## Development Status
 
-Safety boundary:
+The current implementation runs in local-first fixture mode. The app defaults to Simplified Chinese and the light theme, with English and dark theme switching available. The main window follows the command deck prototype with a top command bar, brand status band, menu bar panel, and macOS-style workbench window. The workbench includes Home, Discover, Profiles, Sync, Operate, Usage, Insights, Guard, and Settings. A standalone Tauri menu bar panel renders through `index.html?panel=1` and shows the current profile, sync health, cost, wake state, and quick actions. The UI has also been adjusted against the native-feel audit with system typography, default cursors, platform focus rings, pressed states, WebKit context-menu suppression, and macOS-style shortcuts.
 
-- Prompts, source code, full logs, secrets, and complete local configuration are not uploaded by default.
-- Agent calls are local CLI subprocesses.
-- Local reads, external signals, projection writes, and script execution each require separate authorization.
-- Projection confirm, adopt, and rollback require `write_projection` authorization before touching target files.
+Implemented local loop:
 
-## Technology
+- Profile fixtures, Codex / Claude Code fixture targets, deploy plan, and dry-run manifest.
+- Safe target discovery with explicit local-read authorization and summary-only output.
+- Three-way diff, conflict queue, drift detection, and rollback preview.
+- Account Workspace, mock Keychain reference, switch-plan preview, and audit trail.
+- Usage / cost aggregation with Official, LocalLog, Estimated, and Missing confidence.
+- Curated registry, `find-best-skill` scoring, and GitHub discovery gate.
+- Local insight rules, feed, and profile impact alert.
+- Wake Control mock/system-safe state, with explicit confirmation for experimental lid-awake behavior.
 
-- Tauri 2
-- React
-- TypeScript
-- Rust
-- SQLite
-- macOS Keychain boundary for future secret storage
+Mock / fixture capabilities:
 
-## Development Commands
-
-```bash
-pnpm install
-pnpm dev
-pnpm tauri:dev
-pnpm tauri:build
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm test:watch
-cargo test --manifest-path src-tauri/Cargo.toml
-```
+- No real Claude Code or Codex configuration writes.
+- Keychain is interface/mock-only and does not store secret values.
+- Registry / GitHub discovery does not perform automatic remote calls.
+- Wake Control does not change system power policy.
+- SQLite persistence is reserved; manifests are currently recorded as local JSON files.
 
 ## License
 
-Hone is released under the GNU General Public License v3.0 only (GPL-3.0-only). See [`LICENSE`](LICENSE) for the full text.
+HarnessDeck is released under the GNU General Public License v3.0 only (GPL-3.0-only). See [`LICENSE`](LICENSE) for the full text.
+
+Common commands:
+
+```bash
+pnpm install
+pnpm tauri:dev
+pnpm lint
+pnpm typecheck
+pnpm test
+cargo test --manifest-path src-tauri/Cargo.toml
+pnpm tauri:build
+```

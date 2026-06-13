@@ -4,9 +4,9 @@
 
 ## 项目简介
 
-Hone 是一个基于 Tauri 2 + React + TypeScript + Rust 构建的 macOS 菜单栏应用和工作台，帮助个人开发者持续跟进、应用、评估并优化 AI coding 最佳实践。产品闭环：Discover → Apply → Observe → Optimize。当前实现闭环：Signals → Practices → Local Assets → Projection → Usage/Insights。
+Hone 是一个基于 Tauri 2 + React + TypeScript + Rust 构建的 macOS 菜单栏应用和工作台，帮助个人开发者持续跟进、应用、评估并同步 AI coding 最佳实践。核心闭环：Signals → Practices → Local Assets → Projection → Review。
 
-产品采用 **BYOA (Bring Your Own Agent)** 模式——通过调用用户本地已安装的 Claude Code / Codex CLI 执行推理任务（信号分析、实践标准化、优化建议），不直连 API，不绑定特定 provider。
+产品采用 **BYOA (Bring Your Own Agent)** 模式——通过调用用户本地已安装的 Claude Code / Codex CLI 执行推理任务（信号分析、实践标准化、本地评审），不直连 API，不绑定特定 provider。
 
 数据持久化采用 **双层真相模型**：SQLite（`hone.db`）保存结构化索引、状态、关系和审计；registry repo 保存文件资产（skills、rules、hooks、MCP 片段）。Target 目录（`~/.claude/`、`~/.codex/`）只是投射结果。
 
@@ -39,8 +39,8 @@ Tauri 在 `src-tauri/tauri.conf.json` 中配置了两个窗口：
 - `App.tsx` — 应用 Shell：窗口判断（panel/workbench）、5 视图路由、全局键盘快捷键、locale/theme
 - `components/menubar/MenuBarPanel.tsx` — 菜单栏弹出面板：健康度、刷新状态、快捷操作
 - `components/views/` — 5 个业务视图：
-  - `HomeView.tsx` — 仪表盘，闭环健康度和下一步队列
-  - `PracticeLibraryView.tsx` — Discover 主视图：信号、Practice Card、本地资产和投射入口
+  - `HomeView.tsx` — 仪表盘，4 张导航卡片（信号源、用量、洞察、设置）
+  - `DiscoverView.tsx` — 信号源管理：来源列表、启用/禁用、手动刷新、最近信号展示
   - `UsageView.tsx` — 真实用量统计（`getRealUsageSummary()`）
   - `InsightsView.tsx` — 用量洞察 + 投射健康度 + 审计轨迹
   - `SettingsView.tsx` — 3-tab（通用 / 授权 / 审计）：registry 路径、5 项权限独立授权、审计事件
@@ -58,7 +58,7 @@ SQLite 数据库（`hone.db`），10 张表 + 2 张扩展表：
 - `signal_practice_links` — 信号 ↔ 实践多对多关联
 - `local_assets` — 本地资产：registry 路径、类型、checksum、system/user 标记
 - `projections` — 投射状态：asset → target 的 symlink/copy 映射
-- `operations_scripts` — 本地脚本注册表；不属于主导航闭环
+- `operations_scripts` — 运维脚本注册
 - `audit_events` — 全局审计日志
 - `registry_connections` — registry repo 路径和活跃状态
 - `authorization_state` — 5 项权限分步授权
@@ -71,7 +71,7 @@ SQLite 数据库（`hone.db`），10 张表 + 2 张扩展表：
 #### 服务层 (services/)
 
 - `skill_service` — 内置 System Practice Skill 的加载、解析、执行和追踪。3 个 SKILL.md 通过 `include_str!()` 嵌入二进制
-- `projection_service` — registry → target 安全投射：plan preview、授权后 symlink/copy、conflict skip、adopt flow、rollback、health check
+- `projection_service` — registry → target 安全投射：plan preview、symlink/copy、conflict skip、adopt flow、rollback、health check
 - `intake_service` — 信号源刷新管道：授权检查、fixture signal 生成、refresh 记录、audit
 - `byoa_service` — BYOA 管道：检测本地 agent CLI、子进程调用
 - `target_adapter` — Target adapter trait，ClaudeCode/Codex 实现
@@ -83,11 +83,8 @@ SQLite 数据库（`hone.db`），10 张表 + 2 张扩展表：
 - `app_commands` — get_app_status、open_workbench
 - `db_commands` — 授权 CRUD、registry 连接、信号列表、审计事件
 - `skill_commands` — list/execute/toggle system skills
-- `projection_commands` — preview/confirm/adopt/rollback/health；confirm/adopt/rollback 需要 `write_projection`
+- `projection_commands` — preview/confirm/adopt/rollback/health
 - `intake_commands` — refresh/list/toggle signal sources
-- `usage_commands` — real local usage summary
-- `insight_commands` — real local insights
-- `byoa_commands` — local Claude Code / Codex detection and invocation
 
 #### 内置 Skills (bundled-skills/)
 
@@ -98,8 +95,8 @@ SQLite 数据库（`hone.db`），10 张表 + 2 张扩展表：
 
 ### 测试结构
 
-- **React**：`src/App.test.tsx` 覆盖 5 视图导航、快捷键、MenuBar、Discover flow、Usage/Insights。
-- **Rust**：`db_tests.rs`、`skill_tests.rs`、`projection_tests.rs`、`intake_tests.rs`、`loop_tests.rs` 覆盖 DB、skills、projection、intake 和产品闭环。
+- **React**：`src/App.test.tsx`（10 个测试），覆盖 5 视图导航、快捷键、MenuBar、Settings tabs、品牌。
+- **Rust**：`db_tests.rs`（10）、`skill_tests.rs`（7）、`projection_tests.rs`（6）、`intake_tests.rs`（7），共 45 个测试。
 
 ## 关键约定
 

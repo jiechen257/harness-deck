@@ -4,12 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { MenuBarPanel } from "./components/menubar/MenuBarPanel";
 import { HarnessLogo } from "./components/shared/HarnessLogo";
+import { ApplySyncView } from "./components/views/ApplySyncView";
 import { HomeView } from "./components/views/HomeView";
-import { InsightsView } from "./components/views/InsightsView";
+import { LocalReviewView } from "./components/views/LocalReviewView";
+import { OperationsView } from "./components/views/OperationsView";
 import { PracticeLibraryView } from "./components/views/PracticeLibraryView";
-import { ProjectionPlanView } from "./components/views/ProjectionPlanView";
 import { SettingsView } from "./components/views/SettingsView";
-import { UsageView } from "./components/views/UsageView";
 import { copy } from "./constants/copy";
 import { isNavSelected, navItems, navLabel } from "./constants/navigation";
 import type { ViewId } from "./constants/types";
@@ -26,19 +26,20 @@ const OPEN_VIEW_KEY = "hone:open-view";
 
 const navCaptions = {
   home: { zh: "闭环状态", en: "Loop status" },
-  discover: { zh: "信号 · 实践 · 资产", en: "Signals · Practices · Assets" },
-  usage: { zh: "本地用量与成本", en: "Local usage and cost" },
-  insights: { zh: "偏移 · 证据 · 建议", en: "Drift · Evidence · Advice" },
+  library: { zh: "信号 · 实践 · 资产", en: "Signals · Practices · Assets" },
+  apply: { zh: "投射 · 采纳 · 回滚", en: "Projection · Adopt · Rollback" },
+  review: { zh: "偏移 · 证据 · 建议", en: "Drift · Evidence · Advice" },
+  operations: { zh: "脚本预览与确认", en: "Script preview and confirm" },
   settings: { zh: "注册表与授权", en: "Registry and authorization" },
-} satisfies Record<Exclude<ViewId, "apply">, { zh: string; en: string }>;
+} satisfies Record<ViewId, { zh: string; en: string }>;
 
 const navSectionMap = {
   home: null,
-  discover: "signals",
-  usage: null,
-  insights: "review",
-  settings: null,
+  library: "signals",
   apply: "assets",
+  review: "review",
+  operations: "operations",
+  settings: null,
 } satisfies Record<ViewId, string | null>;
 
 function sectionById(summary: LoopSummary | null, id: string): LoopSection | null {
@@ -54,8 +55,8 @@ function navBadge(summary: LoopSummary | null, viewId: ViewId, healthScore: numb
 }
 
 function badgeTone(viewId: ViewId) {
-  if (viewId === "home" || viewId === "discover") return "good";
-  if (viewId === "apply" || viewId === "insights") return "warn";
+  if (viewId === "home" || viewId === "library") return "good";
+  if (viewId === "apply" || viewId === "review") return "warn";
   return "";
 }
 
@@ -242,8 +243,8 @@ export function App() {
                   <button type="button" role="menuitem" onClick={() => { setActiveView("settings"); setBrandMenuOpen(false); }}>
                     {zh ? "设置" : "Settings"}
                   </button>
-                  <button type="button" role="menuitem" onClick={() => { setActiveView("insights"); setBrandMenuOpen(false); }}>
-                    {zh ? "洞察" : "Insights"}
+                  <button type="button" role="menuitem" onClick={() => { setActiveView("review"); setBrandMenuOpen(false); }}>
+                    {zh ? "本地评审" : "Local Review"}
                   </button>
                   <hr />
                   <button type="button" role="menuitem" onClick={() => { setLocale(zh ? "en-US" : "zh-CN"); setBrandMenuOpen(false); }}>
@@ -294,9 +295,9 @@ export function App() {
                 </div>
               </div>
               <strong>{zh ? "快捷动作" : "Quick actions"}</strong>
-              <button className="quick-button" type="button" onClick={() => setActiveView("discover")}><span>{zh ? "规范化信号" : "Normalize signals"}</span><span>→</span></button>
+              <button className="quick-button" type="button" onClick={() => setActiveView("library")}><span>{zh ? "规范化信号" : "Normalize signals"}</span><span>→</span></button>
               <button className="quick-button" type="button" onClick={() => setActiveView("apply")}><span>{zh ? "预览投射计划" : "Preview projection"}</span><span>→</span></button>
-              <button className="quick-button" type="button" onClick={() => setActiveView("insights")}><span>{zh ? "查看证据链" : "View evidence"}</span><span>→</span></button>
+              <button className="quick-button" type="button" onClick={() => setActiveView("review")}><span>{zh ? "查看证据链" : "View evidence"}</span><span>→</span></button>
             </section>
           </div>
           <footer className="rail-head rail-foot">
@@ -313,7 +314,7 @@ export function App() {
             </label>
             <div className="head-actions" aria-label={zh ? "工作台工具" : "Workbench tools"}>
               <button className="action" type="button" disabled={refreshing} onClick={refreshData}>{zh ? "刷新信号" : "Refresh signals"}</button>
-              <button className="action primary" type="button" onClick={() => setActiveView("discover")}>{zh ? "打开发现" : "Open Discover"}</button>
+              <button className="action primary" type="button" onClick={() => setActiveView("library")}>{zh ? "打开命令面板" : "Open command panel"}</button>
             </div>
           </header>
           <main className="canvas native-content" ref={contentRef}>
@@ -327,14 +328,14 @@ export function App() {
             ) : (
               <section className="detail-workspace">
                 <section className="view-panel">
-                  {activeView === "discover" ? (
+                  {activeView === "library" ? (
                     <PracticeLibraryView locale={locale} onSelectView={setActiveView} />
-                  ) : activeView === "usage" ? (
-                    <UsageView locale={locale} />
-                  ) : activeView === "insights" ? (
-                    <InsightsView locale={locale} />
                   ) : activeView === "apply" ? (
-                    <ProjectionPlanView locale={locale} />
+                    <ApplySyncView locale={locale} />
+                  ) : activeView === "review" ? (
+                    <LocalReviewView locale={locale} />
+                  ) : activeView === "operations" ? (
+                    <OperationsView locale={locale} />
                   ) : (
                     <SettingsView locale={locale} theme={theme} />
                   )}
@@ -363,9 +364,9 @@ export function App() {
                 </div>
               ))}
             </section>
-            {activeView !== "insights" && activeView !== "settings" ? (
+            {activeView !== "review" && activeView !== "settings" ? (
               <section className="drawer-card">
-                <div className="drawer-title"><strong>{zh ? "最近审计" : "Recent Audit"}</strong><button className="ghost-button" type="button" onClick={() => setActiveView("insights")}>{zh ? "查看全部" : "View all"}</button></div>
+                <div className="drawer-title"><strong>{zh ? "最近审计" : "Recent Audit"}</strong><button className="ghost-button" type="button" onClick={() => setActiveView("review")}>{zh ? "查看全部" : "View all"}</button></div>
                 {(loopSummary?.recentAudits ?? []).slice(0, 3).map((audit) => (
                   <div className="audit-row" key={audit.id}>
                     <span className={`badge ${audit.outcome === "success" ? "good" : "warn"}`}>{audit.outcome === "success" ? "OK" : "!"}</span>

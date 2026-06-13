@@ -1,40 +1,46 @@
 # 数据库规范
 
-Hone 采用本地优先架构。SQLite 保存结构化状态，registry repo 保存可投射文件资产。
+HarnessDeck 采用本地优先架构，持久化状态存储在应用数据目录下。
 
-## 应用数据
+## 应用数据布局
 
-应用路径由 `services::app_paths::paths_for_app()` 解析。SQLite 数据库文件为 `hone.db`。
+```text
+~/Library/Application Support/HarnessDeck/
+  manifests/               # dry-run 部署 manifest（JSON）
+  backups/                 # 未来的备份快照
+  registry-cache/          # 未来的注册表缓存
+  feed-cache/              # 未来的 feed 缓存
+```
 
-当前核心表：
+路径解析使用 `app_paths::paths_for_app()`：
 
-- `signal_cards`
-- `practice_cards`
-- `signal_practice_links`
-- `local_assets`
-- `projections`
-- `audit_events`
-- `registry_connections`
-- `authorization_state`
-- `refresh_records`
-- `system_skill_configs`
-- `source_configs`
-- `operations_scripts`
+```rust
+// src-tauri/src/services/app_paths.rs
+pub fn paths_for_app<R: Runtime>(app: &AppHandle<R>) -> Result<AppPaths, CommandError> {
+    let base = app.path().app_data_dir().map_err(CommandError::from)?;
+    Ok(AppPaths {
+        base: base.clone(),
+        manifests: base.join("manifests"),
+        backups: base.join("backups"),
+    })
+}
+```
 
-## Registry
+## 当前持久化
 
-- active registry 由 `registry_connections` 记录。
-- `LocalAsset.registry_path` 指向 registry 内路径。
-- 有 writable active registry 时，`create_local_asset_from_practice` 必须 materialize 文件或目录，使 projection planner 能找到真实 source。
-- `starter://bundled` 只能作为只读 starter，不承载用户生成资产。
+- Dry-run manifest 是由 `storage_service::write_dry_run_manifest` 写入 `manifests/` 的 JSON 文件。
+- 配置集 fixture 硬编码在 `profile_service.rs` 中，不从磁盘加载。
+- 当前阶段无 SQLite 或 Keychain。
 
-## 隐私边界
+## 未来 SQLite 规则
 
-- SQLite 不保存 API key、provider token、完整 prompt、源代码或完整日志。
-- secrets 走 Keychain 边界；当前只保存引用或状态。
-- audit 记录事件、实体、结果和安全摘要，不保存秘密值。
+- 在 SQLite 中存储索引、状态、用量聚合、feed 缓存、洞察和审计记录。
+- 完整部署 manifest 作为文件存储；仅可索引的元数据放入 SQLite。
+- 不存储 API key、provider token、prompt、源代码或完整日志。
+- 迁移必须是确定性的并有测试覆盖。
 
-## Migration
+## 备份规则
 
-- schema migration 必须可重复、确定性执行。
-- 新表或字段必须有测试覆盖。
+- 未来的真实写入路径必须在写入前创建备份。
+- 部署 manifest 必须在写入完成前包含备份元数据。
+- 当前阶段仅展示备份设计和禁用的 UI 状态。

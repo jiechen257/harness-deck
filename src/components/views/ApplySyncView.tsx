@@ -45,7 +45,7 @@ function defaultBackupPath() {
   return "~/Library/Application Support/Hone/backups";
 }
 
-export function ProjectionPlanView({ locale }: { locale: Locale }) {
+export function ApplySyncView({ locale }: { locale: Locale }) {
   const [mode, setMode] = useState<SyncMode>("plan");
   const [registry, setRegistry] = useState<RegistryConnection | null>(null);
   const [targets, setTargets] = useState<ProjectionTarget[]>([]);

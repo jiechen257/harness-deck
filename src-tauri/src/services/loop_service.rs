@@ -1,6 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::fs;
-use std::path::{Path, PathBuf};
 
 use crate::db::Database;
 use crate::domain::audit::NewAuditEvent;
@@ -98,7 +96,7 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
             ],
             action_zh: format!("规范化 {} 条信号", inbox_signals.min(6)),
             action_en: format!("Normalize {} signals", inbox_signals.min(6)),
-            view: "discover".into(),
+            view: "library".into(),
             tone: "blue".into(),
         },
         LoopSection {
@@ -115,7 +113,7 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
             ],
             action_zh: format!("准备 {} 个资产", asset_pending.min(3)),
             action_en: format!("Prepare {} assets", asset_pending.min(3)),
-            view: "discover".into(),
+            view: "library".into(),
             tone: "teal".into(),
         },
         LoopSection {
@@ -155,24 +153,24 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
                 "Review {} issues",
                 open_review + missing_projection + orphan_assets
             ),
-            view: "insights".into(),
+            view: "review".into(),
             tone: "purple".into(),
         },
         LoopSection {
-            id: "usage".into(),
-            name_zh: "用量".into(),
-            name_en: "Usage".into(),
-            count: signals.len() + practices.len() + assets.len(),
-            caption_zh: "本地聚合".into(),
-            caption_en: "local aggregate".into(),
+            id: "operations".into(),
+            name_zh: "运维".into(),
+            name_en: "Operations".into(),
+            count: 0,
+            caption_zh: "待接入".into(),
+            caption_en: "pending wiring".into(),
             metrics: vec![
-                metric("Codex 线程", "Codex threads", 0),
-                metric("Claude 会话", "Claude sessions", 0),
-                metric("Tokens", "Tokens", 0),
+                metric("Codex 代理", "Codex proxy", 0),
+                metric("防睡守护", "Sleep guard", 0),
+                metric("今日脚本", "Scripts today", 0),
             ],
-            action_zh: "查看用量".into(),
-            action_en: "Open usage".into(),
-            view: "usage".into(),
+            action_zh: "查看运行状态".into(),
+            action_en: "Open run log".into(),
+            view: "operations".into(),
             tone: "gold".into(),
         },
     ];
@@ -186,7 +184,7 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
             "Generate Practice Card previews",
             inbox_signals,
             "info",
-            "discover",
+            "library",
         ));
     }
     if asset_pending > 0 {
@@ -197,7 +195,7 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
             "Link practices to projectable assets",
             asset_pending,
             "info",
-            "discover",
+            "library",
         ));
     }
     if missing_projection > 0 || open_review > 0 {
@@ -208,7 +206,7 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
             "Inspect missing projections, broken links, and drift",
             missing_projection + open_review,
             "warn",
-            "insights",
+            "review",
         ));
     }
 
@@ -405,8 +403,7 @@ pub fn create_local_asset_from_practice(
     registry_path: &str,
     is_system: bool,
 ) -> Result<LocalAsset, CommandError> {
-    let practice = db.get_practice(practice_id)?;
-    materialize_registry_asset(db, &practice, asset_type, registry_path)?;
+    db.get_practice(practice_id)?;
     let asset = db.insert_asset(&NewLocalAsset {
         practice_id: Some(practice_id.into()),
         asset_type: asset_type.into(),
@@ -426,56 +423,6 @@ pub fn create_local_asset_from_practice(
         outcome: "success".into(),
     });
     Ok(asset)
-}
-
-fn materialize_registry_asset(
-    db: &Database,
-    practice: &PracticeCard,
-    asset_type: &str,
-    registry_path: &str,
-) -> Result<(), CommandError> {
-    let Some(registry) = db.get_active_registry()? else {
-        return Ok(());
-    };
-    if registry.path == "starter://bundled" || registry.registry_type == "starter" {
-        return Ok(());
-    }
-
-    let root = PathBuf::from(registry.path);
-    let target = root.join(registry_path);
-    if is_directory_asset(asset_type, &target) {
-        fs::create_dir_all(&target)?;
-        fs::write(target.join("SKILL.md"), practice_asset_content(practice, asset_type))?;
-    } else {
-        if let Some(parent) = target.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::write(&target, practice_asset_content(practice, asset_type))?;
-    }
-    Ok(())
-}
-
-fn is_directory_asset(asset_type: &str, target: &Path) -> bool {
-    asset_type == "skill" || target.extension().is_none()
-}
-
-fn practice_asset_content(practice: &PracticeCard, asset_type: &str) -> String {
-    let summary = practice
-        .summary
-        .as_deref()
-        .unwrap_or("Reusable local harness practice.");
-    let scenarios = practice
-        .scenarios
-        .as_deref()
-        .unwrap_or("[]");
-    format!(
-        "---\nasset_type: {asset_type}\npractice_id: {practice_id}\nstatus: managed-by-hone\n---\n\n# {title}\n\n{summary}\n\n## Scenarios\n\n{scenarios}\n",
-        asset_type = asset_type,
-        practice_id = practice.id,
-        title = practice.title,
-        summary = summary,
-        scenarios = scenarios,
-    )
 }
 
 fn parse_practice_draft(raw: &str) -> Result<PracticeDraft, String> {

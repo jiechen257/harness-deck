@@ -149,10 +149,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::app_commands::get_app_status,
             commands::app_commands::open_workbench,
-            commands::usage_commands::get_real_usage_summary,
-            commands::insight_commands::list_real_insights,
-            commands::byoa_commands::detect_agents,
-            commands::byoa_commands::invoke_agent,
             commands::db_commands::get_authorization_state,
             commands::db_commands::grant_authorization,
             commands::db_commands::revoke_authorization,

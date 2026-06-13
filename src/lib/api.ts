@@ -3,7 +3,6 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   AdoptResult,
   AdapterCapability,
-  AgentAvailability,
   AppStatus,
   AuditEvent,
   AuthorizationEntry,
@@ -209,8 +208,8 @@ function buildFallbackSummary(): LoopSummary {
   const projectedAssetIds = new Set(activeProjections.map((projection) => projection.assetId));
   const missingProjection = fallbackAssets.filter((asset) => !projectedAssetIds.has(asset.id)).length;
   const decisions = [
-    ...(inboxSignals > 0 ? [decision("规范化信号", "Normalize signals", "生成 Practice Card 预览", "Generate Practice Card previews", inboxSignals, "info", "discover")] : []),
-    ...(assetPending > 0 ? [decision("准备本地资产", "Prepare local assets", "把实践关联到可投射资产", "Link practices to projectable assets", assetPending, "info", "discover")] : []),
+    ...(inboxSignals > 0 ? [decision("规范化信号", "Normalize signals", "生成 Practice Card 预览", "Generate Practice Card previews", inboxSignals, "info", "library")] : []),
+    ...(assetPending > 0 ? [decision("准备本地资产", "Prepare local assets", "把实践关联到可投射资产", "Link practices to projectable assets", assetPending, "info", "library")] : []),
     ...(missingProjection > 0 ? [decision("预览投射", "Preview projection", "为本地资产生成 Claude/Codex 投射计划", "Build Claude/Codex projection plans for local assets", missingProjection, "warn", "apply")] : []),
   ];
 
@@ -229,7 +228,7 @@ function buildFallbackSummary(): LoopSummary {
         metrics: [metric("高影响", "High impact", highImpact), metric("官方来源", "Official", officialSignals), metric("已规范化", "Normalized", normalizedSignals)],
         actionZh: `规范化 ${Math.min(inboxSignals, 6)} 条信号`,
         actionEn: `Normalize ${Math.min(inboxSignals, 6)} signals`,
-        view: "discover",
+        view: "library",
         tone: "blue",
       },
       {
@@ -242,7 +241,7 @@ function buildFallbackSummary(): LoopSummary {
         metrics: [metric("可采纳", "Adoptable", adoptable), metric("待生成资产", "Assets pending", assetPending), metric("已应用", "Applied", 0)],
         actionZh: `准备 ${Math.min(assetPending, 3)} 个资产`,
         actionEn: `Prepare ${Math.min(assetPending, 3)} assets`,
-        view: "discover",
+        view: "library",
         tone: "teal",
       },
       {
@@ -268,20 +267,20 @@ function buildFallbackSummary(): LoopSummary {
         metrics: [metric("偏移/断链", "Drift/broken", 0), metric("缺失投射", "Missing", missingProjection), metric("孤立资产", "Orphan", 0)],
         actionZh: `评审 ${missingProjection} 个问题`,
         actionEn: `Review ${missingProjection} issues`,
-        view: "insights",
+        view: "review",
         tone: "purple",
       },
       {
-        id: "usage",
-        nameZh: "用量",
-        nameEn: "Usage",
-        count: fallbackSignals.length + fallbackPractices.length + fallbackAssets.length,
-        captionZh: "本地聚合",
-        captionEn: "local aggregate",
-        metrics: [metric("Codex threads", "Codex threads", 0), metric("Claude sessions", "Claude sessions", 0), metric("Tokens", "Tokens", 0)],
-        actionZh: "查看用量",
-        actionEn: "Open usage",
-        view: "usage",
+        id: "operations",
+        nameZh: "运维",
+        nameEn: "Operations",
+        count: 0,
+        captionZh: "待接入",
+        captionEn: "pending wiring",
+        metrics: [metric("Codex 代理", "Codex proxy", 0), metric("防睡守护", "Sleep guard", 0), metric("今日脚本", "Scripts today", 0)],
+        actionZh: "查看运行状态",
+        actionEn: "Open run log",
+        view: "operations",
         tone: "gold",
       },
     ],
@@ -341,15 +340,6 @@ export async function getRealUsageSummary(): Promise<RealUsageSummary> {
 
 export async function listRealInsights(): Promise<RealInsight[]> {
   return call("list_real_insights", {}, () => []);
-}
-
-// BYOA agents
-
-export async function detectAgents(): Promise<AgentAvailability[]> {
-  return call("detect_agents", {}, () => [
-    { kind: "Claude", binaryPath: null, version: null, available: false },
-    { kind: "Codex", binaryPath: null, version: null, available: false },
-  ]);
 }
 
 // Authorization
