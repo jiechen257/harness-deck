@@ -174,3 +174,37 @@ Aligned the workbench and statusbar React/CSS to product design HTML screens, ge
 ### Next Steps
 
 - None - task complete
+
+
+## Session 6: Practice Shard docs realignment
+
+**Date**: 2026-06-13
+**Task**: Practice Shard docs realignment
+**Branch**: `main`
+
+### Summary
+
+Reverted the incorrect README-centered product-loop change, then realigned README, AGENTS, CLAUDE, product-design docs, and Trellis frontend/backend specs to the current Practice Shard 6-view workbench design.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c577dd8` | (see git log) |
+| `fc6c2d4` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
