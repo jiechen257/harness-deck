@@ -205,6 +205,44 @@ mod tests {
     }
 
     #[test]
+    fn create_local_asset_from_practice_materializes_registry_asset_when_registry_is_active() {
+        let db = test_db();
+        let dir = tempfile::tempdir().expect("tempdir");
+        let registry = dir.path().join("registry");
+        std::fs::create_dir_all(&registry).expect("registry dir");
+        db.insert_registry(&crate::domain::registry_connection::NewRegistryConnection {
+            path: registry.to_string_lossy().to_string(),
+            registry_type: "initialized".into(),
+        })
+        .expect("active registry");
+        let practice = db
+            .insert_practice(&NewPracticeCard {
+                title: "Local review skill".into(),
+                practice_type: "skill".into(),
+                summary: Some("Review local harness assets.".into()),
+                scenarios: Some(r#"["Review Claude and Codex local assets"]"#.into()),
+                comparable: None,
+                applicability: Some("can_generate_asset".into()),
+                generated_by: Some("test".into()),
+            })
+            .expect("insert practice");
+
+        let asset = loop_service::create_local_asset_from_practice(
+            &db,
+            &practice.id,
+            "skill",
+            "system-skills/local-review",
+            true,
+        )
+        .expect("create asset");
+
+        let skill_file = registry.join(&asset.registry_path).join("SKILL.md");
+        let content = std::fs::read_to_string(skill_file).expect("materialized skill");
+        assert!(content.contains("Local review skill"));
+        assert!(content.contains("Review local harness assets."));
+    }
+
+    #[test]
     fn normalize_signal_uses_codex_exec_schema_flow_end_to_end() {
         let _guard = env_lock().lock().expect("env lock");
         let db = test_db();

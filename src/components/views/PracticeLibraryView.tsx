@@ -209,7 +209,7 @@ export function PracticeLibraryView({ locale, onSelectView }: PracticeLibraryVie
     <div className="view-content">
       <div className="view-header">
         <div>
-          <span className="view-kicker">PRACTICE LIBRARY</span>
+          <span className="view-kicker">DISCOVER</span>
           <h1 className="view-title">{zh ? "信号不是内容库，信号是可落地实践的入口。" : "Signals are not a content library; they are the entry point to local practice."}</h1>
           <p className="view-subtitle">{zh ? "从可信来源收集信号，生成实践草稿，保存为 Practice Card，再沉淀成本地可投射资产。" : "Collect trusted signals, generate practice drafts, save Practice Cards, then settle them as projectable local assets."}</p>
         </div>
@@ -393,8 +393,8 @@ export function PracticeLibraryView({ locale, onSelectView }: PracticeLibraryVie
             <div className="info-block">
               <LoopStepper activeStep="asset" locale={locale} />
               <div className="surface-head"><h3>{selectedAsset.registryPath}</h3><span className="badge">{selectedAsset.assetType}</span></div>
-              <p className="empty-hint">{zh ? "下一步：到应用与同步生成投射计划。" : "Next: generate a projection plan in Apply & Sync."}</p>
-              <button className="action-button" type="button" onClick={() => onSelectView("apply")}>{zh ? "打开应用与同步" : "Open Apply & Sync"}</button>
+              <p className="empty-hint">{zh ? "下一步：预览投射计划，确认后写入 Claude Code / Codex 目标。" : "Next: preview the projection plan, then confirm writes to Claude Code / Codex targets."}</p>
+              <button className="action-button" type="button" onClick={() => onSelectView("apply")}>{zh ? "预览投射计划" : "Preview Projection"}</button>
             </div>
           ) : null}
         </section>

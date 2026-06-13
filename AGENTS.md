@@ -1,4 +1,4 @@
-# HarnessDeck Agent 工作规则
+# Hone Agent 工作规则
 
 本文件约束自动化代理在 `harness-deck` 仓库中的工作方式。上层全局规则仍然生效，本文件只记录本项目的额外约定。
 
@@ -8,11 +8,13 @@
 - 当前已有 Tauri 2 + React + TypeScript + Rust macOS 桌面应用、package 配置、测试和构建命令。
 - 当前主窗口对齐 command deck 原型，包含顶部命令栏、品牌状态带、菜单栏面板和 macOS 窗口化工作台。
 - 当前 Tauri 配置包含 `main` 管理窗口和 `menubar` 菜单栏面板窗口；`menubar` 通过 `index.html?panel=1` 渲染。
-- 当前默认仍为 fixture / mock mode，不直接写入真实 Claude Code、Codex 或系统电源配置。
+- 当前主导航为 5 个工作台视图：Home、Discover、Usage、Insights、Settings。
+- 当前数据层使用 SQLite；registry repo 保存可投射资产；Claude Code / Codex target 目录保存投射结果。
+- 当前 projection confirm / adopt / rollback 会真实触碰文件系统，必须先获得 `write_projection` 授权。
 - 当前设计与实现来源：
-  - `docs/superpowers/specs/2026-06-07-harness-deck-design.md`
-  - `docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md`
-  - `docs/product-design/harnessdeck-command-deck-prototype.html`
+  - `.trellis/tasks/06-13-06-13-readme-product-loop-real-closure/`
+  - `README.md`
+  - `docs/product-design/`（视觉参考）
   - `yetone/native-feel-skill`
 
 ## 默认语言
@@ -26,30 +28,28 @@
 
 ## 产品边界
 
-HarnessDeck 是 macOS 菜单栏应用和管理工作台，核心目标是帮助用户用好 harness engineering。
+Hone 是 macOS 菜单栏应用和管理工作台，核心目标是帮助个人开发者发现、应用、观测并持续优化 AI coding/harness engineering 实践。
 
 当前产品闭环是：
 
 ```text
-Discover -> Profile -> Sync -> Operate -> Improve
+Discover -> Apply -> Observe -> Optimize
 ```
 
 MVP 必须保留完整闭环：
 
-- 发现 harness engineering 最佳实践。
-- 生成并维护 Harness Profile。
-- 在 Claude Code 和 Codex 之间安全同步。
-- 通过菜单栏控制中心融入日常工作。
-- 基于用量、drift、失败和更新给出改进建议。
+- Discover：收集信号，生成 Practice Card，并沉淀为 registry-backed local asset。
+- Apply：预览 projection plan，确认后投射到 Claude Code / Codex，支持 adopt 和 rollback。
+- Observe：读取真实本地 Usage、projection health 和 audit trail。
+- Optimize：基于洞察和 BYOA agent 生成可确认的本地资产改进建议。
 
 ## UI/UX 约定
 
-- 复杂 UI 改动优先对齐 `docs/product-design/harnessdeck-command-deck-prototype.html`。
+- 复杂 UI 改动优先对齐当前五视图闭环；视觉风格可参考 `docs/product-design/harnessdeck-command-deck-prototype.html`。
 - 不使用星宿名（天枢、天璇、瑶光等）作为功能名，功能命名保持工程语义。
-- 中文界面中 `Profiles` 统一使用“配置集”。
 - 浅色主题使用浅金白底、低饱和星图、深蓝/鎏金点缀。
 - 深色主题使用玄夜蓝、鎏金星图风格。
-- 菜单栏面板必须能独立于管理窗口展示当前配置集、同步健康度、成本、防睡状态和快捷动作。
+- 菜单栏面板必须能独立于管理窗口展示闭环健康度、实践健康度、本地用量和快捷动作。
 - 原生感改动遵循 native-feel audit：系统字体、默认 cursor、非内容文本不选中、平台 focus ring、pressed state、禁用 WebKit 默认右键菜单、快捷键遵循 macOS 习惯。
 
 ## 技术方向
@@ -68,14 +68,14 @@ MVP 必须保留完整闭环：
 ## 安全与隐私
 
 - 默认不上传 prompts、source code、完整 logs。
-- secrets 存 Keychain，Profile files 和 SQLite 只保存引用。
+- secrets 存 Keychain，registry asset 和 SQLite 只保存引用。
 - 读取 logs、启用 hooks、调用本地 LLM、发送脱敏摘要到远端 LLM、启用实验性合盖防睡，都需要用户明确授权。
-- 修改 Claude/Codex 配置前必须生成 plan、展示 diff、备份、写入、验证并记录 manifest。
+- 修改 Claude/Codex target 前必须生成 plan、展示 diff、获得 `write_projection` 授权、写入、验证并记录 audit。
 - 涉及账号切换、配置写入、rollback 和隐私授权的动作需要进入 audit trail。
 
 ## 文档维护
 
-- 产品设计变更先更新 spec。
+- 产品设计变更先更新当前 Trellis task / spec。
 - README 写中文稳定结论、当前状态和入口信息。
 - `README.en.md` 写对应英文文档。
 - 新增实现计划时，保持它与 spec 对齐，避免重新定义 MVP 边界。
@@ -87,7 +87,7 @@ MVP 必须保留完整闭环：
 纯文档修改至少执行：
 
 ```bash
-rg -n 'TB''D|TO''DO|place''holder|待''定|未''定|不''确定|不是.*而''是|not .*b''ut' AGENTS.md README.md README.en.md docs/superpowers/specs/2026-06-07-harness-deck-design.md docs/superpowers/specs/2026-06-07-harness-deck-implementation-design.md
+rg -n 'TB''D|TO''DO|place''holder|待''定|未''定|不''确定|不是.*而''是|not .*b''ut' AGENTS.md README.md README.en.md CLAUDE.md docs .trellis/spec
 ```
 
 代码或 UI 修改按风险运行：

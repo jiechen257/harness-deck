@@ -87,6 +87,36 @@ mod tests {
     }
 
     #[test]
+    fn execute_projection_requires_write_projection_authorization() {
+        let db = test_db();
+        db.seed_authorization().expect("seed auth");
+        let dir = tempfile::tempdir().expect("tempdir");
+        let registry = dir.path().join("registry");
+        let target = dir.path().join("target");
+        std::fs::create_dir_all(registry.join("skills/test-skill")).unwrap();
+        std::fs::write(registry.join("skills/test-skill/SKILL.md"), "content").unwrap();
+        std::fs::create_dir_all(&target).unwrap();
+
+        setup_asset(&db, "skills/test-skill");
+
+        let plan =
+            projection_service::plan_projection(&db, &registry, &target, "codex").expect("plan");
+        let error = projection_service::execute_projection_with_authorization(&db, &registry, &plan)
+            .expect_err("write projection authorization should be required");
+
+        assert_eq!(error.code, "AuthorizationRequired");
+        assert!(!target.join("test-skill").exists());
+
+        db.grant_authorization("write_projection")
+            .expect("grant write projection");
+        let ids = projection_service::execute_projection_with_authorization(&db, &registry, &plan)
+            .expect("authorized projection");
+
+        assert_eq!(ids.len(), 1);
+        assert!(target.join("test-skill").symlink_metadata().is_ok());
+    }
+
+    #[test]
     fn rollback_removes_symlink_keeps_registry() {
         let db = test_db();
         let dir = tempfile::tempdir().expect("tempdir");
@@ -109,6 +139,36 @@ mod tests {
 
         let projection = db.get_projection(&ids[0]).expect("get");
         assert_eq!(projection.status, "removed");
+    }
+
+    #[test]
+    fn rollback_projection_requires_write_projection_authorization() {
+        let db = test_db();
+        db.seed_authorization().expect("seed auth");
+        let dir = tempfile::tempdir().expect("tempdir");
+        let registry = dir.path().join("registry");
+        let target = dir.path().join("target");
+        std::fs::create_dir_all(registry.join("skills/rb-auth-skill")).unwrap();
+        std::fs::write(registry.join("skills/rb-auth-skill/SKILL.md"), "content").unwrap();
+        std::fs::create_dir_all(&target).unwrap();
+
+        setup_asset(&db, "skills/rb-auth-skill");
+        let plan = projection_service::plan_projection(&db, &registry, &target, "claude_code")
+            .expect("plan");
+        let ids = projection_service::execute_projection(&db, &registry, &plan).expect("execute");
+
+        let error = projection_service::rollback_projection_with_authorization(&db, &ids[0])
+            .expect_err("rollback should require authorization");
+
+        assert_eq!(error.code, "AuthorizationRequired");
+        assert!(target.join("rb-auth-skill").symlink_metadata().is_ok());
+
+        db.grant_authorization("write_projection")
+            .expect("grant write projection");
+        projection_service::rollback_projection_with_authorization(&db, &ids[0])
+            .expect("authorized rollback");
+
+        assert!(!target.join("rb-auth-skill").exists());
     }
 
     #[test]

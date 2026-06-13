@@ -199,11 +199,9 @@ When adding new files to `src/templates/trellis/scripts/`:
 1. Add `export const xxxScript = readTemplate("scripts/path/file.py");`
 2. Add to `getAllScripts()` Map
 
-That's it. `commands/update.ts` uses `getAllScripts()` directly — no manual sync needed.
+That's it. `commands/update.ts` uses `getAllScripts()` directly, so the map remains the source of truth.
 
-**Why this matters**: Without registration in `getAllScripts()`, `trellis update` won't sync the file to user projects. Bug fixes and features won't propagate.
-
-**History**: Before v0.4.0-beta.3, `update.ts` had its own hand-maintained file list that frequently fell out of sync with `getAllScripts()`. This caused 11 Python files to be silently skipped during `trellis update`. The fix was to eliminate the duplicate list and use `getAllScripts()` as the single source of truth.
+**Why this matters**: Without registration in `getAllScripts()`, `trellis update` won't propagate the file to user projects.
 
 ### Quick Checklist for New Scripts
 
@@ -212,7 +210,7 @@ That's it. `commands/update.ts` uses `getAllScripts()` directly — no manual sy
 grep -l "newFileName" src/templates/trellis/index.ts  # Should match
 ```
 
-### Template Sync Convention
+### Template Alignment Convention
 
 `.trellis/scripts/` (dogfooded) and `packages/cli/src/templates/trellis/scripts/` (template) must stay identical. After editing `.trellis/scripts/`, always sync:
 

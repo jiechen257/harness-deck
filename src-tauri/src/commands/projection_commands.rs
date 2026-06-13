@@ -140,8 +140,11 @@ pub fn confirm_projection(
     )?;
     let skipped = plan.skips;
     let conflicts = plan.conflicts;
-    let executed_projection_ids =
-        projection_service::execute_projection(&db, registry_path.as_path(), &plan)?;
+    let executed_projection_ids = projection_service::execute_projection_with_authorization(
+        &db,
+        registry_path.as_path(),
+        &plan,
+    )?;
     Ok(ProjectionExecutionResult {
         target_kind,
         executed_projection_ids,
@@ -166,7 +169,7 @@ pub fn adopt_asset(
     let target_path = expand_user_path(&target_path);
     let registry_path = expand_user_path(&registry_path);
     let backup_path = expand_user_path(&backup_path);
-    projection_service::adopt_unmanaged(
+    projection_service::adopt_unmanaged_with_authorization(
         &db,
         target_path.as_path(),
         registry_path.as_path(),
@@ -185,7 +188,7 @@ pub fn rollback_projection(
     let db = db
         .lock()
         .map_err(|e| CommandError::storage(e.to_string()))?;
-    projection_service::rollback_projection(&db, &projection_id)
+    projection_service::rollback_projection_with_authorization(&db, &projection_id)
 }
 
 #[tauri::command]

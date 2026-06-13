@@ -84,6 +84,17 @@ export interface RealInsight {
   source: string;
 }
 
+// BYOA agents
+
+export type AgentKind = "Claude" | "Codex";
+
+export interface AgentAvailability {
+  kind: AgentKind;
+  binaryPath: string | null;
+  version: string | null;
+  available: boolean;
+}
+
 // Signal Cards
 
 export interface SignalCard {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  detectAgents,
   detectRegistryCandidates,
   getActiveRegistry,
   getAuthorizationState,
@@ -11,7 +12,7 @@ import {
   setRegistryConnection,
   useStarterRegistryReadonly,
 } from "../../lib/api";
-import type { AuditEvent, AuthorizationEntry, AuthScope, Locale, RegistryCandidate, RegistryConnection, Theme } from "../../lib/types";
+import type { AgentAvailability, AuditEvent, AuthorizationEntry, AuthScope, Locale, RegistryCandidate, RegistryConnection, Theme } from "../../lib/types";
 
 interface SettingsViewProps {
   locale: Locale;
@@ -56,14 +57,16 @@ function GeneralTab({ locale, theme }: { locale: Locale; theme: Theme }) {
   const [registry, setRegistry] = useState<RegistryConnection | null>(null);
   const [registryInput, setRegistryInput] = useState("");
   const [candidates, setCandidates] = useState<RegistryCandidate[]>([]);
+  const [agents, setAgents] = useState<AgentAvailability[]>([]);
   const [registryError, setRegistryError] = useState<string | null>(null);
   const zh = locale === "zh-CN";
 
   const loadRegistry = useCallback(async () => {
-    const [r, nextCandidates] = await Promise.all([getActiveRegistry(), detectRegistryCandidates()]);
+    const [r, nextCandidates, nextAgents] = await Promise.all([getActiveRegistry(), detectRegistryCandidates(), detectAgents()]);
       setRegistry(r);
       if (r) setRegistryInput(r.path);
       setCandidates(nextCandidates);
+      setAgents(nextAgents);
   }, []);
 
   useEffect(() => {
@@ -161,6 +164,25 @@ function GeneralTab({ locale, theme }: { locale: Locale; theme: Theme }) {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="settings-group">
+        <h3 className="section-title">{zh ? "本机 Agent" : "Local Agents"}</h3>
+        <p className="field-hint">{zh ? "检测 BYOA 执行入口，用于规范化信号和运行 system skills。" : "Detect BYOA executables used for signal normalization and system skills."}</p>
+        <div className="item-list">
+          {agents.map((agent) => (
+            <div key={agent.kind} className="list-row">
+              <div className="row-primary">
+                <strong>{agent.kind}</strong>
+                <span className="row-meta">{agent.binaryPath ?? (zh ? "未检测到可执行文件" : "Executable not found")}</span>
+              </div>
+              <span className={`badge ${agent.available ? "badge-good" : "badge-warn"}`}>
+                {agent.available ? (agent.version ?? (zh ? "可用" : "Available")) : (zh ? "不可用" : "Unavailable")}
+              </span>
+            </div>
+          ))}
+          {agents.length === 0 ? <p className="empty-hint">{zh ? "尚未检测到本机 agent。" : "No local agent detected yet."}</p> : null}
         </div>
       </section>
 

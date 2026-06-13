@@ -168,6 +168,15 @@ pub fn execute_projection(
     Ok(executed)
 }
 
+pub fn execute_projection_with_authorization(
+    db: &Database,
+    registry_root: &Path,
+    plan: &ProjectionPlan,
+) -> Result<Vec<String>, CommandError> {
+    require_write_projection(db)?;
+    execute_projection(db, registry_root, plan)
+}
+
 pub fn rollback_projection(db: &Database, projection_id: &str) -> Result<(), CommandError> {
     let projection = db.get_projection(projection_id)?;
     let target = PathBuf::from(&projection.target_path);
@@ -193,6 +202,14 @@ pub fn rollback_projection(db: &Database, projection_id: &str) -> Result<(), Com
     });
 
     Ok(())
+}
+
+pub fn rollback_projection_with_authorization(
+    db: &Database,
+    projection_id: &str,
+) -> Result<(), CommandError> {
+    require_write_projection(db)?;
+    rollback_projection(db, projection_id)
 }
 
 pub fn adopt_unmanaged(
@@ -279,6 +296,27 @@ pub fn adopt_unmanaged(
         backup_path: backup_path.to_string_lossy().to_string(),
         symlink_path: target_path.to_string_lossy().to_string(),
     })
+}
+
+pub fn adopt_unmanaged_with_authorization(
+    db: &Database,
+    target_path: &Path,
+    registry_root: &Path,
+    registry_dest: &str,
+    asset_type: &str,
+    backup_root: &Path,
+    target_kind: &str,
+) -> Result<AdoptResult, CommandError> {
+    require_write_projection(db)?;
+    adopt_unmanaged(
+        db,
+        target_path,
+        registry_root,
+        registry_dest,
+        asset_type,
+        backup_root,
+        target_kind,
+    )
 }
 
 pub fn check_health(db: &Database, target_kind: &str) -> Result<Vec<HealthFinding>, CommandError> {
@@ -535,4 +573,19 @@ fn copy_dir_contents(src: &Path, dest: &Path) -> Result<(), CommandError> {
         CommandError::storage(format!("failed to copy directory {}: {e}", src.display()))
     })?;
     Ok(())
+}
+
+fn require_write_projection(db: &Database) -> Result<(), CommandError> {
+    let authorized = db
+        .get_all_authorizations()?
+        .into_iter()
+        .any(|entry| entry.scope == "write_projection" && entry.granted);
+
+    if authorized {
+        Ok(())
+    } else {
+        Err(CommandError::authorization_required(
+            "write_projection authorization is required before modifying target files",
+        ))
+    }
 }

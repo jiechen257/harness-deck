@@ -41,7 +41,7 @@ export function MenuBarPanel({
   const practiceSection = section(summary, "practices");
   const assetSection = section(summary, "assets");
   const reviewSection = section(summary, "review");
-  const operationsSection = section(summary, "operations");
+  const usageSection = section(summary, "usage");
   const updatedAt = summary
     ? new Date(summary.updatedAt).toLocaleString(zh ? "zh-CN" : "en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
     : (zh ? "读取中" : "Loading");
@@ -121,22 +121,22 @@ export function MenuBarPanel({
           </section>
 
           <section className="card">
-            <div className="card-head"><div><strong>{zh ? "本机运维" : "Local Ops"}</strong><div className="caption">{zh ? "只读状态，运行进入工作台确认" : "Read-only state; run from workbench confirmation"}</div></div><span className="pill">{operationsSection?.metrics.length ?? 3}</span></div>
-            <div className="row"><div><strong>Codex proxy</strong><span className="caption">launchctl</span></div><span className="pill good">{metricValue(operationsSection, "Codex proxy") || (zh ? "运行中" : "running")}</span></div>
-            <div className="row"><div><strong>Sleep guard</strong><span className="caption">caffeinate</span></div><span className="pill warn">{metricValue(operationsSection, "Sleep guard") || (zh ? "活跃" : "active")}</span></div>
-            <div className="row"><div><strong>Wake display</strong><span className="caption">pmset</span></div><span className="pill">{metricValue(operationsSection, "Scripts today") || (zh ? "空闲" : "idle")}</span></div>
+            <div className="card-head"><div><strong>{zh ? "本地用量" : "Local Usage"}</strong><div className="caption">{zh ? "只读聚合，详情进入工作台" : "Read-only aggregate; details in workbench"}</div></div><span className="pill">{usageSection?.metrics.length ?? 2}</span></div>
+            <div className="row"><div><strong>Codex</strong><span className="caption">{zh ? "本地线程" : "local threads"}</span></div><span className="pill good">{metricValue(usageSection, "Codex threads")}</span></div>
+            <div className="row"><div><strong>Claude Code</strong><span className="caption">{zh ? "本地会话" : "local sessions"}</span></div><span className="pill warn">{metricValue(usageSection, "Claude sessions")}</span></div>
+            <button className="action" type="button" onClick={() => onOpenView("usage")}><div><strong>{zh ? "查看用量" : "Open Usage"}</strong><span className="caption">{zh ? "成本、tokens、线程" : "cost, tokens, threads"}</span></div><span>→</span></button>
           </section>
 
           <section className="card">
             <div className="card-head"><div><strong>{zh ? "快捷入口" : "Quick Actions"}</strong><div className="caption">{zh ? "低风险动作在菜单栏，写入动作进入工作台确认" : "Low-risk actions stay here; writes open the workbench"}</div></div></div>
             <button className="action" type="button" disabled={refreshing || panelRefreshing} onClick={handleRefreshSignals}><div><strong>{zh ? "刷新信号" : "Refresh"}</strong><span className="caption">{zh ? "低风险读取" : "Low-risk read"}</span></div><span>↻</span></button>
-            <button className="action" type="button" onClick={() => onOpenView("library")}><div><strong>{zh ? "规范化信号" : "Normalize"}</strong><span className="caption">{zh ? "主窗口确认" : "Confirm in workbench"}</span></div><span>→</span></button>
-            <button className="action" type="button" onClick={() => onOpenView("review")}><div><strong>{zh ? "打开本地评审" : "Open Local Review"}</strong><span className="caption">{zh ? "查看证据" : "View evidence"}</span></div><span>→</span></button>
-            <button className="action" type="button" onClick={() => onOpenView("apply")}><div><strong>{zh ? "打开应用与同步" : "Open Apply & Sync"}</strong><span className="caption">{zh ? "先预览计划" : "Preview plan first"}</span></div><span>→</span></button>
+            <button className="action" type="button" onClick={() => onOpenView("discover")}><div><strong>{zh ? "规范化信号" : "Normalize"}</strong><span className="caption">{zh ? "主窗口确认" : "Confirm in workbench"}</span></div><span>→</span></button>
+            <button className="action" type="button" onClick={() => onOpenView("insights")}><div><strong>{zh ? "打开洞察" : "Open Insights"}</strong><span className="caption">{zh ? "查看证据" : "View evidence"}</span></div><span>→</span></button>
+            <button className="action" type="button" onClick={() => onOpenView("apply")}><div><strong>{zh ? "预览投射计划" : "Preview Projection"}</strong><span className="caption">{zh ? "先预览计划" : "Preview plan first"}</span></div><span>→</span></button>
             <button className="action primary" type="button" onClick={onOpenWorkbench}><div><strong>{zh ? "打开工作台" : "Open Workbench"}</strong><span className="caption">{zh ? "进入完整运营台" : "Enter full ops desk"}</span></div><span>↗</span></button>
           </section>
         </div>
-        <footer className="footer"><span className="pill">{zh ? "配置集：默认" : "Profile: Default"}</span><span className="pill good">{zh ? "同步：正常" : "Sync: OK"}</span></footer>
+        <footer className="footer"><span className="pill">{zh ? "注册表：本地" : "Registry: Local"}</span><span className="pill good">{zh ? "闭环：可评审" : "Loop: Reviewable"}</span></footer>
       </section>
     </main>
   );
