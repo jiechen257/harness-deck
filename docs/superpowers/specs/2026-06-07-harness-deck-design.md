@@ -1,5 +1,7 @@
 # HarnessDeck 产品设计
 
+> 历史文档：本文记录 2026-06-07 的 Profile-first 方案，不再作为当前产品边界或 UI 权威。当前产品逻辑以 `docs/product-design/screens/workbench-home.html` 的 Practice Shard 6 视图工作台为准：Home、Practice Library、Apply & Sync、Local Review、Operations、Settings。
+
 ## 产品名称
 
 推荐产品名：**HarnessDeck**。

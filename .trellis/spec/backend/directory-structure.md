@@ -1,6 +1,6 @@
 # 后端目录结构
 
-后端代码位于 `src-tauri/src/`，采用三层 Rust 架构，另外将 tray/窗口管理逻辑从 `lib.rs` 分离。
+后端代码位于 `src-tauri/src/`，采用 domain / services / commands / db / readers 分层。当前 `lib.rs` 持有 tray、窗口和 handler 注册逻辑。
 
 ## 目录布局
 
@@ -10,121 +10,126 @@ src-tauri/
   tauri.conf.json
   src/
     main.rs                          # Tauri 入口
-    lib.rs                           # 模块声明 + invoke_handler 注册
-    tray.rs                          # 系统托盘图标、菜单、点击事件
-    window.rs                        # 窗口管理（show_menu_panel、workbench 显示）
+    lib.rs                           # 模块声明、tray/window 管理、invoke_handler 注册
     commands/
       mod.rs
       app_commands.rs
-      profile_commands.rs
-      target_commands.rs
-      deploy_commands.rs
-      account_commands.rs
-      registry_commands.rs
-      insight_commands.rs
-      usage_commands.rs
-      wake_commands.rs
+      db_commands.rs
+      intake_commands.rs
+      loop_commands.rs
+      projection_commands.rs
+      skill_commands.rs
+      byoa_commands.rs               # 服务文件存在；当前未在 lib.rs 注册
+    db/
+      mod.rs
+      schema.rs
+      asset_repo.rs
+      audit_repo.rs
+      auth_repo.rs
+      ops_repo.rs
+      practice_repo.rs
+      projection_repo.rs
+      refresh_repo.rs
+      registry_repo.rs
+      signal_repo.rs
+      skill_config_repo.rs
+      source_config_repo.rs
     domain/
       mod.rs
       app.rs
-      adapter.rs                     # TargetKind 枚举
-      deploy_plan.rs
-      errors.rs                      # CommandError 结构体
-      manifest.rs
-      profile.rs                     # HarnessProfile、ProfileSummary、ValidationReport
-      account_workspace.rs
+      audit.rs
+      auth_state.rs
+      byoa.rs
+      errors.rs
       insights.rs
+      local_asset.rs
+      loop_summary.rs
+      ops_script.rs
+      practice.rs
+      projection.rs
+      projection_plan.rs
+      refresh.rs
       registry.rs
-      sync_governance.rs
-      target_integration.rs
+      registry_connection.rs
+      signal.rs
+      source_config.rs
+      system_skill.rs
       usage.rs
-      wake_control.rs
     services/
       mod.rs
       app_paths.rs
-      adapter_service.rs
-      privacy_service.rs
-      profile_service.rs
-      storage_service.rs
-      sync_governance_service.rs
-      target_integration_service.rs
-      account_service.rs
+      byoa_service.rs
       insight_service.rs
-      registry_service.rs
+      intake_service.rs
+      loop_service.rs
+      projection_service.rs
+      secret_service.rs
+      skill_service.rs
+      target_adapter.rs
       usage_service.rs
       wake_service.rs
-    tests/                           # 按领域组织测试
-      mod.rs
-      profile_tests.rs              # 配置集解析、验证、秘密扫描
-      deploy_tests.rs               # deploy plan 生成、manifest 写入
-      target_tests.rs               # 目标发现授权
-      sync_governance_tests.rs      # 三方 diff、冲突、漂移
-      account_tests.rs              # 账号工作区、Keychain 引用
-      usage_tests.rs                # 用量汇总、置信度标签
-      registry_tests.rs             # 注册表模板、技能评分
-      insight_tests.rs              # 洞察、feed
-      wake_tests.rs                 # 防睡模式、实验性 lid-awake
+    readers/
+      claude_reader.rs
+      codex_reader.rs
+      sanitizer.rs
+      skill_scanner.rs
+    db_tests.rs
+    intake_tests.rs
+    loop_tests.rs
+    projection_tests.rs
+    skill_tests.rs
 ```
 
 ## 模块组织
 
-### 三层架构（不变）
+- `domain/`：可序列化的数据结构和纯业务规则。无文件系统、Tauri、网络或 UI 依赖。
+- `db/`：SQLite 连接、schema 初始化、seed、repository。repository 返回 domain 类型或简单持久化结构，不直接暴露 SQL 到 commands。
+- `services/`：副作用层。负责应用数据目录、registry、projection、target adapter、secret boundary、intake 和 skill 扫描。
+- `commands/`：Tauri IPC 边界。command 验证参数、检查授权、调用 service、返回 `Result<T, CommandError>`。保持薄封装。
+- `readers/`：读取 Claude/Codex 本地信息、skill 扫描和脱敏。reader 输出必须经过 sanitizer 或 domain 边界后再进入 service。
 
-- **`domain/`** — 可序列化的数据结构和纯业务规则。无文件系统、Tauri、网络或 UI 依赖。
-- **`services/`** — 副作用层：应用数据目录、manifest 文件、fixture 加载，未来的 SQLite 和 Keychain 封装。每个 service 文件对应一个领域区域。
-- **`commands/`** — Tauri IPC 边界。command 验证参数、调用 service、返回 `Result<T, CommandError>`。保持薄封装。
-
-### tray/窗口分离（新增）
-
-当前 `lib.rs` 混合了模块声明、tray 图标构建、窗口管理和 handler 注册。拆分为：
-
-- **`lib.rs`** — 仅保留模块声明、`run()` 函数和 `invoke_handler` 注册。
-- **`tray.rs`** — tray 图标构建、菜单项定义、tray 事件处理。
-- **`window.rs`** — `show_menu_panel`、workbench 窗口显示等窗口管理函数。
-
-### macOS 菜单栏图标约定
+## macOS 菜单栏图标约定
 
 Dock / app bundle icon 和菜单栏 tray icon 使用不同资源：
 
-- Dock / app bundle icon 由 `src-tauri/icons/icon-master.svg` 生成，并通过 `src-tauri/tauri.conf.json` 的 `bundle.icon` 引用 `32x32.png`、`128x128.png`、`128x128@2x.png`、`icon.icns` 和 `icon.ico`。
+- Dock / app bundle icon 由 `src-tauri/icons/icon-master.svg` 生成，并通过 `src-tauri/tauri.conf.json` 的 `bundle.icon` 引用。
 - 菜单栏 tray icon 使用透明单色模板图 `src-tauri/icons/tray-template.png`，Rust 侧通过 `tauri::include_image!("icons/tray-template.png")` 嵌入，并在 `TrayIconBuilder` 上同时设置 `.icon(...)` 和 `.icon_as_template(true)`。
-- 不要用 `app.default_window_icon()` 作为菜单栏图标。Dock 图标通常带底板、阴影和多色细节，在 macOS 菜单栏小尺寸和深浅模式下可读性不稳定。
+- 不要用 `app.default_window_icon()` 作为菜单栏图标。
 
-### 测试按领域组织（新增）
+## 测试按领域组织
 
-将 `phase{N}_tests.rs` 重组为按领域域拆分的测试文件，放在 `tests/` 目录下：
+| 文件 | 覆盖领域 |
+|------|----------|
+| `db_tests.rs` | SQLite schema、seed、repository |
+| `intake_tests.rs` | signal source、refresh、normalize |
+| `loop_tests.rs` | Practice Card、local asset、loop summary |
+| `projection_tests.rs` | target adapter、preview、confirm、adopt、rollback、health |
+| `skill_tests.rs` | system skill 扫描和执行边界 |
 
-| 旧文件 | 新文件 | 覆盖领域 |
-|--------|--------|----------|
-| `phase1_tests.rs` | `profile_tests.rs` + `deploy_tests.rs` | 配置集验证、秘密扫描、deploy plan、manifest |
-| `phase2_3_tests.rs` | `target_tests.rs` + `sync_governance_tests.rs` | 目标发现授权、同步治理 |
-| `phase4_5_tests.rs` | `account_tests.rs` + `usage_tests.rs` | 账号工作区、Keychain、用量置信度 |
-| `phase6_8_tests.rs` | `registry_tests.rs` + `insight_tests.rs` + `wake_tests.rs` | 注册表、洞察/feed、防睡控制 |
-
-### 添加新 Tauri 命令的流程
+## 添加新 Tauri 命令的流程
 
 ```rust
 // 1. domain/ — 定义结构体
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct WakeSession {
-    pub mode: WakeMode,
-    pub active: bool,
-    pub duration_minutes: Option<u32>,
+pub struct ProjectionPlan {
+    pub id: String,
+    pub target_id: String,
+    pub operations: Vec<ProjectionOperation>,
 }
 
 // 2. services/ — 实现逻辑
-pub fn get_fixture_wake_control() -> WakeControlSummary { /* ... */ }
+pub fn preview_projection(/* ... */) -> Result<ProjectionPlan, CommandError> { /* ... */ }
 
 // 3. commands/ — 薄 command 处理器
 #[tauri::command]
-pub fn get_wake_control() -> WakeControlSummary {
-    wake_service::get_fixture_wake_control()
+pub fn preview_projection(/* ... */) -> Result<ProjectionPlan, CommandError> {
+    projection_service::preview_projection(/* ... */)
 }
 
 // 4. lib.rs — 在 generate_handler![] 中注册
 .invoke_handler(tauri::generate_handler![
-    commands::wake_commands::get_wake_control,
+    commands::projection_commands::preview_projection,
 ])
 ```
 
@@ -133,12 +138,12 @@ pub fn get_wake_control() -> WakeControlSummary {
 ## 命名约定
 
 - Rust 模块使用 `snake_case`。command 文件命名为 `{domain}_commands.rs`，service 命名为 `{domain}_service.rs`，测试命名为 `{domain}_tests.rs`。
-- 公开 domain 类型使用产品名称：`HarnessProfile`、`DeployPlan`、`ManifestSummary`、`TargetKind`、`CommandError`、`SyncGovernance`。
+- 公开 domain 类型使用当前产品名称：`PracticeCard`、`LocalAsset`、`ProjectionPlan`、`ProjectionTarget`、`AuditEvent`、`CommandError`。
 - 代码中保持产品专用英文标识符，中文只出现在前端本地化文案中。
 
 ## 边界
 
 - 前端代码不可写入用户 agent 配置文件。
-- 当前 fixture 模式下，Rust command 不暴露真实写操作。
-- 当前 fixture 模式下，适配器不读取真实 Claude Code 或 Codex 目录。
-- 每个新 command 必须在 `lib.rs` 的 `generate_handler![]` 中注册。
+- 真实 projection 写入必须经过 preview、authorization、confirm、audit。
+- 适配器读取和写入 Claude Code / Codex target 时必须走 `target_adapter` / `projection_service`。
+- 每个新 command 必须在 `lib.rs` 的 `generate_handler![]` 中注册，否则前端不能声明该能力可用。

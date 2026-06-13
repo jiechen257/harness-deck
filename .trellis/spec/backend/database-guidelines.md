@@ -1,46 +1,41 @@
 # 数据库规范
 
-HarnessDeck 采用本地优先架构，持久化状态存储在应用数据目录下。
+Hone 采用本地优先架构，持久化状态存储在应用数据目录下的 SQLite 和 registry 目录中。
 
 ## 应用数据布局
 
 ```text
-~/Library/Application Support/HarnessDeck/
-  manifests/               # dry-run 部署 manifest（JSON）
-  backups/                 # 未来的备份快照
-  registry-cache/          # 未来的注册表缓存
-  feed-cache/              # 未来的 feed 缓存
+~/Library/Application Support/<bundle app data>/
+  hone.db                  # SQLite 主库
+  profiles/                # 历史目录，当前仍由 app paths 创建
+  manifests/               # manifest/metadata 目录
+  backups/                 # projection 写入前备份
+  registry-cache/          # starter 或用户选择的 registry-backed local assets 缓存
+  feed-cache/              # feed/source 缓存
+  suggestions/             # 改进建议缓存
+  install-history/         # 安装/投射历史
 ```
 
-路径解析使用 `app_paths::paths_for_app()`：
-
-```rust
-// src-tauri/src/services/app_paths.rs
-pub fn paths_for_app<R: Runtime>(app: &AppHandle<R>) -> Result<AppPaths, CommandError> {
-    let base = app.path().app_data_dir().map_err(CommandError::from)?;
-    Ok(AppPaths {
-        base: base.clone(),
-        manifests: base.join("manifests"),
-        backups: base.join("backups"),
-    })
-}
-```
+路径解析使用 `app_paths::paths_for_app()`，目录创建必须集中在 app paths/service 层。
 
 ## 当前持久化
 
-- Dry-run manifest 是由 `storage_service::write_dry_run_manifest` 写入 `manifests/` 的 JSON 文件。
-- 配置集 fixture 硬编码在 `profile_service.rs` 中，不从磁盘加载。
-- 当前阶段无 SQLite 或 Keychain。
+- SQLite 由 `db::Database::open()` 打开，schema 在 `db/schema.rs` 初始化。
+- `seed_authorization()` 写入基础授权范围。
+- `intake_service::seed_default_sources()` 写入默认信号源。
+- repository 文件按领域拆分：signal、practice、asset、projection、registry、auth、audit、ops、refresh、source config、skill config。
+- registry 目录保存可投射资产；SQLite 保存索引、状态、授权、projection 和 audit。
 
-## 未来 SQLite 规则
+## SQLite 规则
 
-- 在 SQLite 中存储索引、状态、用量聚合、feed 缓存、洞察和审计记录。
-- 完整部署 manifest 作为文件存储；仅可索引的元数据放入 SQLite。
+- SQLite 存储索引、状态、信号、实践、资产、projection、授权和审计记录。
+- 完整文件内容、秘密值、prompt、source code 和完整日志不进入 SQLite。
 - 不存储 API key、provider token、prompt、源代码或完整日志。
-- 迁移必须是确定性的并有测试覆盖。
+- schema 迁移必须是确定性的并有测试覆盖。
 
-## 备份规则
+## Projection 写入规则
 
-- 未来的真实写入路径必须在写入前创建备份。
-- 部署 manifest 必须在写入完成前包含备份元数据。
-- 当前阶段仅展示备份设计和禁用的 UI 状态。
+- projection confirm / adopt / rollback 必须在写入前生成 plan 或读取已有 projection 元数据。
+- 修改 Claude/Codex target 前必须检查 `write_projection` 授权。
+- 写入完成后必须记录 audit event。
+- registry asset 和 target path 必须保留可审计引用，避免 UI 只保存展示字符串。

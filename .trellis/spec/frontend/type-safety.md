@@ -3,30 +3,25 @@
 ## TypeScript 规则
 
 - 所有前端源码使用 TypeScript。
-- `@typescript-eslint/no-explicit-any` 设为 `error`——禁止 `any`。
+- `@typescript-eslint/no-explicit-any` 设为 `error`，禁止 `any`。
 - 使用显式联合类型定义领域枚举：
 
 ```tsx
-// src/lib/types.ts — 共享领域类型
 export type Locale = "zh-CN" | "en-US";
 export type Theme = "light" | "dark";
-export type TargetKind = "Codex" | "ClaudeCode";
-export type OperationType = "CreateFile" | "UpdateFile" | "AppendBlock" | "ReplaceBlock" | "Noop";
-export type RiskLevel = "Low" | "Medium" | "High" | "Blocked";
-export type DataConfidence = "Official" | "LocalLog" | "Estimated" | "Missing";
-export type WakeMode = "StandardAwake" | "TimedAwake" | "DisplaySleep" | "ExperimentalLidAwake";
+export type TargetKind = "claude_code" | "codex";
+export type AuthScope = "registry" | "local_read" | "external_signals" | "write_projection" | "script_execution";
+export type SignalImpact = "low" | "medium" | "high";
+export type ProjectionStatus = "planned" | "active" | "rolled_back" | "failed";
 ```
 
 ```tsx
-// src/constants/types.ts — 前端独有类型
-export type ViewId =
-  | "home" | "discover" | "profiles" | "sync"
-  | "operate" | "usage" | "insights" | "guard" | "settings";
+// src/constants/types.ts
+export type ViewId = "home" | "library" | "apply" | "review" | "operations" | "settings";
 
 export interface NavItem {
   id: ViewId;
   icon: React.ComponentType;
-  matches?: ViewId[];
   zh: string;
   en: string;
 }
@@ -37,20 +32,18 @@ export interface NavItem {
 所有 Rust domain 结构体使用 `#[serde(rename_all = "camelCase")]`。TypeScript 接口必须精确镜像 camelCase 字段名：
 
 ```rust
-// Rust 侧
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ProfileSummary {
+pub struct PracticeCard {
     pub id: String,
-    pub mcp_references: usize,   // 序列化为 "mcpReferences"
+    pub practice_type: String,   // 序列化为 "practiceType"
 }
 ```
 
 ```tsx
-// TypeScript 侧
-export interface ProfileSummary {
+export interface PracticeCard {
   id: string;
-  mcpReferences: number;         // 匹配 camelCase serde 输出
+  practiceType: string;          // 匹配 camelCase serde 输出
 }
 ```
 
@@ -58,23 +51,13 @@ export interface ProfileSummary {
 
 ## Copy 类型
 
-`copy` 对象使用 `satisfies Record<Locale, Record<string, string>>` 确保两种语言有相同的 key：
-
-```tsx
-// src/constants/copy.ts
-export const copy = {
-  "zh-CN": { title: "HarnessDeck 命令中心", /* ... */ },
-  "en-US": { title: "HarnessDeck Command Center", /* ... */ },
-} satisfies Record<Locale, Record<string, string>>;
-
-export type CopyStrings = (typeof copy)["zh-CN"];
-```
+`copy` 对象使用 `satisfies Record<Locale, Record<string, string>>` 确保两种语言有相同的 key。
 
 组件通过 `CopyStrings` 类型接收 copy 对象，而不是通用的 `Record<string, string>`。
 
 ## 验证
 
 ```bash
-pnpm typecheck    # tsc --noEmit
-pnpm lint         # eslint + no-explicit-any = error
+pnpm typecheck
+pnpm lint
 ```

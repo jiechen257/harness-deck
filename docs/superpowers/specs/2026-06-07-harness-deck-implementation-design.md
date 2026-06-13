@@ -1,5 +1,7 @@
 # HarnessDeck Phase 0 + Phase 1 实现设计
 
+> 历史文档：本文记录 2026-06-07 的 Profile-first 起步实现方案，不再作为当前实现边界。当前产品逻辑以 `docs/product-design/screens/workbench-home.html` 的 Practice Shard 6 视图工作台和当前 Tauri/Rust/SQLite 实现为准。
+
 ## 文档目标
 
 这份文档把产品设计收敛成第一轮可执行工程方案。目标是初始化 Tauri + React + Rust 项目，建立本地优先架构边界，跑通从 Harness Profile 到 deploy plan preview 的最小闭环。
