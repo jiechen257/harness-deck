@@ -18,9 +18,16 @@ mod skill_tests;
 use tauri::menu::{Menu, MenuBuilder, MenuItem, SubmenuBuilder};
 use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, PhysicalPosition, Rect, Runtime};
+use tauri_plugin_positioner::{Position, WindowExt};
 
 fn show_menu_panel<R: Runtime>(app: &AppHandle<R>, anchor: Option<&Rect>) {
   if let Some(window) = app.get_webview_window("menubar") {
+    if anchor.is_some() && window.move_window_constrained(Position::TrayBottomCenter).is_ok() {
+      let _ = window.show();
+      let _ = window.set_focus();
+      return;
+    }
+
     if let Some(rect) = anchor {
       let position = rect.position.to_physical::<i32>(1.0);
       let size = rect.size.to_physical::<i32>(1.0);
@@ -36,6 +43,7 @@ fn show_menu_panel<R: Runtime>(app: &AppHandle<R>, anchor: Option<&Rect>) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_positioner::init())
     .on_window_event(|window, event| {
       if window.label() == "menubar" {
         if let tauri::WindowEvent::Focused(false) = event {
@@ -95,6 +103,7 @@ pub fn run() {
         .menu(&tray_menu)
         .show_menu_on_left_click(false)
         .on_tray_icon_event(|tray, event| {
+          tauri_plugin_positioner::on_tray_event(tray.app_handle(), &event);
           if let TrayIconEvent::Click {
             button: MouseButton::Left,
             rect,

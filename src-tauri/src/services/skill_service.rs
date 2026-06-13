@@ -2,6 +2,9 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
+use gray_matter::{engine::YAML, Matter};
+use serde::Deserialize;
+
 use crate::db::Database;
 use crate::domain::audit::NewAuditEvent;
 use crate::domain::byoa::{AgentInvocation, AgentKind};
@@ -12,6 +15,14 @@ use crate::services::byoa_service;
 struct BundledSkill {
     id: &'static str,
     content: &'static str,
+}
+
+#[derive(Debug, Deserialize)]
+struct SkillFrontmatter {
+    id: String,
+    version: Option<String>,
+    description: Option<String>,
+    output_type: Option<String>,
 }
 
 const BUNDLED_SKILLS: &[BundledSkill] = &[
@@ -44,7 +55,10 @@ pub fn seed_bundled_skills(registry_path: &Path, db: &Database) -> Result<(), Co
     Ok(())
 }
 
-pub fn list_system_skills(registry_path: &Path, db: &Database) -> Result<Vec<SystemSkillMeta>, CommandError> {
+pub fn list_system_skills(
+    registry_path: &Path,
+    db: &Database,
+) -> Result<Vec<SystemSkillMeta>, CommandError> {
     let mut result = Vec::new();
     for skill in BUNDLED_SKILLS {
         let content = load_skill_content(registry_path, skill.id)?;
@@ -67,7 +81,9 @@ pub fn execute_skill(
     let config = db.get_skill_config(skill_id)?;
     if let Some(ref c) = config {
         if !c.enabled {
-            return Err(CommandError::validation(format!("skill {skill_id} is disabled")));
+            return Err(CommandError::validation(format!(
+                "skill {skill_id} is disabled"
+            )));
         }
     }
 
@@ -124,7 +140,10 @@ pub fn execute_skill(
 }
 
 fn load_skill_content(registry_path: &Path, skill_id: &str) -> Result<String, CommandError> {
-    let path = registry_path.join("system-skills").join(skill_id).join("SKILL.md");
+    let path = registry_path
+        .join("system-skills")
+        .join(skill_id)
+        .join("SKILL.md");
     if path.exists() {
         return fs::read_to_string(&path).map_err(|e| CommandError::storage(e.to_string()));
     }
@@ -133,49 +152,31 @@ fn load_skill_content(registry_path: &Path, skill_id: &str) -> Result<String, Co
             return Ok(bundled.content.to_string());
         }
     }
-    Err(CommandError::validation(format!("skill {skill_id} not found")))
+    Err(CommandError::validation(format!(
+        "skill {skill_id} not found"
+    )))
 }
 
 pub fn parse_skill_md(content: &str) -> Result<SystemSkillMeta, CommandError> {
-    let content = content.trim();
-    if !content.starts_with("---") {
-        return Err(CommandError::validation("SKILL.md missing frontmatter"));
-    }
-    let rest = &content[3..];
-    let end = rest.find("---")
-        .ok_or_else(|| CommandError::validation("SKILL.md missing closing frontmatter"))?;
-    let frontmatter = &rest[..end].trim();
-    let template = rest[end + 3..].trim().to_string();
+    let matter = Matter::<YAML>::new();
+    let parsed = matter
+        .parse::<SkillFrontmatter>(content.trim())
+        .map_err(|e| CommandError::validation(format!("SKILL.md frontmatter parse failed: {e}")))?;
+    let frontmatter = parsed
+        .data
+        .ok_or_else(|| CommandError::validation("SKILL.md missing frontmatter"))?;
 
-    let mut id = String::new();
-    let mut version = String::new();
-    let mut description = String::new();
-    let mut output_type = String::new();
-
-    for line in frontmatter.lines() {
-        let line = line.trim();
-        if let Some(val) = line.strip_prefix("id:") {
-            id = val.trim().trim_matches('"').to_string();
-        } else if let Some(val) = line.strip_prefix("version:") {
-            version = val.trim().trim_matches('"').to_string();
-        } else if let Some(val) = line.strip_prefix("description:") {
-            description = val.trim().trim_matches('"').to_string();
-        } else if let Some(val) = line.strip_prefix("output_type:") {
-            output_type = val.trim().trim_matches('"').to_string();
-        }
-    }
-
-    if id.is_empty() {
+    if frontmatter.id.trim().is_empty() {
         return Err(CommandError::validation("SKILL.md frontmatter missing id"));
     }
 
     Ok(SystemSkillMeta {
-        id,
-        version,
-        description,
-        output_type,
+        id: frontmatter.id,
+        version: frontmatter.version.unwrap_or_default(),
+        description: frontmatter.description.unwrap_or_default(),
+        output_type: frontmatter.output_type.unwrap_or_default(),
         enabled: true,
-        template,
+        template: parsed.content.trim().to_string(),
     })
 }
 

@@ -1,4 +1,26 @@
-pub const MIGRATIONS: &[&str] = &[CREATE_TABLES, ADD_SKILL_CONFIGS, ADD_SOURCE_CONFIGS];
+pub struct Migration {
+    pub version: i32,
+    pub name: &'static str,
+    pub sql: &'static str,
+}
+
+pub const MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "create_core_tables",
+        sql: CREATE_TABLES,
+    },
+    Migration {
+        version: 2,
+        name: "add_skill_configs",
+        sql: ADD_SKILL_CONFIGS,
+    },
+    Migration {
+        version: 3,
+        name: "add_source_configs",
+        sql: ADD_SOURCE_CONFIGS,
+    },
+];
 
 const CREATE_TABLES: &str = "
 CREATE TABLE IF NOT EXISTS signal_cards (

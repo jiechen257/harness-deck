@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use fs_extra::dir::{self, CopyOptions};
+
 use crate::db::Database;
 use crate::domain::audit::NewAuditEvent;
 use crate::domain::errors::CommandError;
@@ -34,22 +36,33 @@ pub fn plan_projection(
         let mode = ProjectionMode::Symlink;
 
         let (action, conflict_reason) = if target.exists() || target.symlink_metadata().is_ok() {
-            if target.symlink_metadata().map(|m| m.file_type().is_symlink()).unwrap_or(false) {
+            if target
+                .symlink_metadata()
+                .map(|m| m.file_type().is_symlink())
+                .unwrap_or(false)
+            {
                 let link_target = fs::read_link(&target).ok();
                 if link_target.as_deref() == Some(source.as_path()) {
-                    (ActionType::Skip, Some("symlink already points to registry source".into()))
+                    (
+                        ActionType::Skip,
+                        Some("symlink already points to registry source".into()),
+                    )
                 } else {
                     (ActionType::Update, None)
                 }
             } else {
-                (ActionType::Conflict, Some("target exists as regular file/directory, not managed by Hone".into()))
+                (
+                    ActionType::Conflict,
+                    Some("target exists as regular file/directory, not managed by Hone".into()),
+                )
             }
         } else {
             (ActionType::Create, None)
         };
 
         let existing_projections = db.list_projections_by_asset(&asset.id)?;
-        let has_projection_for_target = existing_projections.iter()
+        let has_projection_for_target = existing_projections
+            .iter()
             .any(|p| p.target_kind == target_kind && p.status != "removed");
 
         let final_action = if has_projection_for_target && action == ActionType::Create {
@@ -69,10 +82,22 @@ pub fn plan_projection(
         });
     }
 
-    let creates = actions.iter().filter(|a| a.action == ActionType::Create).count();
-    let updates = actions.iter().filter(|a| a.action == ActionType::Update).count();
-    let skips = actions.iter().filter(|a| a.action == ActionType::Skip).count();
-    let conflicts = actions.iter().filter(|a| a.action == ActionType::Conflict).count();
+    let creates = actions
+        .iter()
+        .filter(|a| a.action == ActionType::Create)
+        .count();
+    let updates = actions
+        .iter()
+        .filter(|a| a.action == ActionType::Update)
+        .count();
+    let skips = actions
+        .iter()
+        .filter(|a| a.action == ActionType::Skip)
+        .count();
+    let conflicts = actions
+        .iter()
+        .filter(|a| a.action == ActionType::Conflict)
+        .count();
 
     Ok(ProjectionPlan {
         target_kind: target_kind.to_string(),
@@ -127,7 +152,10 @@ pub fn execute_projection(
                     event_type: "projection_executed".to_string(),
                     entity_type: Some("projection".to_string()),
                     entity_id: Some(projection.id.clone()),
-                    detail: Some(format!("{{\"action\":\"{:?}\",\"target\":\"{}\"}}", action.action, action.target_path)),
+                    detail: Some(format!(
+                        "{{\"action\":\"{:?}\",\"target\":\"{}\"}}",
+                        action.action, action.target_path
+                    )),
                     outcome: "success".to_string(),
                 });
 
@@ -140,10 +168,7 @@ pub fn execute_projection(
     Ok(executed)
 }
 
-pub fn rollback_projection(
-    db: &Database,
-    projection_id: &str,
-) -> Result<(), CommandError> {
+pub fn rollback_projection(db: &Database, projection_id: &str) -> Result<(), CommandError> {
     let projection = db.get_projection(projection_id)?;
     let target = PathBuf::from(&projection.target_path);
 
@@ -180,7 +205,10 @@ pub fn adopt_unmanaged(
     target_kind: &str,
 ) -> Result<AdoptResult, CommandError> {
     if !target_path.exists() {
-        return Err(CommandError::validation(format!("target path does not exist: {}", target_path.display())));
+        return Err(CommandError::validation(format!(
+            "target path does not exist: {}",
+            target_path.display()
+        )));
     }
 
     let dest = registry_root.join(registry_dest);
@@ -189,17 +217,22 @@ pub fn adopt_unmanaged(
     }
 
     if target_path.is_dir() {
-        copy_dir_recursive(target_path, &dest)?;
+        copy_dir_contents(target_path, &dest)?;
     } else {
         fs::copy(target_path, &dest)?;
     }
 
-    let name = target_path.file_name()
+    let name = target_path
+        .file_name()
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_default();
-    let backup_path = backup_root.join(format!("adopt-{}-{}", name, chrono::Utc::now().format("%Y%m%d%H%M%S")));
+    let backup_path = backup_root.join(format!(
+        "adopt-{}-{}",
+        name,
+        chrono::Utc::now().format("%Y%m%d%H%M%S")
+    ));
     if target_path.is_dir() {
-        copy_dir_recursive(target_path, &backup_path)?;
+        copy_dir_contents(target_path, &backup_path)?;
         fs::remove_dir_all(target_path)?;
     } else {
         fs::copy(target_path, &backup_path)?;
@@ -231,7 +264,12 @@ pub fn adopt_unmanaged(
         event_type: "asset_adopted".to_string(),
         entity_type: Some("local_asset".to_string()),
         entity_id: Some(asset.id.clone()),
-        detail: Some(format!("{{\"from\":\"{}\",\"to\":\"{}\",\"backup\":\"{}\"}}", target_path.display(), dest.display(), backup_path.display())),
+        detail: Some(format!(
+            "{{\"from\":\"{}\",\"to\":\"{}\",\"backup\":\"{}\"}}",
+            target_path.display(),
+            dest.display(),
+            backup_path.display()
+        )),
         outcome: "success".to_string(),
     });
 
@@ -243,10 +281,7 @@ pub fn adopt_unmanaged(
     })
 }
 
-pub fn check_health(
-    db: &Database,
-    target_kind: &str,
-) -> Result<Vec<HealthFinding>, CommandError> {
+pub fn check_health(db: &Database, target_kind: &str) -> Result<Vec<HealthFinding>, CommandError> {
     let assets = db.list_assets()?;
     let mut findings = Vec::new();
 
@@ -284,11 +319,7 @@ pub fn check_health(
     Ok(findings)
 }
 
-pub fn preview_diff(
-    registry_root: &Path,
-    registry_path: &str,
-    target_path: &Path,
-) -> DiffPayload {
+pub fn preview_diff(registry_root: &Path, registry_path: &str, target_path: &Path) -> DiffPayload {
     let source = registry_root.join(registry_path);
     let source_read = read_text_preview(&source);
     let target_read = read_text_preview(target_path);
@@ -340,7 +371,9 @@ pub fn drift_timeline(
             target_path: projection.target_path,
             status: projection.status,
             first_detected_at: first_audit.map(|audit| audit.created_at.clone()),
-            last_checked_at: projection.last_checked.or_else(|| Some(projection.updated_at)),
+            last_checked_at: projection
+                .last_checked
+                .or_else(|| Some(projection.updated_at)),
             related_event,
         });
     }
@@ -408,7 +441,10 @@ struct TextPreview {
 
 fn read_text_preview(path: &Path) -> TextPreview {
     if !path.exists() {
-        return TextPreview { text: None, error: None };
+        return TextPreview {
+            text: None,
+            error: None,
+        };
     }
 
     let read_path = if path.is_dir() {
@@ -423,7 +459,10 @@ fn read_text_preview(path: &Path) -> TextPreview {
     let Some(read_path) = read_path else {
         return TextPreview {
             text: None,
-            error: Some(format!("{} is a directory without a readable preview file", path.display())),
+            error: Some(format!(
+                "{} is a directory without a readable preview file",
+                path.display()
+            )),
         };
     };
 
@@ -434,15 +473,24 @@ fn read_text_preview(path: &Path) -> TextPreview {
         },
         Ok(_) => match fs::read(&read_path) {
             Ok(bytes) => match String::from_utf8(bytes) {
-                Ok(text) => TextPreview { text: Some(text), error: None },
+                Ok(text) => TextPreview {
+                    text: Some(text),
+                    error: None,
+                },
                 Err(_) => TextPreview {
                     text: None,
                     error: Some(format!("{} is not UTF-8 text", read_path.display())),
                 },
             },
-            Err(error) => TextPreview { text: None, error: Some(error.to_string()) },
+            Err(error) => TextPreview {
+                text: None,
+                error: Some(error.to_string()),
+            },
         },
-        Err(error) => TextPreview { text: None, error: Some(error.to_string()) },
+        Err(error) => TextPreview {
+            text: None,
+            error: Some(error.to_string()),
+        },
     }
 }
 
@@ -478,16 +526,13 @@ fn build_diff_hunks(source: &str, target: &str) -> Vec<String> {
     hunks
 }
 
-fn copy_dir_recursive(src: &Path, dest: &Path) -> Result<(), CommandError> {
+fn copy_dir_contents(src: &Path, dest: &Path) -> Result<(), CommandError> {
     fs::create_dir_all(dest)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let target = dest.join(entry.file_name());
-        if entry.file_type()?.is_dir() {
-            copy_dir_recursive(&entry.path(), &target)?;
-        } else {
-            fs::copy(entry.path(), &target)?;
-        }
-    }
+    let mut options = CopyOptions::new();
+    options.overwrite = true;
+    options.content_only = true;
+    dir::copy(src, dest, &options).map_err(|e| {
+        CommandError::storage(format!("failed to copy directory {}: {e}", src.display()))
+    })?;
     Ok(())
 }

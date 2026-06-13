@@ -4,6 +4,7 @@ pub mod insight_service;
 pub mod intake_service;
 pub mod loop_service;
 pub mod projection_service;
+pub mod secret_service;
 pub mod skill_service;
 pub mod target_adapter;
 pub mod usage_service;

@@ -20,7 +20,10 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
 
     let inbox_signals = signals.iter().filter(|s| s.status == "inbox").count();
     let high_impact = signals.iter().filter(|s| s.impact == "high").count();
-    let official_signals = signals.iter().filter(|s| s.source_tier == "official").count();
+    let official_signals = signals
+        .iter()
+        .filter(|s| s.source_tier == "official")
+        .count();
     let normalized_signals = signals.iter().filter(|s| s.status == "normalized").count();
 
     let practice_ids_with_assets: HashSet<&str> = assets
@@ -35,18 +38,29 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
         .iter()
         .filter(|practice| practice.status == "draft" || practice.status == "adoptable")
         .count();
-    let applied_practices = practices.iter().filter(|practice| practice.status == "applied").count();
+    let applied_practices = practices
+        .iter()
+        .filter(|practice| practice.status == "applied")
+        .count();
 
-    let ready_assets = assets.iter().filter(|asset| asset.status == "ready").count();
+    let ready_assets = assets
+        .iter()
+        .filter(|asset| asset.status == "ready")
+        .count();
     let projected_assets: HashSet<&str> = projections
         .iter()
         .filter(|projection| projection.status == "active")
         .map(|projection| projection.asset_id.as_str())
         .collect();
-    let broken_assets = assets.iter().filter(|asset| asset.status == "broken").count();
+    let broken_assets = assets
+        .iter()
+        .filter(|asset| asset.status == "broken")
+        .count();
     let active_claude = projections
         .iter()
-        .filter(|projection| projection.target_kind == "claude_code" && projection.status == "active")
+        .filter(|projection| {
+            projection.target_kind == "claude_code" && projection.status == "active"
+        })
         .count();
     let active_codex = projections
         .iter()
@@ -62,7 +76,10 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
         .iter()
         .filter(|asset| !projected_assets.contains(asset.id.as_str()))
         .count();
-    let orphan_assets = assets.iter().filter(|asset| asset.practice_id.is_none()).count();
+    let orphan_assets = assets
+        .iter()
+        .filter(|asset| asset.practice_id.is_none())
+        .count();
 
     let sections = vec![
         LoopSection {
@@ -128,8 +145,14 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
                 metric("缺失投射", "Missing", missing_projection),
                 metric("孤立资产", "Orphan", orphan_assets),
             ],
-            action_zh: format!("评审 {} 个问题", open_review + missing_projection + orphan_assets),
-            action_en: format!("Review {} issues", open_review + missing_projection + orphan_assets),
+            action_zh: format!(
+                "评审 {} 个问题",
+                open_review + missing_projection + orphan_assets
+            ),
+            action_en: format!(
+                "Review {} issues",
+                open_review + missing_projection + orphan_assets
+            ),
             view: "review".into(),
             tone: "purple".into(),
         },
@@ -226,16 +249,19 @@ pub fn normalize_signal(
     db.update_signal_status(signal_id, "processing")?;
 
     let registry = db.get_active_registry()?;
-    let registry_path = registry
-        .as_ref()
-        .map(|r| r.path.as_str())
-        .unwrap_or(".");
+    let registry_path = registry.as_ref().map(|r| r.path.as_str()).unwrap_or(".");
 
     let mut variables = HashMap::new();
     variables.insert("signal_title".into(), signal.title.clone());
-    variables.insert("signal_source".into(), signal.source_url.clone().unwrap_or_else(|| "local".into()));
+    variables.insert(
+        "signal_source".into(),
+        signal.source_url.clone().unwrap_or_else(|| "local".into()),
+    );
     variables.insert("source_tier".into(), signal.source_tier.clone());
-    variables.insert("signal_excerpt".into(), signal.excerpt.clone().unwrap_or_default());
+    variables.insert(
+        "signal_excerpt".into(),
+        signal.excerpt.clone().unwrap_or_default(),
+    );
 
     let started = std::time::Instant::now();
     let skill_result = skill_service::execute_skill(
@@ -256,7 +282,10 @@ pub fn normalize_signal(
                         event_type: "signal_normalized_preview".into(),
                         entity_type: Some("signal".into()),
                         entity_id: Some(signal_id.into()),
-                        detail: Some(format!("{{\"title\":\"{}\"}}", escape_json_string(&draft.title))),
+                        detail: Some(format!(
+                            "{{\"title\":\"{}\"}}",
+                            escape_json_string(&draft.title)
+                        )),
                         outcome: "success".into(),
                     });
                     Ok(NormalizeResult {
@@ -277,7 +306,12 @@ pub fn normalize_signal(
                         detail: Some("{\"reason\":\"parse_failed\"}".into()),
                         outcome: "failure".into(),
                     });
-                    Ok(failed_normalize(signal_id, "ParseFailed", error, duration_ms))
+                    Ok(failed_normalize(
+                        signal_id,
+                        "ParseFailed",
+                        error,
+                        duration_ms,
+                    ))
                 }
             }
         }
@@ -288,10 +322,18 @@ pub fn normalize_signal(
                 event_type: "signal_normalize_failed".into(),
                 entity_type: Some("signal".into()),
                 entity_id: Some(signal_id.into()),
-                detail: Some(format!("{{\"reason\":\"{}\"}}", escape_json_string(&message))),
+                detail: Some(format!(
+                    "{{\"reason\":\"{}\"}}",
+                    escape_json_string(&message)
+                )),
                 outcome: "failure".into(),
             });
-            Ok(failed_normalize(signal_id, "SkillFailed", message, duration_ms))
+            Ok(failed_normalize(
+                signal_id,
+                "SkillFailed",
+                message,
+                duration_ms,
+            ))
         }
         Err(error) => {
             let _ = db.update_signal_status(signal_id, "inbox");
@@ -299,10 +341,18 @@ pub fn normalize_signal(
                 event_type: "signal_normalize_failed".into(),
                 entity_type: Some("signal".into()),
                 entity_id: Some(signal_id.into()),
-                detail: Some(format!("{{\"reason\":\"{}\"}}", escape_json_string(&error.message))),
+                detail: Some(format!(
+                    "{{\"reason\":\"{}\"}}",
+                    escape_json_string(&error.message)
+                )),
                 outcome: "failure".into(),
             });
-            Ok(failed_normalize(signal_id, error.code, error.message, duration_ms))
+            Ok(failed_normalize(
+                signal_id,
+                error.code,
+                error.message,
+                duration_ms,
+            ))
         }
     }
 }
@@ -321,7 +371,14 @@ pub fn create_practice_from_signal(
         summary: Some(draft.summary),
         scenarios: Some(scenarios),
         comparable: Some(comparable),
-        applicability: Some(if draft.can_generate_asset { "can_generate_asset" } else { "reference_only" }.into()),
+        applicability: Some(
+            if draft.can_generate_asset {
+                "can_generate_asset"
+            } else {
+                "reference_only"
+            }
+            .into(),
+        ),
         generated_by: Some("normalize-practice-card".into()),
     })?;
     db.link_signal_to_practice(signal_id, &practice.id)?;
@@ -330,7 +387,10 @@ pub fn create_practice_from_signal(
         event_type: "practice_created".into(),
         entity_type: Some("practice".into()),
         entity_id: Some(practice.id.clone()),
-        detail: Some(format!("{{\"signalId\":\"{}\"}}", escape_json_string(signal_id))),
+        detail: Some(format!(
+            "{{\"signalId\":\"{}\"}}",
+            escape_json_string(signal_id)
+        )),
         outcome: "success".into(),
     });
     Ok(practice)
@@ -356,25 +416,51 @@ pub fn create_local_asset_from_practice(
         event_type: "local_asset_created".into(),
         entity_type: Some("local_asset".into()),
         entity_id: Some(asset.id.clone()),
-        detail: Some(format!("{{\"practiceId\":\"{}\"}}", escape_json_string(practice_id))),
+        detail: Some(format!(
+            "{{\"practiceId\":\"{}\"}}",
+            escape_json_string(practice_id)
+        )),
         outcome: "success".into(),
     });
     Ok(asset)
 }
 
 fn parse_practice_draft(raw: &str) -> Result<PracticeDraft, String> {
-    let value = serde_json::from_str::<serde_json::Value>(raw)
-        .or_else(|_| {
-            let trimmed = raw.trim();
-            let start = trimmed.find('{').ok_or_else(|| serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::InvalidData, "missing json object")))?;
-            let end = trimmed.rfind('}').ok_or_else(|| serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::InvalidData, "missing json object end")))?;
-            serde_json::from_str::<serde_json::Value>(&trimmed[start..=end])
-        })
-        .map_err(|e| e.to_string())?;
-
-    let draft = serde_json::from_value::<PracticeDraft>(value)
-        .map_err(|e| e.to_string())?;
+    let value = serde_json::from_str::<serde_json::Value>(raw.trim()).map_err(|e| e.to_string())?;
+    let draft = serde_json::from_value::<PracticeDraft>(value).map_err(|e| e.to_string())?;
     Ok(draft)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_practice_draft;
+
+    const VALID_DRAFT: &str = r#"{
+      "title": "Skill discovery guardrail",
+      "practiceType": "workflow",
+      "summary": "Keep project-scoped skills aligned before agent work.",
+      "scenarios": ["Before starting a Trellis implementation"],
+      "comparable": ["Manual skill lookup"],
+      "canGenerateAsset": true,
+      "suggestedAssetTypes": ["skill"]
+    }"#;
+
+    #[test]
+    fn parse_practice_draft_accepts_strict_json_object() {
+        let draft = parse_practice_draft(VALID_DRAFT).expect("draft");
+
+        assert_eq!(draft.title, "Skill discovery guardrail");
+        assert_eq!(draft.practice_type, "workflow");
+        assert!(draft.can_generate_asset);
+    }
+
+    #[test]
+    fn parse_practice_draft_rejects_text_wrapped_json() {
+        let wrapped = format!("Here is the draft:\n{VALID_DRAFT}");
+        let error = parse_practice_draft(&wrapped).expect_err("wrapped JSON should fail");
+
+        assert!(error.contains("expected value") || error.contains("line"));
+    }
 }
 
 fn failed_normalize(
