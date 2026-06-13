@@ -208,3 +208,36 @@ Reverted the incorrect README-centered product-loop change, then realigned READM
 ### Next Steps
 
 - None - task complete
+
+
+## Session 7: Enforce projection and operations authorization
+
+**Date**: 2026-06-13
+**Task**: Enforce projection and operations authorization
+**Branch**: `main`
+
+### Summary
+
+Fixed product-completeness gaps found during grill/design review: projection confirm/adopt/rollback now require write_projection authorization, Operations uses typed Tauri commands for script list/preview/confirm with script_execution gate and audit, frontend browser fallback mirrors authorization state, and specs/tests were updated.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d7facc5` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
