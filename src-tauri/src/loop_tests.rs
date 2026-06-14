@@ -6,6 +6,7 @@ mod tests {
     use crate::domain::audit::NewAuditEvent;
     use crate::domain::byoa::AgentKind;
     use crate::domain::local_asset::NewLocalAsset;
+    use crate::domain::ops_script::NewOpsScript;
     use crate::domain::practice::{NewPracticeCard, PracticeDraft};
     use crate::domain::projection::NewProjection;
     use crate::domain::signal::NewSignalCard;
@@ -130,6 +131,43 @@ mod tests {
             .iter()
             .any(|target| target.name == "Claude Code"));
         assert_eq!(summary.recent_audits.len(), 1);
+    }
+
+    #[test]
+    fn loop_summary_reports_operations_safe_confirmation_state() {
+        let db = test_db();
+        db.insert_ops_script(&NewOpsScript {
+            name: "Codex proxy".into(),
+            path: "~/start-codex.sh".into(),
+            description: Some("launchctl environment and Codex restart control".into()),
+            risk_level: "high".into(),
+        })
+        .expect("insert codex proxy");
+        db.insert_ops_script(&NewOpsScript {
+            name: "Sleep guard".into(),
+            path: "~/dsleep".into(),
+            description: Some("caffeinate guard with stop boundary".into()),
+            risk_level: "medium".into(),
+        })
+        .expect("insert sleep guard");
+
+        let summary = loop_service::get_loop_summary(&db).expect("summary");
+        let operations = summary
+            .sections
+            .iter()
+            .find(|section| section.id == "operations")
+            .expect("operations section");
+
+        assert_eq!(operations.count, 2);
+        assert_eq!(operations.caption_en, "safe confirm");
+        assert!(operations
+            .metrics
+            .iter()
+            .any(|metric| metric.label_en == "Codex proxy" && metric.value == "registered"));
+        assert!(operations
+            .metrics
+            .iter()
+            .any(|metric| metric.label_en == "Sleep guard" && metric.value == "registered"));
     }
 
     #[test]

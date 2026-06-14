@@ -77,6 +77,8 @@ pub fn run() {
                 .expect("failed to seed authorization state");
             services::intake_service::seed_default_sources(&database)
                 .expect("failed to seed default sources");
+            services::operations_service::ensure_default_ops_scripts(&database)
+                .expect("failed to seed operations scripts");
             app.manage(std::sync::Mutex::new(database));
 
             let app_submenu = SubmenuBuilder::new(app, "Hone")

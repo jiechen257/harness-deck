@@ -231,6 +231,20 @@ function slugify(value: string): string {
     .replace(/(^-|-$)/g, "") || "practice-asset";
 }
 
+function fallbackTargetRoot(targetKind: string): string {
+  if (targetKind === "claude_code") return "~/.claude/skills";
+  if (targetKind === "codex") return "~/.codex/skills";
+  return "~/.hone/skills";
+}
+
+function fallbackProjectedAssetIds(targetKind: string): Set<string> {
+  return new Set(
+    fallbackProjections
+      .filter((projection) => projection.targetKind === targetKind && projection.status === "active")
+      .map((projection) => projection.assetId),
+  );
+}
+
 function metric(labelZh: string, labelEn: string, value: number | string) {
   return { labelZh, labelEn, value: String(value) };
 }
@@ -328,12 +342,16 @@ function buildFallbackSummary(): LoopSummary {
         id: "operations",
         nameZh: "运维",
         nameEn: "Operations",
-        count: 0,
-        captionZh: "待接入",
-        captionEn: "pending wiring",
-        metrics: [metric("Codex 代理", "Codex proxy", 0), metric("防睡守护", "Sleep guard", 0), metric("今日脚本", "Scripts today", 0)],
-        actionZh: "查看运行状态",
-        actionEn: "Open run log",
+        count: fallbackOpsScripts.length,
+        captionZh: "安全确认",
+        captionEn: "safe confirm",
+        metrics: [
+          metric("Codex 代理", "Codex proxy", fallbackOpsScripts.find((script) => script.name === "Codex proxy")?.status ?? "not_registered"),
+          metric("防睡守护", "Sleep guard", fallbackOpsScripts.find((script) => script.name === "Sleep guard")?.status ?? "not_registered"),
+          metric("今日脚本", "Scripts today", fallbackAudits.filter((audit) => audit.eventType === "ops_script_confirmed" && audit.createdAt.startsWith(new Date().toISOString().slice(0, 10))).length),
+        ],
+        actionZh: "预览确认计划",
+        actionEn: "Preview confirmation plan",
         view: "operations",
         tone: "gold",
       },
@@ -912,8 +930,20 @@ export async function rollbackProjection(projectionId: string): Promise<void> {
 }
 
 export async function checkProjectionHealth(targetKind: string): Promise<HealthFinding[]> {
-  return call("check_projection_health", { targetKind }, () => [
-    { findingType: "broken_symlink", severity: "warn", assetId: "local-harness-review", targetPath: "~/.codex/skills/local-harness-review", detail: "Target symlink points to a missing registry path." },
-    { findingType: "missing_projection", severity: "info", assetId: "normalize-practice-card", targetPath: "~/.claude/skills/normalize-practice-card", detail: "Asset is ready in registry but not projected to Claude Code." },
-  ]);
+  return call("check_projection_health", { targetKind }, () => {
+    const projectedAssetIds = fallbackProjectedAssetIds(targetKind);
+    const root = fallbackTargetRoot(targetKind);
+    return fallbackAssets
+      .filter((asset) => !projectedAssetIds.has(asset.id))
+      .map((asset) => {
+        const assetName = asset.registryPath.split("/").at(-1) ?? asset.id;
+        return {
+          findingType: "missing_projection",
+          severity: "info",
+          assetId: asset.id,
+          targetPath: `${root}/${assetName}`,
+          detail: `${asset.registryPath} is ready in the browser fixture registry but not projected to ${targetKind}.`,
+        };
+      });
+  });
 }

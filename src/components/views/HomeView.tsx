@@ -110,8 +110,9 @@ function fallbackSections(zh: boolean): LoopSection[] {
       captionZh: "脚本",
       captionEn: "scripts",
       metrics: [
-        { labelZh: "Codex 代理", labelEn: "Codex proxy", value: zh ? "运行中" : "running" },
-        { labelZh: "防睡守护", labelEn: "Sleep guard", value: zh ? "活跃" : "active" },
+        { labelZh: "Codex 代理", labelEn: "Codex proxy", value: zh ? "已登记" : "registered" },
+        { labelZh: "防睡守护", labelEn: "Sleep guard", value: zh ? "待确认" : "needs confirmation" },
+        { labelZh: "今日脚本", labelEn: "Scripts today", value: "0" },
       ],
       actionZh: "预览运行计划",
       actionEn: "Preview run plan",

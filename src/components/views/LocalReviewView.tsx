@@ -110,16 +110,25 @@ export function LocalReviewView({ locale }: { locale: Locale }) {
         </section>
         <section className="card-section">
           <h3 className="section-title">{zh ? "证据与建议" : "Evidence & Recommendation"}</h3>
-          <div className="info-block">
-            <strong>registry/skills/workflow/grill-me/SKILL.md</strong>
-            <p>{zh ? "建议创建 Practice Card 关系，或通过采纳流程把目标资产纳入 registry 管理。" : "Create a Practice Card relation, or adopt the target asset into the registry."}</p>
-          </div>
+          {findings.map((finding) => (
+            <div key={`${finding.findingType}-${finding.assetId}-${finding.targetPath}`} className="info-block">
+              <strong>{finding.targetPath}</strong>
+              <p>
+                {finding.findingType === "missing_projection"
+                  ? (zh ? "建议先在应用与同步中预览投射计划，确认目标路径后再写入。" : "Preview the projection plan in Apply & Sync, confirm the target path, then write.")
+                  : finding.detail}
+              </p>
+            </div>
+          ))}
           {insights.map((insight) => (
             <div key={insight.id} className="info-block">
               <strong>{insight.title}</strong>
               <p>{insight.summary}</p>
             </div>
           ))}
+          {findings.length === 0 && insights.length === 0 ? (
+            <p className="empty-hint">{zh ? "暂无需要处理的证据或建议。" : "No actionable evidence or suggestions right now."}</p>
+          ) : null}
         </section>
       </div>
 

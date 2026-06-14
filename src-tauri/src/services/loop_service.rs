@@ -17,6 +17,7 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
     let assets = db.list_assets()?;
     let projections = db.list_projections()?;
     let audits = db.list_recent_audits(5)?;
+    let ops_scripts = db.list_ops_scripts()?;
 
     let inbox_signals = signals.iter().filter(|s| s.status == "inbox").count();
     let high_impact = signals.iter().filter(|s| s.impact == "high").count();
@@ -79,6 +80,20 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
     let orphan_assets = assets
         .iter()
         .filter(|asset| asset.practice_id.is_none())
+        .count();
+    let ops_status = |name: &str| {
+        ops_scripts
+            .iter()
+            .find(|script| script.name == name)
+            .map(|script| script.status.as_str())
+            .unwrap_or("not_registered")
+    };
+    let today = chrono::Utc::now().date_naive().to_string();
+    let scripts_today = audits
+        .iter()
+        .filter(|audit| {
+            audit.event_type == "ops_script_confirmed" && audit.created_at.starts_with(&today)
+        })
         .count();
 
     let sections = vec![
@@ -160,16 +175,16 @@ pub fn get_loop_summary(db: &Database) -> Result<LoopSummary, CommandError> {
             id: "operations".into(),
             name_zh: "运维".into(),
             name_en: "Operations".into(),
-            count: 0,
-            caption_zh: "待接入".into(),
-            caption_en: "pending wiring".into(),
+            count: ops_scripts.len(),
+            caption_zh: "安全确认".into(),
+            caption_en: "safe confirm".into(),
             metrics: vec![
-                metric("Codex 代理", "Codex proxy", 0),
-                metric("防睡守护", "Sleep guard", 0),
-                metric("今日脚本", "Scripts today", 0),
+                text_metric("Codex 代理", "Codex proxy", ops_status("Codex proxy")),
+                text_metric("防睡守护", "Sleep guard", ops_status("Sleep guard")),
+                metric("今日脚本", "Scripts today", scripts_today),
             ],
-            action_zh: "查看运行状态".into(),
-            action_en: "Open run log".into(),
+            action_zh: "预览确认计划".into(),
+            action_en: "Preview confirmation plan".into(),
             view: "operations".into(),
             tone: "gold".into(),
         },
@@ -484,6 +499,14 @@ fn metric(label_zh: &str, label_en: &str, value: usize) -> LoopMetric {
         label_zh: label_zh.into(),
         label_en: label_en.into(),
         value: value.to_string(),
+    }
+}
+
+fn text_metric(label_zh: &str, label_en: &str, value: &str) -> LoopMetric {
+    LoopMetric {
+        label_zh: label_zh.into(),
+        label_en: label_en.into(),
+        value: value.into(),
     }
 }
 

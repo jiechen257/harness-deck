@@ -294,9 +294,9 @@ describe("Hone app foundation", () => {
 
     const previewButtons = await screen.findAllByRole("button", { name: "预览计划" });
     await user.click(previewButtons[0]);
-    await user.click((await screen.findAllByRole("button", { name: "确认运行" }))[0]);
+    await user.click((await screen.findAllByRole("button", { name: "确认并审计" }))[0]);
 
-    expect(screen.getByText("需要先在设置中授予脚本执行权限。菜单栏不会直接运行高风险脚本。")).toBeInTheDocument();
+    expect(screen.getByText("需要先在设置中授予脚本执行权限。当前只会确认并写审计，不直接执行 shell。")).toBeInTheDocument();
   });
 
   it("records an Operations audit after script execution authorization", async () => {
@@ -310,9 +310,20 @@ describe("Hone app foundation", () => {
 
     await user.click(within(navigation).getByRole("button", { name: "运维" }));
     await user.click((await screen.findAllByRole("button", { name: "预览计划" }))[0]);
-    await user.click((await screen.findAllByRole("button", { name: "确认运行" }))[0]);
+    await user.click((await screen.findAllByRole("button", { name: "确认并审计" }))[0]);
 
     expect(await screen.findByText("ops_script_confirmed")).toBeInTheDocument();
+  });
+
+  it("renders Local Review evidence from findings instead of fixed sample paths", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const navigation = screen.getByRole("navigation", { name: "Workbench views" });
+    await user.click(within(navigation).getByRole("button", { name: "本地评审" }));
+
+    expect(await screen.findByText("~/.codex/skills/local-harness-review")).toBeInTheDocument();
+    expect(screen.queryByText("registry/skills/workflow/grill-me/SKILL.md")).not.toBeInTheDocument();
   });
 
   it("renders Settings with authorization and audit tabs", async () => {

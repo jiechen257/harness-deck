@@ -122,8 +122,8 @@ export function MenuBarPanel({
 
           <section className="card">
             <div className="card-head"><div><strong>{zh ? "本机运维" : "Local Ops"}</strong><div className="caption">{zh ? "只读状态，运行进入工作台确认" : "Read-only state; run from workbench confirmation"}</div></div><span className="pill">{operationsSection?.metrics.length ?? 3}</span></div>
-            <div className="row"><div><strong>Codex proxy</strong><span className="caption">launchctl</span></div><span className="pill good">{metricValue(operationsSection, "Codex proxy") || (zh ? "运行中" : "running")}</span></div>
-            <div className="row"><div><strong>Sleep guard</strong><span className="caption">caffeinate</span></div><span className="pill warn">{metricValue(operationsSection, "Sleep guard") || (zh ? "活跃" : "active")}</span></div>
+            <div className="row"><div><strong>Codex proxy</strong><span className="caption">launchctl</span></div><span className="pill">{metricValue(operationsSection, "Codex proxy") || (zh ? "已登记" : "registered")}</span></div>
+            <div className="row"><div><strong>Sleep guard</strong><span className="caption">caffeinate</span></div><span className="pill">{metricValue(operationsSection, "Sleep guard") || (zh ? "待确认" : "needs confirmation")}</span></div>
             <div className="row"><div><strong>Wake display</strong><span className="caption">pmset</span></div><span className="pill">{metricValue(operationsSection, "Scripts today") || (zh ? "空闲" : "idle")}</span></div>
           </section>
 

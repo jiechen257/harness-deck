@@ -3,16 +3,21 @@ import { useCallback, useEffect, useState } from "react";
 import { confirmOpsScript, listAuditEvents, listOpsScripts, previewOpsScript } from "../../lib/api";
 import type { AuditEvent, Locale, OpsScript, OpsScriptExecutionResult, OpsScriptPreview } from "../../lib/types";
 
-function statusTone(name: string) {
-  if (name === "Codex proxy") return "badge-good";
-  if (name === "Sleep guard") return "badge-warn";
+function statusTone(status: string) {
+  if (status === "running") return "badge-good";
+  if (status === "disabled") return "badge-warn";
   return "badge-info";
 }
 
-function statusLabel(name: string, zh: boolean) {
-  if (name === "Codex proxy") return zh ? "运行中" : "running";
-  if (name === "Sleep guard") return zh ? "活跃" : "active";
-  return zh ? "空闲" : "idle";
+function statusLabel(status: string, zh: boolean) {
+  const labels: Record<string, { zh: string; en: string }> = {
+    registered: { zh: "已登记", en: "registered" },
+    running: { zh: "运行中", en: "running" },
+    idle: { zh: "空闲", en: "idle" },
+    disabled: { zh: "已禁用", en: "disabled" },
+  };
+  const label = labels[status] ?? { zh: status, en: status };
+  return zh ? label.zh : label.en;
 }
 
 function riskLabel(riskLevel: string, zh: boolean) {
@@ -66,7 +71,7 @@ export function OperationsView({ locale }: { locale: Locale }) {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setActionError(message.includes("script_execution")
-        ? (zh ? "需要先在设置中授予脚本执行权限。菜单栏不会直接运行高风险脚本。" : "Grant script execution in Settings first. The menu bar never runs high-risk scripts directly.")
+        ? (zh ? "需要先在设置中授予脚本执行权限。当前只会确认并写审计，不直接执行 shell。" : "Grant script execution in Settings first. The current flow only confirms and audits; it does not execute shell.")
         : message);
     } finally {
       setBusyScriptId(null);
@@ -94,7 +99,7 @@ export function OperationsView({ locale }: { locale: Locale }) {
       <div className="compact-card-grid">
         {scripts.map((script) => (
           <article key={script.id} className="info-block">
-            <div className="surface-head"><h3>{script.name}</h3><span className={`badge ${statusTone(script.name)}`}>{statusLabel(script.name, zh)}</span></div>
+            <div className="surface-head"><h3>{script.name}</h3><span className={`badge ${statusTone(script.status)}`}>{statusLabel(script.status, zh)}</span></div>
             <code className="row-path">{script.path}</code>
             <p>{script.description ?? (zh ? "没有脚本说明。" : "No script description.")}</p>
             <span className={`badge ${script.riskLevel === "high" ? "badge-warn" : "badge-info"}`}>{riskLabel(script.riskLevel, zh)}</span>
@@ -122,7 +127,7 @@ export function OperationsView({ locale }: { locale: Locale }) {
             ) : null}
             <div className="inline-actions">
               <button className="action-button" type="button" disabled={busyScriptId === script.id} onClick={() => handlePreview(script)}>{zh ? "预览计划" : "Preview Plan"}</button>
-              <button className="action-button primary" type="button" disabled={preview?.scriptId !== script.id || busyScriptId === script.id} onClick={() => handleConfirm(script)}>{zh ? "确认运行" : "Confirm Run"}</button>
+              <button className="action-button primary" type="button" disabled={preview?.scriptId !== script.id || busyScriptId === script.id} onClick={() => handleConfirm(script)}>{zh ? "确认并审计" : "Confirm & Audit"}</button>
             </div>
           </article>
         ))}
