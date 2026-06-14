@@ -241,3 +241,36 @@ Fixed product-completeness gaps found during grill/design review: projection con
 ### Next Steps
 
 - None - task complete
+
+
+## Session 8: Final product polish readiness
+
+**Date**: 2026-06-14
+**Task**: Final product polish readiness
+**Branch**: `main`
+
+### Summary
+
+Completed release-readiness polish: removed misleading Operations run-state copy, made Local Review evidence data-driven, aligned loop summary with safe Operations confirmation, validated lint/typecheck/tests/cargo/build/browser DOM checks, and archived the Trellis task.
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2013205` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
